@@ -1,0 +1,316 @@
+/* User Stats - Diseño Profesional Simplificado */
+.user-stats-container {
+  padding: 0;
+}
+
+/* Card con mismo estilo que Users.css */
+.users-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.users-card .card-header {
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
+  color: white;
+  border-bottom: none;
+  padding: 1.5rem;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.users-card .card-header h5 {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  color: white;
+}
+
+.users-card .card-body {
+  padding: 2rem;
+}
+
+/* Tarjetas Premium */
+.user-stats-row {
+  margin: 0;
+}
+
+.premium-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: white;
+  height: 100%;
+  border: 1px solid #eaeef2;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card-body {
+  padding: 1.5rem !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Header de Tarjetas */
+.stats-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.stats-icon-container {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-icon-container.bg-primary {
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
+}
+
+.stats-icon-container.bg-success {
+  background: linear-gradient(135deg, #2eb85c 0%, #1f8c3f 100%);
+}
+
+.stats-icon-container.bg-warning {
+  background: linear-gradient(135deg, #f9b115 0%, #d69400 100%);
+}
+
+.stats-icon-container.bg-danger {
+  background: linear-gradient(135deg, #e55353 0%, #c53030 100%);
+}
+
+.stats-icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.stats-trend {
+  background: rgba(46, 184, 92, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(46, 184, 92, 0.2);
+}
+
+.stats-percentage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2eb85c;
+}
+
+/* Contenido de Tarjetas */
+.stats-content {
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.stats-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stats-label {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.stats-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Distribución por Roles */
+.role-distribution {
+  padding: 1.5rem !important;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #321fdb;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.section-title .icon {
+  margin-right: 0.5rem;
+}
+
+.role-stat-col {
+  padding: 0 1rem;
+}
+
+.role-stat {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.role-stat:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.role-stat h4 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.role-stat small {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .users-card .card-body {
+    padding: 1.5rem;
+  }
+  
+  .users-card .card-header {
+    padding: 1.25rem;
+  }
+  
+  .stats-value {
+    font-size: 2rem;
+  }
+  
+  .stats-card-header {
+    margin-bottom: 1rem;
+  }
+  
+  .stats-icon-container {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .stats-label {
+    font-size: 1rem;
+  }
+  
+  .role-stat-col {
+    margin-bottom: 1rem;
+  }
+  
+  .role-stat {
+    padding: 1rem;
+  }
+  
+  .role-stat h4 {
+    font-size: 2rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.premium-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efectos de profundidad */
+.stats-card-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #321fdb, #2eb85c, #f9b115, #e55353);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.premium-card:hover .stats-card-body::before {
+  opacity: 1;
+}
+
+/* Estados de carga */
+.users-loading-container {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.users-loading-text {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
+}
+
+/* Estado vacío */
+.users-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.users-empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+  color: #321fdb;
+}
+
+/* Alertas */
+.users-alert {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}

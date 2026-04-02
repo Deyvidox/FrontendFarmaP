@@ -1,0 +1,250 @@
+/* Users.css - IDÉNTICO AL REGISTRO */
+
+/* Animación idéntica */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Contenedor principal - EXACTO */
+.users-container {
+  padding: 0;
+}
+
+/* Card principal - IDÉNTICA */
+.users-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  animation: fadeInUp 0.5s ease-out; /* MISMA ANIMACIÓN */
+}
+
+/* Header - IDÉNTICO */
+.users-card .card-header {
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
+  color: white;
+  border-bottom: none;
+  padding: 1.5rem;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.users-card .card-header h5 {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* Body - MISMO PADDING */
+.users-card .card-body {
+  padding: 2rem;
+}
+
+/* Tabla con estilo de formulario */
+.users-table {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.users-table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #eaeef2;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1rem 1.25rem;
+}
+
+.users-table tbody td {
+  padding: 1rem 1.25rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #eaeef2;
+  color: #495057;
+  font-size: 0.95rem;
+}
+
+.users-table tbody tr:hover {
+  background-color: rgba(50, 31, 219, 0.03);
+}
+
+/* Estados - Estilo similar a inputs */
+.user-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.user-status-active {
+  background-color: rgba(46, 184, 92, 0.1);
+  color: #2eb85c;
+  border: 1px solid rgba(46, 184, 92, 0.2);
+}
+
+.user-status-inactive {
+  background-color: rgba(229, 83, 83, 0.1);
+  color: #e55353;
+  border: 1px solid rgba(229, 83, 83, 0.2);
+}
+
+/* Botones - EXACTAMENTE IGUALES */
+.users-action-btn-primary {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.users-action-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(50, 31, 219, 0.3);
+}
+
+.users-action-btn-secondary {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  background: white;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.users-action-btn-secondary:hover {
+  background: #f8f9fa;
+  border-color: #d0d0d0;
+  color: #495057;
+}
+
+/* Secciones (para consistencia) */
+.table-section {
+  margin-bottom: 2rem;
+}
+
+.table-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #321fdb;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.section-title .icon {
+  margin-right: 0.5rem;
+}
+
+/* Responsive - MISMO COMPORTAMIENTO */
+@media (max-width: 768px) {
+  .users-card .card-body {
+    padding: 1.5rem;
+  }
+  
+  .users-card .card-header {
+    padding: 1.25rem;
+  }
+  
+  .users-action-btn-primary,
+  .users-action-btn-secondary {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .btn-group-responsive {
+    flex-direction: column;
+  }
+  
+  .users-table thead {
+    display: none;
+  }
+  
+  .users-table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #eaeef2;
+    border-radius: 8px;
+  }
+  
+  .users-table tbody td {
+    display: block;
+    text-align: right;
+    border-bottom: 1px solid #eaeef2;
+    position: relative;
+    padding-left: 50%;
+  }
+  
+  .users-table tbody td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 1rem;
+    width: calc(50% - 2rem);
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+}
+
+/* Estados de carga - SIMILAR */
+.users-loading-container {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.users-loading-text {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
+}
+
+/* Estado vacío */
+.users-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.users-empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+  color: #321fdb;
+}
+
+/* Alertas */
+.users-alert {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Animación para elementos */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

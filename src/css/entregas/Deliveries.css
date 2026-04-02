@@ -1,0 +1,142 @@
+/* Deliveries.css - Versión simplificada para debugging */
+
+/* 1. Asegurar que las clases están aplicadas */
+.deliveries-card {
+  border: 3px solid red !important; /* Color temporal para verificar */
+  background-color: #f8f9fa !important;
+}
+
+/* 2. Verificar que el header se está estilizando */
+.deliveries-card .card-header {
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%) !important;
+  color: white !important;
+}
+
+/* 3. Estadísticas cards */
+.stats-card {
+  border: 2px solid #321fdb !important;
+  border-radius: 10px !important;
+  margin-bottom: 1rem !important;
+}
+
+.stats-card-programadas {
+  border-color: #321fdb !important;
+}
+
+.stats-card-en-proceso {
+  border-color: #f6960b !important;
+}
+
+.stats-card-completadas {
+  border-color: #2eb85c !important;
+}
+
+.stats-card-beneficiarios {
+  border-color: #321fdb !important;
+}
+
+/* 4. Tabla */
+.deliveries-table {
+  border: 2px solid blue !important; /* Color temporal */
+}
+
+.deliveries-table thead th {
+  background-color: #f8f9fa !important;
+  color: #321fdb !important;
+  font-weight: bold !important;
+}
+
+/* 5. Badges personalizados */
+.badge-status {
+  padding: 5px 10px !important;
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+}
+
+.badge-programada {
+  background-color: #321fdb !important;
+  color: white !important;
+}
+
+.badge-en-proceso {
+  background-color: #f6960b !important;
+  color: white !important;
+}
+
+.badge-completada {
+  background-color: #2eb85c !important;
+  color: white !important;
+}
+
+/* 6. Botones */
+.btn-delivery-primary {
+  background-color: #321fdb !important;
+  border-color: #321fdb !important;
+  color: white !important;
+}
+
+.btn-delivery-secondary {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+}
+
+.btn-action-sm {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 7. Medicine badges */
+.medicine-badge {
+  background-color: #321fdb !important;
+  color: white !important;
+  padding: 5px 10px !important;
+  border-radius: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+/* 8. Formularios */
+.donation-form-input,
+.donation-form-select {
+  border: 1px solid #321fdb !important;
+  border-radius: 5px !important;
+}
+
+.donation-form-label {
+  font-weight: bold !important;
+  color: #321fdb !important;
+}
+
+/* 9. Secciones */
+.form-section {
+  margin-bottom: 30px !important;
+  padding-bottom: 20px !important;
+  border-bottom: 2px solid #eaeef2 !important;
+}
+
+.section-title {
+  color: #321fdb !important;
+  font-weight: bold !important;
+}
+
+/* 10. Modal */
+.delivery-modal .modal-header {
+  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%) !important;
+  color: white !important;
+}
+
+/* 11. Badge categoría */
+.badge-category {
+  background-color: #321fdb !important;
+  color: white !important;
+}
+
+/* 12. Hover para filas de tabla */
+.table-row-hover:hover {
+  background-color: rgba(50, 31, 219, 0.1) !important;
+}
