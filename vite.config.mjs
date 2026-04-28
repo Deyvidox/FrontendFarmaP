@@ -42,7 +42,11 @@ export default defineConfig(() => {
     server: {
       port: 3000,
       proxy: {
-        // https://vitejs.dev/config/server-options.html
+        '/api': 'http://localhost:4000',
+        '/login': 'http://localhost:4000',
+        '/register': 'http://localhost:4000',
+        '/roles': 'http://localhost:4000',
+        '/uploads': 'http://localhost:4000',
       },
     },
   }

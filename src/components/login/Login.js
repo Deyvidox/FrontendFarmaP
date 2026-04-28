@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login, setToken } from 'src/services/api';
 
 const Login = () => {
   const navigate = useNavigate();
   
-  const [usuario, setUsuario] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    // Datos quemados para acceso rápido
-    if (usuario === 'David' && password === '123') {
-      // Guardar en localStorage
-      localStorage.setItem('usuarioLogueado', JSON.stringify({
-        id: 1,
-        usuario: 'David',
-        correo: 'david@ejemplo.com'
-      }));
-      
-      // Redirigir al dashboard
+    setError('');
+
+    try {
+      const response = await login({ email, password });
+      const token = response?.message?.token;
+      if (!token) {
+        throw new Error('No se recibió token de autenticación');
+      }
+      setToken(token);
+      localStorage.setItem('FarmaPatriaUser', JSON.stringify({ email }));
       navigate('/dashboard');
-    } else {
-      setError('Usuario o contraseña incorrectos');
+    } catch (err) {
+      setError(err.message || 'Usuario o contraseña incorrectos');
     }
   };
 
@@ -38,15 +38,16 @@ const Login = () => {
 
         <form className="login-form" onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">Usuario</label>
+            <label className="form-label">Correo electrónico</label>
             <div className="input-group">
-              <span className="input-icon">👤</span>
+              <span className="input-icon">📧</span>
               <input
-                type="text"
+                type="email"
                 className="form-input"
-                placeholder="Ingresa tu usuario"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
+                placeholder="Ingresa tu correo"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -84,13 +85,6 @@ const Login = () => {
             </button>
           </div>
 
-          <div className="login-info">
-            <p className="demo-credentials">
-              <strong>Acceso rápido:</strong><br />
-              Usuario: <span className="demo-text">David</span><br />
-              Contraseña: <span className="demo-text">123</span>
-            </p>
-          </div>
         </form>
       </div>
     </div>

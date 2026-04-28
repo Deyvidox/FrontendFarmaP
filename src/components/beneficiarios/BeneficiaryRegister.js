@@ -15,31 +15,101 @@ import {
 } from '@coreui/react';
 import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { createBeneficiary } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 
 const BeneficiaryRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState({
+    cedula: '',
+    nombres: '',
+    apellidos: '',
+    fecha_nacimiento: '',
+    genero: '',
+    comunidad_id: '',
+    direccion_detallada: '',
+    telefono_personal: '',
+    email: '',
+    contacto_emergencia: '',
+    telefono_emergencia: '',
+    personas_dependientes: 0,
+    ingresos_mensuales: '',
+    nivel_prioridad: 'MEDIA',
+    observaciones: '',
+  });
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: name === 'personas_dependientes' ? Number(value) : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Formulario de beneficiario enviado');
-    
-    setAlert({
-      show: true,
-      message: 'Beneficiario registrado exitosamente',
-      type: 'success'
-    });
+    setAlert({ show: false, message: '', type: '' });
+    setSubmitting(true);
+
+    try {
+      await createBeneficiary(formValues);
+      setAlert({
+        show: true,
+        message: 'Beneficiario registrado exitosamente',
+        type: 'success',
+      });
+      setFormValues({
+        cedula: '',
+        nombres: '',
+        apellidos: '',
+        fecha_nacimiento: '',
+        genero: '',
+        comunidad_id: '',
+        direccion_detallada: '',
+        telefono_personal: '',
+        email: '',
+        contacto_emergencia: '',
+        telefono_emergencia: '',
+        personas_dependientes: 0,
+        ingresos_mensuales: '',
+        nivel_prioridad: 'MEDIA',
+        observaciones: '',
+      });
+    } catch (err) {
+      console.error('Error registrando beneficiario:', err);
+      setAlert({ show: true, message: err.message || 'Error al registrar beneficiario', type: 'danger' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setAlert({ show: false, message: '', type: '' });
+    setFormValues({
+      cedula: '',
+      nombres: '',
+      apellidos: '',
+      fecha_nacimiento: '',
+      genero: '',
+      comunidad_id: '',
+      direccion_detallada: '',
+      telefono_personal: '',
+      email: '',
+      contacto_emergencia: '',
+      telefono_emergencia: '',
+      personas_dependientes: 0,
+      ingresos_mensuales: '',
+      nivel_prioridad: 'MEDIA',
+      observaciones: '',
+    });
   };
 
   // Datos quemados para comunidades (de Cat_Comunidad)
   const comunidades = [
-    { id: 1, ComNombre: 'Tariba', ComMunicipio: 'Cardenas' },
-    { id: 2, ComNombre: 'Palmira', ComMunicipio: 'Guasimos' },
-    { id: 3, ComNombre: 'San Cristobal', ComMunicipio: 'San Cristobal' },
+    { id: '00000000-0000-0000-0000-000000000001', ComNombre: 'Tariba', ComMunicipio: 'Cardenas' },
+    { id: '00000000-0000-0000-0000-000000000002', ComNombre: 'Palmira', ComMunicipio: 'Guasimos' },
+    { id: '00000000-0000-0000-0000-000000000003', ComNombre: 'San Cristobal', ComMunicipio: 'San Cristobal' },
   ];
 
   return (
@@ -74,9 +144,11 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="text"
                       id="BenCedula"
-                      name="BenCedula"
+                      name="cedula"
                       className="register-form-input"
                       placeholder="V-12345678"
+                      value={formValues.cedula}
+                      onChange={handleChange}
                       required
                     />
                   </div>
@@ -89,8 +161,10 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="date"
                       id="BenFechaNacimiento"
-                      name="BenFechaNacimiento"
+                      name="fecha_nacimiento"
                       className="register-form-input"
+                      value={formValues.fecha_nacimiento}
+                      onChange={handleChange}
                       required
                     />
                   </div>
@@ -106,9 +180,11 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="text"
                       id="BenNombres"
-                      name="BenNombres"
+                      name="nombres"
                       className="register-form-input"
                       placeholder="Ingrese los nombres"
+                      value={formValues.nombres}
+                      onChange={handleChange}
                       required
                     />
                   </div>
@@ -121,9 +197,11 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="text"
                       id="BenApellidos"
-                      name="BenApellidos"
+                      name="apellidos"
                       className="register-form-input"
                       placeholder="Ingrese los apellidos"
+                      value={formValues.apellidos}
+                      onChange={handleChange}
                       required
                     />
                   </div>
@@ -136,11 +214,10 @@ const BeneficiaryRegister = () => {
                     <CFormLabel htmlFor="BenGenero" className="register-form-label required-field">
                       Género
                     </CFormLabel>
-                    <CFormSelect id="BenGenero" name="BenGenero" className="register-form-select" required>
+                    <CFormSelect id="BenGenero" name="genero" className="register-form-select" value={formValues.genero} onChange={handleChange} required>
                       <option value="">Seleccione</option>
                       <option value="M">Masculino</option>
                       <option value="F">Femenino</option>
-                      <option value="O">Otro</option>
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -152,10 +229,11 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="number"
                       id="BenPersonasDependientes"
-                      name="BenPersonasDependientes"
+                      name="personas_dependientes"
                       className="register-form-input"
                       min="0"
-                      defaultValue="0"
+                      value={formValues.personas_dependientes}
+                      onChange={handleChange}
                     />
                   </div>
                 </CCol>
@@ -177,9 +255,12 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="tel"
                       id="BenTelefonoPersonal"
-                      name="BenTelefonoPersonal"
+                      name="telefono_personal"
                       className="register-form-input"
+                      value={formValues.telefono_personal}
+                      onChange={handleChange}
                       placeholder="+58 412 1234567"
+                      required
                     />
                   </div>
                 </CCol>
@@ -191,9 +272,12 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="email"
                       id="BenEmail"
-                      name="BenEmail"
+                      name="email"
                       className="register-form-input"
+                      value={formValues.email}
+                      onChange={handleChange}
                       placeholder="beneficiario@ejemplo.com"
+                      required
                     />
                   </div>
                 </CCol>
@@ -205,7 +289,7 @@ const BeneficiaryRegister = () => {
                     <CFormLabel htmlFor="ComunidadID" className="register-form-label required-field">
                       Comunidad
                     </CFormLabel>
-                    <CFormSelect id="ComunidadID" name="ComunidadID" className="register-form-select" required>
+                    <CFormSelect id="ComunidadID" name="comunidad_id" className="register-form-select" value={formValues.comunidad_id} onChange={handleChange} required>
                       <option value="">Seleccione una comunidad</option>
                       {comunidades.map((comunidad) => (
                         <option key={comunidad.id} value={comunidad.id}>
@@ -222,9 +306,11 @@ const BeneficiaryRegister = () => {
                     </CFormLabel>
                     <CFormTextarea
                       id="BenDireccionDetallada"
-                      name="BenDireccionDetallada"
+                      name="direccion_detallada"
                       className="register-form-input"
                       rows="2"
+                      value={formValues.direccion_detallada}
+                      onChange={handleChange}
                       placeholder="Calle, casa, referencia..."
                     />
                   </div>
@@ -247,8 +333,10 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="text"
                       id="BenContactoEmergencia"
-                      name="BenContactoEmergencia"
+                      name="contacto_emergencia"
                       className="register-form-input"
+                      value={formValues.contacto_emergencia}
+                      onChange={handleChange}
                       placeholder="Nombre completo del contacto"
                     />
                   </div>
@@ -261,8 +349,10 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="tel"
                       id="BenTelefonoEmergencia"
-                      name="BenTelefonoEmergencia"
+                      name="telefono_emergencia"
                       className="register-form-input"
+                      value={formValues.telefono_emergencia}
+                      onChange={handleChange}
                       placeholder="+58 412 9876543"
                     />
                   </div>
@@ -285,10 +375,12 @@ const BeneficiaryRegister = () => {
                     <CFormInput
                       type="number"
                       id="BenIngresosMensuales"
-                      name="BenIngresosMensuales"
+                      name="ingresos_mensuales"
                       className="register-form-input"
                       min="0"
                       step="0.01"
+                      value={formValues.ingresos_mensuales}
+                      onChange={handleChange}
                       placeholder="0.00"
                     />
                   </div>
@@ -298,7 +390,7 @@ const BeneficiaryRegister = () => {
                     <CFormLabel htmlFor="BenNivelPrioridad" className="register-form-label required-field">
                       Nivel de Prioridad
                     </CFormLabel>
-                    <CFormSelect id="BenNivelPrioridad" name="BenNivelPrioridad" className="register-form-select" required>
+                    <CFormSelect id="BenNivelPrioridad" name="nivel_prioridad" className="register-form-select" value={formValues.nivel_prioridad} onChange={handleChange} required>
                       <option value="">Seleccione prioridad</option>
                       <option value="ALTA">Alta</option>
                       <option value="MEDIA">Media</option>
@@ -316,9 +408,11 @@ const BeneficiaryRegister = () => {
                     </CFormLabel>
                     <CFormTextarea
                       id="BenObservaciones"
-                      name="BenObservaciones"
+                      name="observaciones"
                       className="register-form-input"
                       rows="3"
+                      value={formValues.observaciones}
+                      onChange={handleChange}
                       placeholder="Observaciones relevantes sobre el beneficiario..."
                     />
                   </div>

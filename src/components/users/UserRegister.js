@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   CCard,
   CCardHeader,
@@ -13,26 +13,91 @@ import {
 } from '@coreui/react'
 import { cilUser, cilSave, cilReload } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
+import { getRoles, registerUser } from 'src/services/api'
 import '../../css/users/UserRegister.css'
 
 const UserRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [roles, setRoles] = useState([])
+  const [loadingRoles, setLoadingRoles] = useState(true)
+  const [formValues, setFormValues] = useState({
+    usu_nombre: '',
+    usu_correo: '',
+    password: '',
+    rol_id: '',
+    usu_cedula: '',
+    usu_apellidos: '',
+    usu_telefono: '',
+    usu_cargo: '',
+    usu_departamento: '',
+    usu_estado: 'ACTIVO',
+  })
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const response = await getRoles()
+        setRoles(response?.message || [])
+      } catch (err) {
+        console.error('Error cargando roles:', err)
+        setAlert({ show: true, message: err.message || 'No se pudieron cargar los roles', type: 'danger' })
+      } finally {
+        setLoadingRoles(false)
+      }
+    }
+
+    loadRoles()
+  }, [])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormValues((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Solo muestra mensaje de consola
-    console.log('Formulario enviado (sin funcionalidad)')
-    
-    setAlert({
-      show: true,
-      message: 'Usuario registrado exitosamente (simulado)',
-      type: 'success'
-    })
+    setAlert({ show: false, message: '', type: '' })
+
+    try {
+      await registerUser({
+        usu_nombre: formValues.usu_nombre,
+        usu_correo: formValues.usu_correo,
+        password: formValues.password,
+        rol_id: formValues.rol_id,
+      })
+      setAlert({ show: true, message: 'Usuario registrado exitosamente', type: 'success' })
+      setFormValues({
+        usu_nombre: '',
+        usu_correo: '',
+        password: '',
+        rol_id: '',
+        usu_cedula: '',
+        usu_apellidos: '',
+        usu_telefono: '',
+        usu_cargo: '',
+        usu_departamento: '',
+        usu_estado: 'ACTIVO',
+      })
+    } catch (err) {
+      console.error('Error registrando usuario:', err)
+      setAlert({ show: true, message: err.message || 'Error al registrar usuario', type: 'danger' })
+    }
   }
 
   const handleReset = () => {
-    // Solo limpia el formulario visualmente
     setAlert({ show: false, message: '', type: '' })
+    setFormValues({
+      usu_nombre: '',
+      usu_correo: '',
+      password: '',
+      rol_id: '',
+      usu_cedula: '',
+      usu_apellidos: '',
+      usu_telefono: '',
+      usu_cargo: '',
+      usu_departamento: '',
+      usu_estado: 'ACTIVO',
+    })
   }
 
   return (
@@ -67,8 +132,10 @@ const UserRegister = () => {
                     <CFormInput
                       type="text"
                       id="UsuCedula"
-                      name="UsuCedula"
+                      name="usu_cedula"
                       className="register-form-input"
+                      value={formValues.usu_cedula}
+                      onChange={handleChange}
                       placeholder="V-12345678 o J-301234567"
                     />
                   </div>
@@ -81,9 +148,12 @@ const UserRegister = () => {
                     <CFormInput
                       type="text"
                       id="UsuNombres"
-                      name="UsuNombres"
+                      name="usu_nombre"
                       className="register-form-input"
+                      value={formValues.usu_nombre}
+                      onChange={handleChange}
                       placeholder="Ingrese los nombres"
+                      required
                     />
                   </div>
                 </CCol>
@@ -98,8 +168,10 @@ const UserRegister = () => {
                     <CFormInput
                       type="text"
                       id="UsuApellidos"
-                      name="UsuApellidos"
+                      name="usu_apellidos"
                       className="register-form-input"
+                      value={formValues.usu_apellidos}
+                      onChange={handleChange}
                       placeholder="Ingrese los apellidos"
                     />
                   </div>
@@ -112,9 +184,12 @@ const UserRegister = () => {
                     <CFormInput
                       type="email"
                       id="UsuCorreo"
-                      name="UsuCorreo"
+                      name="usu_correo"
                       className="register-form-input"
+                      value={formValues.usu_correo}
+                      onChange={handleChange}
                       placeholder="usuario@donaciones.com"
+                      required
                     />
                   </div>
                 </CCol>
@@ -129,8 +204,10 @@ const UserRegister = () => {
                     <CFormInput
                       type="tel"
                       id="UsuTelefono"
-                      name="UsuTelefono"
+                      name="usu_telefono"
                       className="register-form-input"
+                      value={formValues.usu_telefono}
+                      onChange={handleChange}
                       placeholder="+58 412 1234567"
                     />
                   </div>
@@ -143,8 +220,10 @@ const UserRegister = () => {
                     <CFormInput
                       type="text"
                       id="UsuCargo"
-                      name="UsuCargo"
+                      name="usu_cargo"
                       className="register-form-input"
+                      value={formValues.usu_cargo}
+                      onChange={handleChange}
                       placeholder="Cargo del usuario"
                     />
                   </div>
@@ -164,13 +243,24 @@ const UserRegister = () => {
                     <CFormLabel htmlFor="RolNombre" className="register-form-label">
                       Rol
                     </CFormLabel>
-                    <CFormSelect id="RolNombre" name="RolNombre" className="register-form-select">
+                    <CFormSelect
+                      id="RolNombre"
+                      name="rol_id"
+                      className="register-form-select"
+                      value={formValues.rol_id}
+                      onChange={handleChange}
+                      required
+                    >
                       <option value="">Seleccione un rol</option>
-                      <option value="Administrador">Administrador</option>
-                      <option value="Farmacéutico">Farmacéutico</option>
-                      <option value="Donante">Donante</option>
-                      <option value="Asistente">Asistente</option>
-                      <option value="Coordinador">Coordinador</option>
+                      {loadingRoles ? (
+                        <option value="">Cargando roles...</option>
+                      ) : (
+                        roles.map((role) => (
+                          <option key={role.RolID} value={role.RolID}>
+                            {role.RolNombre}
+                          </option>
+                        ))
+                      )}
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -182,8 +272,10 @@ const UserRegister = () => {
                     <CFormInput
                       type="text"
                       id="UsuDepartamento"
-                      name="UsuDepartamento"
+                      name="usu_departamento"
                       className="register-form-input"
+                      value={formValues.usu_departamento}
+                      onChange={handleChange}
                       placeholder="Departamento"
                     />
                   </div>
@@ -196,7 +288,13 @@ const UserRegister = () => {
                     <CFormLabel htmlFor="UsuEstado" className="register-form-label">
                       Estado
                     </CFormLabel>
-                    <CFormSelect id="UsuEstado" name="UsuEstado" className="register-form-select">
+                    <CFormSelect
+                      id="UsuEstado"
+                      name="usu_estado"
+                      className="register-form-select"
+                      value={formValues.usu_estado}
+                      onChange={handleChange}
+                    >
                       <option value="ACTIVO">Activo</option>
                       <option value="INACTIVO">Inactivo</option>
                       <option value="SUSPENDIDO">Suspendido</option>
@@ -223,7 +321,10 @@ const UserRegister = () => {
                       id="password"
                       name="password"
                       className="register-form-input"
+                      value={formValues.password}
+                      onChange={handleChange}
                       placeholder="Ingrese contraseña"
+                      required
                     />
                   </div>
                 </CCol>
