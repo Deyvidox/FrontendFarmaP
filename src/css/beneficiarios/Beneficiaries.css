@@ -1,317 +1,57 @@
+/* Beneficiaries.css — Module-specific overrides only */
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+.beneficiaries-container { padding: 0; }
 
-/* Contenedor principal - EXACTO */
-.beneficiaries-container {
-  padding: 0;
-}
-
-/* Card principal - IDÉNTICA */
 .beneficiary-card,
 .beneficiary-register-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
-  animation: fadeInUp 0.5s ease-out; /* MISMA ANIMACIÓN */
+  animation: fp-fadeInUp 0.5s ease-out;
 }
 
-/* Header - IDÉNTICO */
 .beneficiary-card .card-header,
 .beneficiary-register-card .card-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1.5rem;
-  border-radius: 12px 12px 0 0 !important;
+  border-left: 4px solid var(--fp-primary);
+  background: linear-gradient(135deg, var(--fp-primary-50) 0%, transparent 100%) !important;
+  color: var(--fp-text) !important;
 }
 
 .beneficiary-card .card-header h5,
 .beneficiary-register-card .card-header h5 {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
+  color: var(--fp-text) !important;
 }
 
-/* Body - MISMO PADDING */
-.beneficiary-card .card-body,
-.beneficiary-register-card .card-body {
-  padding: 2rem;
-}
-
-/* Tabla con estilo de formulario */
-.beneficiary-table {
-  margin-bottom: 0;
-  width: 100%;
-}
-
-.beneficiary-table thead th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #eaeef2;
-  color: #2c3e50;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 1rem 1.25rem;
-}
-
-.beneficiary-table tbody td {
-  padding: 1rem 1.25rem;
-  vertical-align: middle;
-  border-bottom: 1px solid #eaeef2;
-  color: #495057;
-  font-size: 0.95rem;
-}
-
-.beneficiary-table tbody tr:hover {
-  background-color: rgba(50, 31, 219, 0.03);
-}
-
-/* Estados - Estilo similar a inputs */
+/* Status pills */
 .beneficiary-status {
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   display: inline-block;
 }
 
 .beneficiary-status.active {
-  background-color: rgba(46, 184, 92, 0.1);
-  color: #2eb85c;
-  border: 1px solid rgba(46, 184, 92, 0.2);
+  background: var(--fp-success-bg);
+  color: var(--fp-success);
+  border: 1px solid rgba(16,185,129,0.2);
 }
 
 .beneficiary-status.inactive {
-  background-color: rgba(229, 83, 83, 0.1);
-  color: #e55353;
-  border: 1px solid rgba(229, 83, 83, 0.2);
+  background: var(--fp-danger-bg);
+  color: var(--fp-danger);
+  border: 1px solid rgba(239,68,68,0.2);
 }
 
-/* Botones - EXACTAMENTE IGUALES */
-.beneficiary-action-btn-primary,
-.register-btn-primary {
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  border: none;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-}
+/* Empty state */
+.beneficiary-empty-state { text-align: center; padding: 3rem; color: var(--fp-text-muted); }
+.beneficiary-empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; color: var(--fp-primary); }
 
-.beneficiary-action-btn-primary:hover:not(:disabled),
-.register-btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(50, 31, 219, 0.3);
-}
-
-.beneficiary-action-btn-secondary,
-.register-btn-secondary {
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  border: 1px solid #e0e0e0;
-  background: white;
-  color: #6c757d;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.beneficiary-action-btn-secondary:hover,
-.register-btn-secondary:hover {
-  background: #f8f9fa;
-  border-color: #d0d0d0;
-  color: #495057;
-}
-
-/* Alertas */
-.beneficiary-alert {
-  border-radius: 8px;
-  border: none;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-/* Badges para prioridad */
-.badge-danger {
-  background-color: rgba(229, 83, 83, 0.1);
-  color: #e55353;
-  border: 1px solid rgba(229, 83, 83, 0.2);
-}
-
-.badge-warning {
-  background-color: rgba(241, 196, 15, 0.1);
-  color: #f1c40f;
-  border: 1px solid rgba(241, 196, 15, 0.2);
-}
-
-.badge-success {
-  background-color: rgba(46, 184, 92, 0.1);
-  color: #2eb85c;
-  border: 1px solid rgba(46, 184, 92, 0.2);
-}
-
-/* Form Styles (para registro) */
-.register-form-label {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.register-form-input,
-.register-form-select {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.register-form-input:focus,
-.register-form-select:focus {
-  border-color: #321fdb;
-  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.1);
-  background: white;
-}
-
-.register-form-input::placeholder {
-  color: #9ca3af;
-}
-
-/* Required field indicator */
-.required-field::after {
-  content: " *";
-  color: #e55353;
-}
-
-/* Secciones (para consistencia) */
-.form-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eaeef2;
-}
-
-.form-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #321fdb;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.section-title .icon {
-  margin-right: 0.5rem;
-}
-
-/* Responsive - MISMO COMPORTAMIENTO */
-@media (max-width: 768px) {
-  .beneficiary-card .card-body,
-  .beneficiary-register-card .card-body {
-    padding: 1.5rem;
-  }
-  
-  .beneficiary-card .card-header,
-  .beneficiary-register-card .card-header {
-    padding: 1.25rem;
-  }
-  
-  .beneficiary-action-btn-primary,
-  .beneficiary-action-btn-secondary,
-  .register-btn-primary,
-  .register-btn-secondary {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  
-  .btn-group-responsive {
-    flex-direction: column;
-  }
-  
-  .beneficiary-table thead {
-    display: none;
-  }
-  
-  .beneficiary-table tbody tr {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid #eaeef2;
-    border-radius: 8px;
-  }
-  
-  .beneficiary-table tbody td {
-    display: block;
-    text-align: right;
-    border-bottom: 1px solid #eaeef2;
-    position: relative;
-    padding-left: 50%;
-  }
-  
-  .beneficiary-table tbody td:before {
-    content: attr(data-label);
-    position: absolute;
-    left: 1rem;
-    width: calc(50% - 2rem);
-    text-align: left;
-    font-weight: 600;
-    color: #2c3e50;
-  }
-}
-
-/* Estados de carga - SIMILAR */
+/* Loading */
 .beneficiary-loading-container {
   min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8f9fa;
-  border-radius: 0.5rem;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--fp-bg);
+  border-radius: var(--fp-radius-sm);
 }
 
-.beneficiary-loading-text {
-  color: #6c757d;
-  font-size: 0.875rem;
-  margin-left: 0.5rem;
-}
-
-/* Estado vacío */
-.beneficiary-empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-}
-
-.beneficiary-empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-  color: #321fdb;
-}
-
-/* Animación para elementos */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@media (max-width: 768px) {
+  .btn-group-responsive { flex-direction: column; }
 }

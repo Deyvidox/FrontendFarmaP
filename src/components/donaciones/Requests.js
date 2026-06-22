@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardHeader,
@@ -22,98 +22,54 @@ import {
 import CIcon from '@coreui/icons-react';
 import { 
   cilClipboard,
-  cilPlus,
   cilPrint,
   cilEnvelopeClosed,
-  cilCalendar,
   cilWarning,
   cilCheckCircle,
   cilClock,
   cilUser
 } from '@coreui/icons';
-
+import { getProviderRequests } from '../../services/api';
 
 const Requests = () => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Datos de solicitudes
-  const requests = [
-    {
-      id: 1,
-      solicitudId: 'SOL-2024-001',
-      solicitante: 'Hospital General del Este',
-      fechaSolicitud: '2024-01-10',
-      tipo: 'Medicamentos Crónicos',
-      cantidadMedicamentos: 12,
-      prioridad: 'ALTA',
-      estado: 'PENDIENTE',
-      contacto: 'Dr. Carlos Mendoza',
-      telefono: '0412-555-7890'
-    },
-    {
-      id: 2,
-      solicitudId: 'SOL-2024-002',
-      solicitante: 'Centro de Salud Comunitario',
-      fechaSolicitud: '2024-01-12',
-      tipo: 'Antibióticos',
-      cantidadMedicamentos: 8,
-      prioridad: 'MEDIA',
-      estado: 'EN PROCESO',
-      contacto: 'Lic. María Rodríguez',
-      telefono: '0414-222-4567'
-    },
-    {
-      id: 3,
-      solicitudId: 'SOL-2024-003',
-      solicitante: 'Asociación de Diabéticos',
-      fechaSolicitud: '2024-01-15',
-      tipo: 'Insulinas',
-      cantidadMedicamentos: 5,
-      prioridad: 'ALTA',
-      estado: 'APROBADA',
-      contacto: 'Ing. Pedro López',
-      telefono: '0426-333-8910'
-    },
-    {
-      id: 4,
-      solicitudId: 'SOL-2024-004',
-      solicitante: 'Clínica Materno Infantil',
-      fechaSolicitud: '2024-01-18',
-      tipo: 'Pediatría',
-      cantidadMedicamentos: 15,
-      prioridad: 'ALTA',
-      estado: 'RECHAZADA',
-      contacto: 'Dra. Ana García',
-      telefono: '0416-444-1234'
-    },
-    {
-      id: 5,
-      solicitudId: 'SOL-2024-005',
-      solicitante: 'Hogar de Ancianos San José',
-      fechaSolicitud: '2024-01-20',
-      tipo: 'Geriatría',
-      cantidadMedicamentos: 10,
-      prioridad: 'MEDIA',
-      estado: 'COMPLETADA',
-      contacto: 'Hna. Carmen Pérez',
-      telefono: '0424-555-6789'
-    }
-  ];
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await getProviderRequests();
+        if (response?.message?.providerRequests) {
+          setRequests(response.message.providerRequests);
+        }
+      } catch (error) {
+        console.error('Error fetching provider requests:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
 
   const getEstadoColor = (estado) => {
     switch(estado) {
       case 'PENDIENTE': return 'warning';
-      case 'EN PROCESO': return 'info';
+      case 'ENVIADA': return 'info';
+      case 'EN_REVISION': return 'info';
+      case 'APROBADA_INTERNA': return 'primary';
       case 'APROBADA': return 'success';
       case 'RECHAZADA': return 'danger';
-      case 'COMPLETADA': return 'primary';
+      case 'COMPLETADA': return 'success';
       default: return 'secondary';
     }
   };
 
   const getPrioridadColor = (prioridad) => {
     switch(prioridad) {
+      case 'CRITICA':
+      case 'URGENTE': 
       case 'ALTA': return 'danger';
       case 'MEDIA': return 'warning';
       case 'BAJA': return 'success';
@@ -126,6 +82,16 @@ const Requests = () => {
     setShowPrintModal(true);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getShortId = (id) => {
+    if (!id) return '';
+    return `SOL-${id.split('-')[0].toUpperCase()}`;
+  };
+
   return (
     <>
       <CCard className="mb-4">
@@ -133,14 +99,8 @@ const Requests = () => {
           <div className="d-flex justify-content-between align-items-center">
             <h5 className="mb-0">
               <CIcon icon={cilClipboard} className="me-2" />
-              Solicitudes de Medicamentos
+              Solicitudes de Medicamentos a Proveedores
             </h5>
-{/*             <div className="d-flex gap-2">
-              <CButton color="secondary">
-                <CIcon icon={cilEnvelopeClosed} className="me-1" />
-                Enviar Recordatorios
-              </CButton>
-            </div> */}
           </div>
         </CCardHeader>
         
@@ -150,81 +110,93 @@ const Requests = () => {
             <div className="d-flex flex-wrap gap-2">
               <CButton color="outline-warning" size="sm">
                 <CIcon icon={cilClock} className="me-1" />
-                Pendientes (2)
+                Pendientes ({requests.filter(r => r.status === 'PENDIENTE').length})
               </CButton>
               <CButton color="outline-info" size="sm">
                 <CIcon icon={cilWarning} className="me-1" />
-                En Proceso (1)
+                En Proceso ({requests.filter(r => ['ENVIADA', 'EN_REVISION', 'APROBADA_INTERNA'].includes(r.status)).length})
               </CButton>
               <CButton color="outline-success" size="sm">
                 <CIcon icon={cilCheckCircle} className="me-1" />
-                Aprobadas (1)
+                Aprobadas/Completadas ({requests.filter(r => ['APROBADA', 'COMPLETADA'].includes(r.status)).length})
               </CButton>
               <CButton color="outline-danger" size="sm">
                 <CIcon icon={cilWarning} className="me-1" />
-                Rechazadas (1)
+                Rechazadas ({requests.filter(r => r.status === 'RECHAZADA').length})
               </CButton>
             </div>
           </div>
 
           {/* Lista de Solicitudes */}
-          <CTable hover responsive>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>ID Solicitud</CTableHeaderCell>
-                <CTableHeaderCell>Solicitante</CTableHeaderCell>
-                <CTableHeaderCell>Fecha</CTableHeaderCell>
-                <CTableHeaderCell>Tipo</CTableHeaderCell>
-                <CTableHeaderCell>Medicamentos</CTableHeaderCell>
-                <CTableHeaderCell>Prioridad</CTableHeaderCell>
-                <CTableHeaderCell>Estado</CTableHeaderCell>
-                <CTableHeaderCell>Acciones</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {requests.map(request => (
-                <CTableRow key={request.id}>
-                  <CTableDataCell>
-                    <strong>{request.solicitudId}</strong>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <div>{request.solicitante}</div>
-                    <small className="text-muted">{request.contacto}</small>
-                  </CTableDataCell>
-                  <CTableDataCell>{request.fechaSolicitud}</CTableDataCell>
-                  <CTableDataCell>{request.tipo}</CTableDataCell>
-                  <CTableDataCell>{request.cantidadMedicamentos}</CTableDataCell>
-                  <CTableDataCell>
-                    <CBadge color={getPrioridadColor(request.prioridad)}>
-                      {request.prioridad}
-                    </CBadge>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <CBadge color={getEstadoColor(request.estado)}>
-                      {request.estado}
-                    </CBadge>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <div className="d-flex gap-1">
-                      <CButton 
-                        color="primary" 
-                        size="sm"
-                        onClick={() => handlePrintRequest(request)}
-                      >
-                        <CIcon icon={cilPrint} />
-                      </CButton>
-                      <CButton color="info" size="sm">
-                        <CIcon icon={cilEnvelopeClosed} />
-                      </CButton>
-                      <CButton color="warning" size="sm">
-                        <CIcon icon={cilUser} />
-                      </CButton>
-                    </div>
-                  </CTableDataCell>
+          {loading ? (
+            <div className="text-center my-5">Cargando solicitudes...</div>
+          ) : (
+            <CTable hover responsive>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>ID Solicitud</CTableHeaderCell>
+                  <CTableHeaderCell>Proveedor / Destino</CTableHeaderCell>
+                  <CTableHeaderCell>Fecha</CTableHeaderCell>
+                  <CTableHeaderCell>Tipo</CTableHeaderCell>
+                  <CTableHeaderCell>Medicamentos</CTableHeaderCell>
+                  <CTableHeaderCell>Prioridad</CTableHeaderCell>
+                  <CTableHeaderCell>Estado</CTableHeaderCell>
+                  <CTableHeaderCell>Acciones</CTableHeaderCell>
                 </CTableRow>
-              ))}
-            </CTableBody>
-          </CTable>
+              </CTableHead>
+              <CTableBody>
+                {requests.length === 0 ? (
+                  <CTableRow>
+                    <CTableDataCell colSpan="8" className="text-center">No hay solicitudes registradas</CTableDataCell>
+                  </CTableRow>
+                ) : (
+                  requests.map(request => (
+                    <CTableRow key={request.id}>
+                      <CTableDataCell>
+                        <strong>{getShortId(request.id)}</strong>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div>{request.provider_name}</div>
+                        <small className="text-muted">{request.department || 'Sin Dpto'} - {request.responsible_name}</small>
+                      </CTableDataCell>
+                      <CTableDataCell>{formatDate(request.request_date)}</CTableDataCell>
+                      <CTableDataCell>{request.request_type}</CTableDataCell>
+                      <CTableDataCell>
+                        {request.total_medicines} ({request.total_units} unds)
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <CBadge color={getPrioridadColor(request.general_priority)}>
+                          {request.general_priority}
+                        </CBadge>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <CBadge color={getEstadoColor(request.status)}>
+                          {request.status}
+                        </CBadge>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div className="d-flex gap-1">
+                          <CButton 
+                            color="primary" 
+                            size="sm"
+                            onClick={() => handlePrintRequest(request)}
+                          >
+                            <CIcon icon={cilPrint} />
+                          </CButton>
+                          <CButton color="info" size="sm">
+                            <CIcon icon={cilEnvelopeClosed} />
+                          </CButton>
+                          <CButton color="warning" size="sm">
+                            <CIcon icon={cilUser} />
+                          </CButton>
+                        </div>
+                      </CTableDataCell>
+                    </CTableRow>
+                  ))
+                )}
+              </CTableBody>
+            </CTable>
+          )}
         </CCardBody>
       </CCard>
 
@@ -242,74 +214,71 @@ const Requests = () => {
               {/* Encabezado del documento */}
               <div className="text-center mb-4">
                 <h4 className="fw-bold">FARMAPATRIA</h4>
-                <h5>Sistema de Gestión de Donaciones</h5>
-                <h6 className="text-muted">SOLICITUD OFICIAL DE MEDICAMENTOS</h6>
+                <h5>Sistema de Gestión de Donaciones e Inventario</h5>
+                <h6 className="text-muted">SOLICITUD OFICIAL A PROVEEDOR</h6>
               </div>
 
               {/* Información de la solicitud */}
               <CRow className="mb-3">
                 <CCol md={6}>
                   <div className="mb-2">
-                    <strong>N° Solicitud:</strong> {selectedRequest.solicitudId}
+                    <strong>N° Solicitud:</strong> {getShortId(selectedRequest.id)}
                   </div>
                   <div className="mb-2">
-                    <strong>Fecha:</strong> {selectedRequest.fechaSolicitud}
+                    <strong>Fecha:</strong> {formatDate(selectedRequest.request_date)}
                   </div>
                   <div className="mb-2">
-                    <strong>Solicitante:</strong> {selectedRequest.solicitante}
+                    <strong>Proveedor:</strong> {selectedRequest.provider_name}
+                  </div>
+                  <div className="mb-2">
+                    <strong>RIF:</strong> {selectedRequest.provider_rif}
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-2">
-                    <strong>Prioridad:</strong> <CBadge color={getPrioridadColor(selectedRequest.prioridad)}>
-                      {selectedRequest.prioridad}
+                    <strong>Prioridad:</strong> <CBadge color={getPrioridadColor(selectedRequest.general_priority)}>
+                      {selectedRequest.general_priority}
                     </CBadge>
                   </div>
                   <div className="mb-2">
-                    <strong>Contacto:</strong> {selectedRequest.contacto}
+                    <strong>Departamento:</strong> {selectedRequest.department}
                   </div>
                   <div className="mb-2">
-                    <strong>Teléfono:</strong> {selectedRequest.telefono}
+                    <strong>Responsable:</strong> {selectedRequest.responsible_name}
+                  </div>
+                  <div className="mb-2">
+                    <strong>Tipo:</strong> {selectedRequest.request_type}
                   </div>
                 </CCol>
               </CRow>
 
+              <div className="mb-4 mt-3">
+                <strong>Justificación General: </strong> 
+                {selectedRequest.general_justification || 'Sin justificación provista'}
+              </div>
+
               {/* Tabla de medicamentos solicitados */}
-              <h6 className="mt-4 mb-3">Medicamentos Solicitados</h6>
+              <h6 className="mt-4 mb-3">Resumen de Cantidades Solicitadas</h6>
               <CTable bordered hover>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Medicamento</CTableHeaderCell>
-                    <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                    <CTableHeaderCell>Presentación</CTableHeaderCell>
-                    <CTableHeaderCell>Observaciones</CTableHeaderCell>
+                    <CTableHeaderCell>Tipos de Medicamentos</CTableHeaderCell>
+                    <CTableHeaderCell>Unidades Totales</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
                   <CTableRow>
-                    <CTableDataCell>1</CTableDataCell>
-                    <CTableDataCell>Metformina 850mg</CTableDataCell>
-                    <CTableDataCell>500 unidades</CTableDataCell>
-                    <CTableDataCell>Tabletas</CTableDataCell>
-                    <CTableDataCell>Para pacientes diabéticos</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableDataCell>2</CTableDataCell>
-                    <CTableDataCell>Losartán 50mg</CTableDataCell>
-                    <CTableDataCell>300 unidades</CTableDataCell>
-                    <CTableDataCell>Tabletas</CTableDataCell>
-                    <CTableDataCell>Control de hipertensión</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableDataCell>3</CTableDataCell>
-                    <CTableDataCell>Amoxicilina 500mg</CTableDataCell>
-                    <CTableDataCell>200 unidades</CTableDataCell>
-                    <CTableDataCell>Cápsulas</CTableDataCell>
-                    <CTableDataCell>Antibiótico de amplio espectro</CTableDataCell>
+                    <CTableDataCell>{selectedRequest.total_medicines}</CTableDataCell>
+                    <CTableDataCell>{selectedRequest.total_units} unidades</CTableDataCell>
                   </CTableRow>
                 </CTableBody>
               </CTable>
+
+              <div className="alert alert-secondary mt-3">
+                <small>
+                  Para ver el detalle completo de los medicamentos, consulte la solicitud detallada en el sistema.
+                </small>
+              </div>
 
               {/* Firmas y autorizaciones */}
               <div className="mt-5 pt-4">
@@ -317,15 +286,15 @@ const Requests = () => {
                   <CCol md={6} className="text-center">
                     <div className="border-top pt-3">
                       <strong>________________________________</strong>
-                      <div className="mt-2">Solicitante</div>
-                      <small className="text-muted">{selectedRequest.contacto}</small>
+                      <div className="mt-2">Responsable Solicitante</div>
+                      <small className="text-muted">{selectedRequest.responsible_name}</small>
                     </div>
                   </CCol>
                   <CCol md={6} className="text-center">
                     <div className="border-top pt-3">
                       <strong>________________________________</strong>
                       <div className="mt-2">Autorizado por</div>
-                      <small className="text-muted">FarmaPatria - Departamento de Distribución</small>
+                      <small className="text-muted">FarmaPatria - Departamento de Logística</small>
                     </div>
                   </CCol>
                 </CRow>

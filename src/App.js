@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { CSpinner, useColorModes } from '@coreui/react'
 
+import './css/farmapatria-theme.css'
 import './scss/style.scss'
 import './scss/examples.scss'
 

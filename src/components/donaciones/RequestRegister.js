@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CCard,
   CCardHeader,
@@ -11,7 +11,6 @@ import {
   CFormSelect,
   CButton,
   CFormTextarea,
-  CFormCheck,
   CTable,
   CTableHead,
   CTableRow,
@@ -22,9 +21,30 @@ import {
 import { cilSave, cilReload, cilClipboard, cilPlus, cilTrash } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import '../../css/donaciones/RequestRegister.css'
+import { getProviders, getMedicines, createProviderRequest } from '../../services/api'
 
 const RequestRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  
+  // Opciones desde API
+  const [proveedores, setProveedores] = useState([])
+  const [medicamentosCatalogo, setMedicamentosCatalogo] = useState([])
+
+  // Estado del formulario principal
+  const [formData, setFormData] = useState({
+    provider_id: '',
+    request_type: '',
+    request_date: new Date().toISOString().split('T')[0],
+    required_date: '',
+    general_priority: 'MEDIA',
+    general_justification: '',
+    responsible_name: '',
+    department: '',
+    status: 'PENDIENTE',
+    observations: ''
+  })
+
+  // Estado de los medicamentos agregados
   const [medicamentos, setMedicamentos] = useState([])
   const [nuevoMedicamento, setNuevoMedicamento] = useState({
     medicamentoId: '',
@@ -33,33 +53,40 @@ const RequestRegister = () => {
     justificacion: ''
   })
 
-  // Datos de ejemplo
-  const proveedores = [
-    { id: 1, nombre: 'Laboratorio Pfizer C.A.', rif: 'J-301234567', tipo: 'FARMACEUTICA' },
-    { id: 2, nombre: 'Farmacias SAAS', rif: 'J-302345678', tipo: 'DISTRIBUIDORA' },
-    { id: 3, nombre: 'Distribuidora Médica Unida', rif: 'J-303456789', tipo: 'DISTRIBUIDORA' },
-    { id: 4, nombre: 'Ministerio de Salud', rif: 'G-200000001', tipo: 'GOBIERNO' },
-    { id: 5, nombre: 'Fundación Ayuda Médica', rif: 'J-305678901', tipo: 'ONG' }
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const provRes = await getProviders()
+        if (provRes?.message?.providers) {
+          setProveedores(provRes.message.providers)
+        }
+        const medRes = await getMedicines()
+        if (medRes?.message?.medicines) {
+          setMedicamentosCatalogo(medRes.message.medicines)
+        }
+      } catch (error) {
+        console.error('Error cargando catálogos:', error)
+        setAlert({
+          show: true,
+          message: 'Error al cargar los catálogos. Verifique su conexión.',
+          type: 'danger'
+        })
+      }
+    }
+    fetchData()
+  }, [])
 
-  const tiposSolicitud = [
-    { id: 'EMERGENCIA', nombre: 'Emergencia' },
-    { id: 'RUTINARIA', nombre: 'Rutinaria' },
-    { id: 'PROYECTO', nombre: 'Proyecto Especial' },
-    { id: 'REPOSICION', nombre: 'Reposición de Stock' }
-  ]
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
-  const medicamentosCatalogo = [
-    { id: 1, nombre: 'Metformina 850mg', principioActivo: 'Metformina', concentracion: '850mg', presentacion: 'Tabletas' },
-    { id: 2, nombre: 'Losartán 50mg', principioActivo: 'Losartán', concentracion: '50mg', presentacion: 'Tabletas' },
-    { id: 3, nombre: 'Atorvastatina 20mg', principioActivo: 'Atorvastatina', concentracion: '20mg', presentacion: 'Tabletas' },
-    { id: 4, nombre: 'Insulina Glargina', principioActivo: 'Insulina Glargina', concentracion: '100 UI/ml', presentacion: 'Inyectable' },
-    { id: 5, nombre: 'Salbutamol Inhalador', principioActivo: 'Salbutamol', concentracion: '100 mcg/dosis', presentacion: 'Inhalador' }
-  ]
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (medicamentos.length === 0) {
       setAlert({
         show: true,
@@ -68,17 +95,48 @@ const RequestRegister = () => {
       })
       return
     }
-    
-    console.log('Solicitud a proveedor enviada')
-    
-    setAlert({
-      show: true,
-      message: 'Solicitud registrada exitosamente',
-      type: 'success'
-    })
+
+    try {
+      const payload = {
+        ...formData,
+        medicines: medicamentos.map(m => ({
+          medicine_id: m.medicamentoId,
+          quantity: parseInt(m.cantidad),
+          priority: m.prioridad,
+          justification: m.justificacion
+        }))
+      }
+
+      await createProviderRequest(payload)
+      
+      setAlert({
+        show: true,
+        message: 'Solicitud registrada exitosamente',
+        type: 'success'
+      })
+      handleReset()
+    } catch (error) {
+      setAlert({
+        show: true,
+        message: error.message || 'Error al registrar la solicitud',
+        type: 'danger'
+      })
+    }
   }
 
   const handleReset = () => {
+    setFormData({
+      provider_id: '',
+      request_type: '',
+      request_date: new Date().toISOString().split('T')[0],
+      required_date: '',
+      general_priority: 'MEDIA',
+      general_justification: '',
+      responsible_name: '',
+      department: '',
+      status: 'PENDIENTE',
+      observations: ''
+    })
     setMedicamentos([])
     setNuevoMedicamento({
       medicamentoId: '',
@@ -86,7 +144,6 @@ const RequestRegister = () => {
       prioridad: 'MEDIA',
       justificacion: ''
     })
-    setAlert({ show: false, message: '', type: '' })
   }
 
   const agregarMedicamento = () => {
@@ -100,23 +157,23 @@ const RequestRegister = () => {
     }
 
     const medicamentoSeleccionado = medicamentosCatalogo.find(
-      m => m.id === parseInt(nuevoMedicamento.medicamentoId)
+      m => m.id === nuevoMedicamento.medicamentoId
     )
 
     const medicamento = {
       id: Date.now(),
       medicamentoId: nuevoMedicamento.medicamentoId,
-      nombre: medicamentoSeleccionado.nombre,
-      principioActivo: medicamentoSeleccionado.principioActivo,
-      concentracion: medicamentoSeleccionado.concentracion,
-      presentacion: medicamentoSeleccionado.presentacion,
+      nombre: medicamentoSeleccionado?.commercial_name || 'Desconocido',
+      principioActivo: medicamentoSeleccionado?.active_principle || '',
+      concentracion: medicamentoSeleccionado?.concentration || '',
+      presentacion: medicamentoSeleccionado?.pharmaceutical_form || '',
       cantidad: nuevoMedicamento.cantidad,
       prioridad: nuevoMedicamento.prioridad,
       justificacion: nuevoMedicamento.justificacion
     }
 
     setMedicamentos([...medicamentos, medicamento])
-    
+
     // Resetear formulario de medicamento
     setNuevoMedicamento({
       medicamentoId: '',
@@ -145,12 +202,13 @@ const RequestRegister = () => {
         </CCardHeader>
         <CCardBody>
           {alert.show && (
-            <div className={`alert alert-${alert.type} mb-4`}>
+            <div className={`alert alert-${alert.type} mb-4 alert-dismissible fade show`} role="alert">
               {alert.message}
+              <button type="button" className="btn-close" onClick={() => setAlert({ show: false, message: '', type: '' })}></button>
             </div>
           )}
-          
-          <CForm onSubmit={handleSubmit} onReset={handleReset}>
+
+          <CForm onSubmit={handleSubmit}>
             {/* Información del Proveedor */}
             <div className="form-section">
               <h6 className="section-title">
@@ -160,14 +218,21 @@ const RequestRegister = () => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="proveedorId" className="register-form-label">
+                    <CFormLabel htmlFor="provider_id" className="register-form-label">
                       Proveedor/Laboratorio *
                     </CFormLabel>
-                    <CFormSelect id="proveedorId" name="proveedorId" className="register-form-select" required>
+                    <CFormSelect 
+                      id="provider_id" 
+                      name="provider_id" 
+                      className="register-form-select" 
+                      required
+                      value={formData.provider_id}
+                      onChange={handleInputChange}
+                    >
                       <option value="">Seleccione proveedor</option>
                       {proveedores.map(proveedor => (
                         <option key={proveedor.id} value={proveedor.id}>
-                          {proveedor.nombre} - {proveedor.rif} ({proveedor.tipo})
+                          {proveedor.name} - {proveedor.rif_cedula}
                         </option>
                       ))}
                     </CFormSelect>
@@ -175,16 +240,22 @@ const RequestRegister = () => {
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="tipoSolicitud" className="register-form-label">
+                    <CFormLabel htmlFor="request_type" className="register-form-label">
                       Tipo de Solicitud *
                     </CFormLabel>
-                    <CFormSelect id="tipoSolicitud" name="tipoSolicitud" className="register-form-select" required>
+                    <CFormSelect 
+                      id="request_type" 
+                      name="request_type" 
+                      className="register-form-select" 
+                      required
+                      value={formData.request_type}
+                      onChange={handleInputChange}
+                    >
                       <option value="">Seleccione tipo</option>
-                      {tiposSolicitud.map(tipo => (
-                        <option key={tipo.id} value={tipo.id}>
-                          {tipo.nombre}
-                        </option>
-                      ))}
+                      <option value="EMERGENCIA">Emergencia</option>
+                      <option value="RUTINARIA">Rutinaria</option>
+                      <option value="PROYECTO">Proyecto Especial</option>
+                      <option value="REPOSICION">Reposición de Stock</option>
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -200,38 +271,47 @@ const RequestRegister = () => {
               <CRow>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="fechaSolicitud" className="register-form-label">
+                    <CFormLabel htmlFor="request_date" className="register-form-label">
                       Fecha de Solicitud
                     </CFormLabel>
                     <CFormInput
                       type="date"
-                      id="fechaSolicitud"
-                      name="fechaSolicitud"
+                      id="request_date"
+                      name="request_date"
                       className="register-form-input"
-                      defaultValue={new Date().toISOString().split('T')[0]}
+                      value={formData.request_date}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </CCol>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="fechaRequerida" className="register-form-label">
+                    <CFormLabel htmlFor="required_date" className="register-form-label">
                       Fecha Requerida
                     </CFormLabel>
                     <CFormInput
                       type="date"
-                      id="fechaRequerida"
-                      name="fechaRequerida"
+                      id="required_date"
+                      name="required_date"
                       className="register-form-input"
                       min={new Date().toISOString().split('T')[0]}
+                      value={formData.required_date}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </CCol>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="prioridadGeneral" className="register-form-label">
+                    <CFormLabel htmlFor="general_priority" className="register-form-label">
                       Prioridad General
                     </CFormLabel>
-                    <CFormSelect id="prioridadGeneral" name="prioridadGeneral" className="register-form-select">
+                    <CFormSelect 
+                      id="general_priority" 
+                      name="general_priority" 
+                      className="register-form-select"
+                      value={formData.general_priority}
+                      onChange={handleInputChange}
+                    >
                       <option value="BAJA">Baja</option>
                       <option value="MEDIA">Media</option>
                       <option value="ALTA">Alta</option>
@@ -244,15 +324,17 @@ const RequestRegister = () => {
               <CRow>
                 <CCol md={12}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="justificacionGeneral" className="register-form-label">
+                    <CFormLabel htmlFor="general_justification" className="register-form-label">
                       Justificación de la Solicitud
                     </CFormLabel>
                     <CFormTextarea
-                      id="justificacionGeneral"
-                      name="justificacionGeneral"
+                      id="general_justification"
+                      name="general_justification"
                       className="register-form-input"
                       rows="3"
                       placeholder="Justifique la necesidad de estos medicamentos..."
+                      value={formData.general_justification}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </CCol>
@@ -268,7 +350,7 @@ const RequestRegister = () => {
                   {medicamentos.length} medicamentos | Total: {calcularTotalMedicamentos()} unidades
                 </span>
               </h6>
-              
+
               {/* Formulario para agregar medicamento */}
               <div className="border rounded p-3 mb-4">
                 <h6>Agregar Medicamento</h6>
@@ -278,16 +360,16 @@ const RequestRegister = () => {
                       <CFormLabel htmlFor="nuevoMedicamento" className="register-form-label">
                         Medicamento *
                       </CFormLabel>
-                      <CFormSelect 
+                      <CFormSelect
                         id="nuevoMedicamento"
                         className="register-form-select"
                         value={nuevoMedicamento.medicamentoId}
-                        onChange={(e) => setNuevoMedicamento({...nuevoMedicamento, medicamentoId: e.target.value})}
+                        onChange={(e) => setNuevoMedicamento({ ...nuevoMedicamento, medicamentoId: e.target.value })}
                       >
                         <option value="">Seleccione medicamento</option>
                         {medicamentosCatalogo.map(med => (
                           <option key={med.id} value={med.id}>
-                            {med.nombre} ({med.principioActivo} {med.concentracion})
+                            {med.commercial_name} ({med.active_principle} {med.concentration})
                           </option>
                         ))}
                       </CFormSelect>
@@ -305,7 +387,7 @@ const RequestRegister = () => {
                         placeholder="Ej: 100"
                         min="1"
                         value={nuevoMedicamento.cantidad}
-                        onChange={(e) => setNuevoMedicamento({...nuevoMedicamento, cantidad: e.target.value})}
+                        onChange={(e) => setNuevoMedicamento({ ...nuevoMedicamento, cantidad: e.target.value })}
                       />
                     </div>
                   </CCol>
@@ -314,11 +396,11 @@ const RequestRegister = () => {
                       <CFormLabel htmlFor="prioridadMed" className="register-form-label">
                         Prioridad
                       </CFormLabel>
-                      <CFormSelect 
+                      <CFormSelect
                         id="prioridadMed"
                         className="register-form-select"
                         value={nuevoMedicamento.prioridad}
-                        onChange={(e) => setNuevoMedicamento({...nuevoMedicamento, prioridad: e.target.value})}
+                        onChange={(e) => setNuevoMedicamento({ ...nuevoMedicamento, prioridad: e.target.value })}
                       >
                         <option value="BAJA">Baja</option>
                         <option value="MEDIA">Media</option>
@@ -328,8 +410,8 @@ const RequestRegister = () => {
                     </div>
                   </CCol>
                   <CCol md={2} className="d-flex align-items-end">
-                    <CButton 
-                      color="primary" 
+                    <CButton
+                      color="primary"
                       onClick={agregarMedicamento}
                       className="w-100"
                     >
@@ -350,7 +432,7 @@ const RequestRegister = () => {
                         rows="2"
                         placeholder="Justifique la necesidad específica de este medicamento..."
                         value={nuevoMedicamento.justificacion}
-                        onChange={(e) => setNuevoMedicamento({...nuevoMedicamento, justificacion: e.target.value})}
+                        onChange={(e) => setNuevoMedicamento({ ...nuevoMedicamento, justificacion: e.target.value })}
                       />
                     </div>
                   </CCol>
@@ -384,11 +466,10 @@ const RequestRegister = () => {
                             <span className="badge bg-primary">{med.cantidad}</span>
                           </CTableDataCell>
                           <CTableDataCell>
-                            <span className={`badge ${
-                              med.prioridad === 'CRITICA' ? 'bg-danger' :
+                            <span className={`badge ${med.prioridad === 'CRITICA' ? 'bg-danger' :
                               med.prioridad === 'ALTA' ? 'bg-warning' :
-                              med.prioridad === 'MEDIA' ? 'bg-info' : 'bg-secondary'
-                            }`}>
+                                med.prioridad === 'MEDIA' ? 'bg-info' : 'bg-secondary'
+                              }`}>
                               {med.prioridad}
                             </span>
                           </CTableDataCell>
@@ -396,8 +477,8 @@ const RequestRegister = () => {
                             <small>{med.justificacion || 'Sin justificación específica'}</small>
                           </CTableDataCell>
                           <CTableDataCell>
-                            <CButton 
-                              color="danger" 
+                            <CButton
+                              color="danger"
                               size="sm"
                               onClick={() => eliminarMedicamento(med.id)}
                             >
@@ -425,25 +506,33 @@ const RequestRegister = () => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="responsableSolicitud" className="register-form-label">
+                    <CFormLabel htmlFor="responsible_name" className="register-form-label">
                       Responsable de la Solicitud *
                     </CFormLabel>
                     <CFormInput
                       type="text"
-                      id="responsableSolicitud"
-                      name="responsableSolicitud"
+                      id="responsible_name"
+                      name="responsible_name"
                       className="register-form-input"
                       placeholder="Nombre del responsable"
                       required
+                      value={formData.responsible_name}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="departamento" className="register-form-label">
+                    <CFormLabel htmlFor="department" className="register-form-label">
                       Departamento
                     </CFormLabel>
-                    <CFormSelect id="departamento" name="departamento" className="register-form-select">
+                    <CFormSelect 
+                      id="department" 
+                      name="department" 
+                      className="register-form-select"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                    >
                       <option value="">Seleccione departamento</option>
                       <option value="FARMACIA">Farmacia</option>
                       <option value="ALMACEN">Almacén</option>
@@ -457,10 +546,16 @@ const RequestRegister = () => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="estadoSolicitud" className="register-form-label">
+                    <CFormLabel htmlFor="status" className="register-form-label">
                       Estado Inicial
                     </CFormLabel>
-                    <CFormSelect id="estadoSolicitud" name="estadoSolicitud" className="register-form-select">
+                    <CFormSelect 
+                      id="status" 
+                      name="status" 
+                      className="register-form-select"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                    >
                       <option value="PENDIENTE">Pendiente</option>
                       <option value="ENVIADA">Enviada</option>
                       <option value="EN_REVISION">En Revisión</option>
@@ -470,15 +565,17 @@ const RequestRegister = () => {
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="observaciones" className="register-form-label">
+                    <CFormLabel htmlFor="observations" className="register-form-label">
                       Observaciones Finales
                     </CFormLabel>
                     <CFormTextarea
-                      id="observaciones"
-                      name="observaciones"
+                      id="observations"
+                      name="observations"
                       className="register-form-input"
                       rows="2"
                       placeholder="Observaciones adicionales..."
+                      value={formData.observations}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </CCol>
@@ -486,8 +583,8 @@ const RequestRegister = () => {
             </div>
 
             <div className="d-flex gap-2 btn-group-responsive mt-4">
-              <CButton 
-                color="primary" 
+              <CButton
+                color="primary"
                 type="submit"
                 className="register-btn-primary"
                 disabled={medicamentos.length === 0}
@@ -495,9 +592,10 @@ const RequestRegister = () => {
                 <CIcon icon={cilSave} className="me-2" />
                 Registrar Solicitud a Proveedor
               </CButton>
-              <CButton 
-                color="secondary" 
-                type="reset"
+              <CButton
+                color="secondary"
+                type="button"
+                onClick={handleReset}
                 className="register-btn-secondary"
               >
                 <CIcon icon={cilReload} className="me-2" />

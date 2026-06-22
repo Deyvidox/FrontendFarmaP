@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardHeader,
@@ -22,20 +22,23 @@ import {
   CDropdown,
   CDropdownToggle,
   CDropdownMenu,
-  CDropdownItem
+  CDropdownItem,
+  CSpinner,
+  CAlert,
 } from '@coreui/react';
-import { 
-  cilStorage, 
-  cilSearch, 
-  cilPlus, 
+import {
+  cilStorage,
+  cilSearch,
+  cilPlus,
   cilMinus,
   cilSwapHorizontal,
   cilFilter,
   cilChart,
   cilWarning,
-  cilCheckCircle
+  cilCheckCircle,
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { getMedicineInventory } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 
 const MedicamentoInventario = () => {
@@ -45,153 +48,68 @@ const MedicamentoInventario = () => {
   const [filterEstado, setFilterEstado] = useState('TODOS');
   const itemsPerPage = 8;
 
-  // Datos quemados de inventario
-  const inventarioQuemado = [
-    {
-      id: 1,
-      LoteNumero: 'LOT-2024-001',
-      Medicamento: 'Paracetamol 500mg',
-      Ubicacion: 'Estante A1',
-      FechaVencimiento: '2024-03-15',
-      CantidadTotal: 1000,
-      CantidadDisponible: 500,
-      CantidadReservada: 200,
-      CantidadEntregada: 300,
-      StockMinimo: 100,
-      StockMaximo: 1500,
-      EstadoStock: 'OPTIMO',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 2,
-      LoteNumero: 'LOT-2024-002',
-      Medicamento: 'Amoxicilina 250mg',
-      Ubicacion: 'Estante B2',
-      FechaVencimiento: '2024-04-20',
-      CantidadTotal: 800,
-      CantidadDisponible: 300,
-      CantidadReservada: 250,
-      CantidadEntregada: 250,
-      StockMinimo: 80,
-      StockMaximo: 1000,
-      EstadoStock: 'BAJO',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 3,
-      LoteNumero: 'LOT-2023-045',
-      Medicamento: 'Losartán 50mg',
-      Ubicacion: 'Estante C3',
-      FechaVencimiento: '2024-02-28',
-      CantidadTotal: 500,
-      CantidadDisponible: 0,
-      CantidadReservada: 0,
-      CantidadEntregada: 500,
-      StockMinimo: 50,
-      StockMaximo: 600,
-      EstadoStock: 'AGOTADO',
-      EstadoLote: 'RETIRADO'
-    },
-    {
-      id: 4,
-      LoteNumero: 'LOT-2024-003',
-      Medicamento: 'Insulina NPH',
-      Ubicacion: 'Refrigerador 1',
-      FechaVencimiento: '2024-05-10',
-      CantidadTotal: 400,
-      CantidadDisponible: 200,
-      CantidadReservada: 100,
-      CantidadEntregada: 100,
-      StockMinimo: 40,
-      StockMaximo: 500,
-      EstadoStock: 'OPTIMO',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 5,
-      LoteNumero: 'LOT-2024-004',
-      Medicamento: 'Omeprazol 20mg',
-      Ubicacion: 'Estante A2',
-      FechaVencimiento: '2024-03-05',
-      CantidadTotal: 1200,
-      CantidadDisponible: 400,
-      CantidadReservada: 300,
-      CantidadEntregada: 500,
-      StockMinimo: 120,
-      StockMaximo: 1500,
-      EstadoStock: 'CRITICO',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 6,
-      LoteNumero: 'LOT-2024-005',
-      Medicamento: 'Atorvastatina 40mg',
-      Ubicacion: 'Estante B1',
-      FechaVencimiento: '2024-06-30',
-      CantidadTotal: 600,
-      CantidadDisponible: 250,
-      CantidadReservada: 150,
-      CantidadEntregada: 200,
-      StockMinimo: 60,
-      StockMaximo: 800,
-      EstadoStock: 'BAJO',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 7,
-      LoteNumero: 'LOT-2023-050',
-      Medicamento: 'Salbutamol Inhalador',
-      Ubicacion: 'Estante D4',
-      FechaVencimiento: '2024-01-15',
-      CantidadTotal: 300,
-      CantidadDisponible: 0,
-      CantidadReservada: 0,
-      CantidadEntregada: 300,
-      StockMinimo: 30,
-      StockMaximo: 400,
-      EstadoStock: 'AGOTADO',
-      EstadoLote: 'RETIRADO'
-    },
-    {
-      id: 8,
-      LoteNumero: 'LOT-2024-006',
-      Medicamento: 'Diclofenaco Gel 1%',
-      Ubicacion: 'Estante C2',
-      FechaVencimiento: '2024-04-01',
-      CantidadTotal: 700,
-      CantidadDisponible: 350,
-      CantidadReservada: 200,
-      CantidadEntregada: 150,
-      StockMinimo: 70,
-      StockMaximo: 900,
-      EstadoStock: 'OPTIMO',
-      EstadoLote: 'DISPONIBLE'
-    }
-  ];
+  const [inventario, setInventario] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Ubicaciones únicas
-  const ubicaciones = ['TODAS', ...new Set(inventarioQuemado.map(i => i.Ubicacion))];
-  
-  // Estados únicos
-  const estados = ['TODOS', ...new Set(inventarioQuemado.map(i => i.EstadoStock))];
+  // Carga de inventario desde API
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const response = await getMedicineInventory();
+        setInventario(response?.message?.inventory || []);
+      } catch (err) {
+        console.error('Error cargando inventario:', err);
+        setError(err.message || 'Error al cargar inventario');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
 
-  // Calcular estadísticas
-  const totalItems = inventarioQuemado.length;
-  const totalUnidades = inventarioQuemado.reduce((sum, item) => sum + item.CantidadTotal, 0);
-  const unidadesDisponibles = inventarioQuemado.reduce((sum, item) => sum + item.CantidadDisponible, 0);
-  const itemsOptimos = inventarioQuemado.filter(item => item.EstadoStock === 'OPTIMO').length;
-  const itemsCriticos = inventarioQuemado.filter(item => item.EstadoStock === 'CRITICO' || item.EstadoStock === 'BAJO').length;
+  // Mapeo de estados del backend a español
+  const mapStockStatus = (status) => {
+    const statusMap = {
+      'Optimal': 'OPTIMO',
+      'Low Stock': 'BAJO',
+      'Out of Stock': 'AGOTADO',
+      'Overstock': 'SOBRANTE',
+    };
+    return statusMap[status] || status;
+  };
 
-  // Filtrar inventario
-  let filteredInventario = inventarioQuemado.filter(item => {
-    const matchesSearch = 
-      item.Medicamento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.LoteNumero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.Ubicacion?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUbicacion = filterUbicacion === 'TODAS' || item.Ubicacion === filterUbicacion;
-    const matchesEstado = filterEstado === 'TODOS' || item.EstadoStock === filterEstado;
-    
+  const mapLotStatus = (status) => {
+    const statusMap = {
+      'Available': 'DISPONIBLE',
+      'Reserved': 'RESERVADO',
+      'Expired': 'VENCIDO',
+      'Depleted': 'AGOTADO',
+      'Quarantined': 'CUARENTENA',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Ubicaciones y estados únicos desde los datos reales
+  const ubicaciones = ['TODAS', ...new Set(inventario.map(i => i.location))];
+  const estados = ['TODOS', ...new Set(inventario.map(i => mapStockStatus(i.stock_status)))];
+
+  // Cálculo de estadísticas
+  const totalItems = inventario.length;
+  const totalUnidades = inventario.reduce((sum, item) => sum + (item.total_quantity || 0), 0);
+  const unidadesDisponibles = inventario.reduce((sum, item) => sum + (item.available_quantity || 0), 0);
+  const itemsOptimos = inventario.filter(item => mapStockStatus(item.stock_status) === 'OPTIMO').length;
+  const itemsCriticos = inventario.filter(item => mapStockStatus(item.stock_status) === 'CRITICO' || mapStockStatus(item.stock_status) === 'BAJO').length;
+
+  // Filtrado
+  let filteredInventario = inventario.filter(item => {
+    const stockStatusSpanish = mapStockStatus(item.stock_status);
+    const matchesSearch =
+      (item.medicine || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.lot_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.location || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesUbicacion = filterUbicacion === 'TODAS' || item.location === filterUbicacion;
+    const matchesEstado = filterEstado === 'TODOS' || stockStatusSpanish === filterEstado;
     return matchesSearch && matchesUbicacion && matchesEstado;
   });
 
@@ -201,41 +119,40 @@ const MedicamentoInventario = () => {
   const currentInventario = filteredInventario.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredInventario.length / itemsPerPage);
 
-  // Funciones auxiliares
-  const getEstadoStockBadge = (estado) => {
-    const estadoConfig = {
+  // Funciones auxiliares de presentación
+  const getEstadoStockBadge = (stockStatus) => {
+    const estado = mapStockStatus(stockStatus);
+    const config = {
       'OPTIMO': { color: 'success', icon: cilCheckCircle, text: 'Óptimo' },
       'BAJO': { color: 'warning', icon: cilWarning, text: 'Bajo' },
-      'CRITICO': { color: 'danger', icon: cilWarning, text: 'Crítico' },
-      'AGOTADO': { color: 'dark', icon: cilMinus, text: 'Agotado' }
+      'AGOTADO': { color: 'dark', icon: cilMinus, text: 'Agotado' },
+      'SOBRANTE': { color: 'info', icon: cilStorage, text: 'Sobrante' },
     };
-    
-    const config = estadoConfig[estado] || { color: 'secondary', icon: cilStorage, text: estado };
+    const { color, icon, text } = config[estado] || { color: 'secondary', icon: cilStorage, text: estado };
     return (
-      <CBadge color={config.color}>
-        <CIcon icon={config.icon} className="me-1" />
-        {config.text}
+      <CBadge color={color}>
+        <CIcon icon={icon} className="me-1" />
+        {text}
       </CBadge>
     );
   };
 
-  const getEstadoLoteBadge = (estado) => {
-    const estadoConfig = {
+  const getEstadoLoteBadge = (lotStatus) => {
+    const estado = mapLotStatus(lotStatus);
+    const config = {
       'DISPONIBLE': { color: 'success', text: 'Disponible' },
       'RESERVADO': { color: 'warning', text: 'Reservado' },
-      'ENTREGADO': { color: 'info', text: 'Entregado' },
-      'RETIRADO': { color: 'danger', text: 'Retirado' },
-      'VENCIDO': { color: 'dark', text: 'Vencido' }
+      'VENCIDO': { color: 'dark', text: 'Vencido' },
+      'AGOTADO': { color: 'dark', text: 'Agotado' },
+      'CUARENTENA': { color: 'info', text: 'Cuarentena' },
     };
-    
-    const config = estadoConfig[estado] || { color: 'secondary', text: estado };
-    return <CBadge color={config.color}>{config.text}</CBadge>;
+    const { color, text } = config[estado] || { color: 'secondary', text: estado };
+    return <CBadge color={color}>{text}</CBadge>;
   };
 
   const calcularPorcentajeStock = (disponible, minimo, maximo) => {
-    const rango = maximo - minimo;
-    const posicion = disponible - minimo;
-    return Math.max(0, Math.min(100, (posicion / rango) * 100));
+    if (!maximo || !minimo || maximo <= minimo) return 0;
+    return Math.max(0, Math.min(100, ((disponible - minimo) / (maximo - minimo)) * 100));
   };
 
   const getProgressColor = (porcentaje) => {
@@ -245,18 +162,22 @@ const MedicamentoInventario = () => {
     return 'success';
   };
 
-  // Handlers
-  const handleAgregarStock = (item) => {
-    console.log('Agregar stock a:', item);
-  };
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <CSpinner color="primary" />
+        <p className="mt-3">Cargando inventario de medicamentos...</p>
+      </div>
+    );
+  }
 
-  const handleAjustarStock = (item) => {
-    console.log('Ajustar stock de:', item);
-  };
-
-  const handleVerMovimientos = (item) => {
-    console.log('Ver movimientos de:', item);
-  };
+  if (error) {
+    return (
+      <div className="medicamento-inventario-container">
+        <CAlert color="danger">{error}</CAlert>
+      </div>
+    );
+  }
 
   return (
     <div className="medicamento-inventario-container">
@@ -283,7 +204,7 @@ const MedicamentoInventario = () => {
               </div>
               <CIcon icon={cilCheckCircle} height={48} className="text-white opacity-50" />
             </CCardBody>
-            <CProgress className="mt-3" color="info" value={(unidadesDisponibles / totalUnidades * 100)} style={{ height: '4px' }} />
+            <CProgress className="mt-3" color="info" value={(unidadesDisponibles / totalUnidades) * 100} style={{ height: '4px' }} />
           </CCard>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
@@ -295,7 +216,7 @@ const MedicamentoInventario = () => {
               </div>
               <CIcon icon={cilChart} height={48} className="text-white opacity-50" />
             </CCardBody>
-            <CProgress className="mt-3" color="info" value={(itemsOptimos / totalItems * 100)} style={{ height: '4px' }} />
+            <CProgress className="mt-3" color="info" value={(itemsOptimos / totalItems) * 100} style={{ height: '4px' }} />
           </CCard>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
@@ -307,7 +228,7 @@ const MedicamentoInventario = () => {
               </div>
               <CIcon icon={cilWarning} height={48} className="text-white opacity-50" />
             </CCardBody>
-            <CProgress className="mt-3" color="info" value={(itemsCriticos / totalItems * 100)} style={{ height: '4px' }} />
+            <CProgress className="mt-3" color="info" value={(itemsCriticos / totalItems) * 100} style={{ height: '4px' }} />
           </CCard>
         </CCol>
       </CRow>
@@ -350,8 +271,8 @@ const MedicamentoInventario = () => {
                   </CDropdownToggle>
                   <CDropdownMenu className="w-100">
                     {ubicaciones.map((ubic, index) => (
-                      <CDropdownItem 
-                        key={index} 
+                      <CDropdownItem
+                        key={index}
                         onClick={() => {
                           setFilterUbicacion(ubic);
                           setCurrentPage(1);
@@ -371,8 +292,8 @@ const MedicamentoInventario = () => {
                   </CDropdownToggle>
                   <CDropdownMenu className="w-100">
                     {estados.map((estado, index) => (
-                      <CDropdownItem 
-                        key={index} 
+                      <CDropdownItem
+                        key={index}
                         onClick={() => {
                           setFilterEstado(estado);
                           setCurrentPage(1);
@@ -409,46 +330,51 @@ const MedicamentoInventario = () => {
               <CTableBody>
                 {currentInventario.length > 0 ? (
                   currentInventario.map((item) => {
-                    const porcentajeStock = calcularPorcentajeStock(
-                      item.CantidadDisponible, 
-                      item.StockMinimo, 
-                      item.StockMaximo
-                    );
-                    
+                    const disponible = item.available_quantity || 0;
+                    const minimo = item.minimum_stock || 0;
+                    const maximo = item.maximum_stock || 1;
+                    const porcentajeStock = calcularPorcentajeStock(disponible, minimo, maximo);
+
                     return (
                       <CTableRow key={item.id}>
                         <CTableDataCell>
-                          <strong>{item.LoteNumero}</strong>
+                          <strong>{item.lot_number}</strong>
                         </CTableDataCell>
-                        <CTableDataCell>{item.Medicamento}</CTableDataCell>
-                        <CTableDataCell>{item.Ubicacion}</CTableDataCell>
+                        <CTableDataCell>{item.medicine}</CTableDataCell>
+                        <CTableDataCell>{item.location}</CTableDataCell>
                         <CTableDataCell>
-                          {new Date(item.FechaVencimiento).toLocaleDateString('es-ES')}
+                          {item.expiration_date
+                            ? new Date(item.expiration_date).toLocaleDateString('es-ES')
+                            : 'N/A'}
                         </CTableDataCell>
                         <CTableDataCell>
-                          <strong>{item.CantidadTotal}</strong>
+                          <strong>{item.total_quantity}</strong>
                         </CTableDataCell>
                         <CTableDataCell>
-                          <strong className={
-                            item.CantidadDisponible <= item.StockMinimo ? 'text-danger' :
-                            item.CantidadDisponible <= item.StockMinimo * 2 ? 'text-warning' :
-                            'text-success'
-                          }>
-                            {item.CantidadDisponible}
+                          <strong
+                            className={
+                              disponible <= minimo
+                                ? 'text-danger'
+                                : disponible <= minimo * 2
+                                  ? 'text-warning'
+                                  : 'text-success'
+                            }
+                          >
+                            {disponible}
                           </strong>
                         </CTableDataCell>
                         <CTableDataCell>
-                          <span className="text-warning">{item.CantidadReservada}</span>
+                          <span className="text-warning">{item.reserved_quantity || 0}</span>
                         </CTableDataCell>
                         <CTableDataCell>
-                          <span className="text-info">{item.CantidadEntregada}</span>
+                          <span className="text-info">{item.delivered_quantity || 0}</span>
                         </CTableDataCell>
-                        <CTableDataCell>{getEstadoStockBadge(item.EstadoStock)}</CTableDataCell>
-                        <CTableDataCell>{getEstadoLoteBadge(item.EstadoLote)}</CTableDataCell>
+                        <CTableDataCell>{getEstadoStockBadge(item.stock_status)}</CTableDataCell>
+                        <CTableDataCell>{getEstadoLoteBadge(item.lot_status)}</CTableDataCell>
                         <CTableDataCell>
                           <div className="d-flex align-items-center">
-                            <CProgress 
-                              className="flex-grow-1 me-2" 
+                            <CProgress
+                              className="flex-grow-1 me-2"
                               value={porcentajeStock}
                               color={getProgressColor(porcentajeStock)}
                               style={{ height: '8px' }}
@@ -456,7 +382,7 @@ const MedicamentoInventario = () => {
                             <small className="text-muted">{Math.round(porcentajeStock)}%</small>
                           </div>
                           <div className="small text-muted">
-                            Mín: {item.StockMinimo} | Máx: {item.StockMaximo}
+                            Mín: {minimo} | Máx: {maximo}
                           </div>
                         </CTableDataCell>
                         <CTableDataCell>
@@ -465,9 +391,9 @@ const MedicamentoInventario = () => {
                               color="success"
                               size="sm"
                               className="medicamento-action-btn"
-                              onClick={() => handleAgregarStock(item)}
+                              onClick={() => console.log('Agregar stock a:', item)}
                               title="Agregar stock"
-                              disabled={item.EstadoLote !== 'DISPONIBLE'}
+                              disabled={mapLotStatus(item.lot_status) !== 'DISPONIBLE'}
                             >
                               <CIcon icon={cilPlus} />
                             </CButton>
@@ -475,9 +401,9 @@ const MedicamentoInventario = () => {
                               color="warning"
                               size="sm"
                               className="medicamento-action-btn"
-                              onClick={() => handleAjustarStock(item)}
+                              onClick={() => console.log('Ajustar stock de:', item)}
                               title="Ajustar stock"
-                              disabled={item.EstadoLote !== 'DISPONIBLE'}
+                              disabled={mapLotStatus(item.lot_status) !== 'DISPONIBLE'}
                             >
                               <CIcon icon={cilSwapHorizontal} />
                             </CButton>
@@ -485,7 +411,7 @@ const MedicamentoInventario = () => {
                               color="info"
                               size="sm"
                               className="medicamento-action-btn"
-                              onClick={() => handleVerMovimientos(item)}
+                              onClick={() => console.log('Ver movimientos de:', item)}
                               title="Ver movimientos"
                             >
                               <CIcon icon={cilStorage} />
@@ -519,13 +445,9 @@ const MedicamentoInventario = () => {
                 Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredInventario.length)} de {filteredInventario.length} registros
               </div>
               <CPagination>
-                <CPaginationItem
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                >
+                <CPaginationItem disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
                   Anterior
                 </CPaginationItem>
-                
                 {[...Array(totalPages)].map((_, index) => (
                   <CPaginationItem
                     key={index + 1}
@@ -535,11 +457,7 @@ const MedicamentoInventario = () => {
                     {index + 1}
                   </CPaginationItem>
                 ))}
-                
-                <CPaginationItem
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                >
+                <CPaginationItem disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
                   Siguiente
                 </CPaginationItem>
               </CPagination>

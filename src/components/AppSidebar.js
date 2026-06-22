@@ -28,7 +28,10 @@ const AppSidebar = () => {
       position="fixed"
       unfoldable={unfoldable}
       visible={sidebarShow}
-      style={{ backgroundColor: '#1f1498' }}
+      style={{ 
+        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+        borderRight: 'none'
+      }}
       onVisibleChange={(visible) => {
         dispatch({ type: 'set', sidebarShow: visible })
       }}
@@ -36,9 +39,9 @@ const AppSidebar = () => {
       <CSidebarHeader 
         className="border-bottom" 
         style={{ 
-          borderColor: '#2a20b0 !important',
-          backgroundColor: '#1f1498',
-          padding: '12px 16px' // Aumentado el padding
+          borderColor: 'rgba(255,255,255,0.06) !important',
+          background: 'transparent',
+          padding: '16px'
         }}
       >
         <CSidebarBrand to="/" style={{ width: '100%' }}>
@@ -49,7 +52,7 @@ const AppSidebar = () => {
               width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center', // Centrado horizontal
+              justifyContent: 'center',
               padding: '0'
             }}
           >
@@ -57,10 +60,11 @@ const AppSidebar = () => {
               src={logoCompleto} 
               alt="FarmaPatria" 
               style={{ 
-                width: '100%', // Ocupa el 100% del ancho disponible
-                maxWidth: '180px', // Tamaño máximo
+                width: '100%',
+                maxWidth: '180px',
                 height: 'auto',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                filter: 'brightness(1.1)'
               }} 
             />
           </div>
@@ -77,8 +81,8 @@ const AppSidebar = () => {
       <CSidebarFooter 
         className="border-top d-none d-lg-flex" 
         style={{ 
-          borderColor: '#2a20b0 !important',
-          backgroundColor: '#3a31a1'
+          borderColor: 'rgba(255,255,255,0.06)',
+          background: 'rgba(0,0,0,0.15)'
         }}
       >
         <CSidebarToggler

@@ -36,31 +36,35 @@ const BeneficiaryList = ({ beneficiaries }) => {
             {beneficiaries.map((beneficiary) => (
               <CTableRow key={beneficiary.id}>
                 <CTableDataCell data-label="Cédula">
-                  <strong>{beneficiary.BenCedula}</strong>
+                  <strong>{beneficiary.identification_number}</strong>
                 </CTableDataCell>
                 <CTableDataCell data-label="Nombre">
-                  {beneficiary.BenNombres} {beneficiary.BenApellidos}
-                  <div className="text-muted small">
-                    Edad: {beneficiary.BenEdad} años
-                  </div>
+                  {beneficiary.first_name} {beneficiary.last_name}
+                  {beneficiary.age !== null && beneficiary.age !== undefined && (
+                    <div className="text-muted small">
+                      Edad: {beneficiary.age} años
+                    </div>
+                  )}
                 </CTableDataCell>
                 <CTableDataCell data-label="Comunidad">
-                  {beneficiary.Comunidad}
-                  <div className="text-muted small">
-                    {beneficiary.ComMunicipio}
-                  </div>
+                  {beneficiary.community_name || 'N/A'}
+                  {beneficiary.municipality && (
+                    <div className="text-muted small">
+                      {beneficiary.municipality}
+                    </div>
+                  )}
                 </CTableDataCell>
                 <CTableDataCell data-label="Teléfono">
-                  {beneficiary.BenTelefonoPersonal}
+                  {beneficiary.phone_personal || 'N/A'}
                 </CTableDataCell>
                 <CTableDataCell data-label="Prioridad">
-                  <CBadge color={getPriorityColor(beneficiary.BenNivelPrioridad)}>
-                    {beneficiary.BenNivelPrioridad}
+                  <CBadge color={getPriorityColor(beneficiary.priority_level)}>
+                    {beneficiary.priority_level}
                   </CBadge>
                 </CTableDataCell>
                 <CTableDataCell data-label="Estado">
-                  <span className={`beneficiary-status ${beneficiary.BenEstado.toLowerCase()}`}>
-                    {beneficiary.BenEstado}
+                  <span className={`beneficiary-status ${(beneficiary.status || 'Active').toLowerCase()}`}>
+                    {beneficiary.status || 'Active'}
                   </span>
                 </CTableDataCell>
                 <CTableDataCell data-label="Acciones">
@@ -102,9 +106,13 @@ const BeneficiaryList = ({ beneficiaries }) => {
 
 // Función para obtener color de prioridad
 const getPriorityColor = (priority) => {
-  switch(priority) {
+  if (!priority) return 'secondary';
+  switch(priority.toUpperCase()) {
+    case 'HIGH':
     case 'ALTA': return 'danger';
+    case 'MEDIUM':
     case 'MEDIA': return 'warning';
+    case 'LOW':
     case 'BAJA': return 'success';
     default: return 'secondary';
   }

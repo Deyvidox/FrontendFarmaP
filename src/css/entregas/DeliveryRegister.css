@@ -1,44 +1,10 @@
-/* Delivery Register Styles - Color Azul Principal */
-.delivery-register-container {
-  padding: 0;
-}
+/* DeliveryRegister.css — Module-specific overrides only */
 
 .delivery-register-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
+  animation: fp-fadeInUp 0.5s ease-out;
 }
 
 .delivery-register-card .card-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1.5rem;
-  border-radius: 12px 12px 0 0 !important;
-}
-
-.delivery-register-card .card-header h5 {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-}
-
-.section-title {
-  color: #321fdb !important; /* Cambiado a azul */
-}
-
-.register-btn-primary {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%) !important; /* Cambiado a azul */
-}
-
-.register-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 4px 12px rgba(50, 31, 219, 0.3) !important; /* Cambiado a azul */
-}
-
-.register-form-input:focus,
-.register-form-select:focus {
-  border-color: #321fdb !important; /* Cambiado a azul */
-  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.1) !important; /* Cambiado a azul */
+  border-left: 4px solid var(--fp-primary);
+  background: linear-gradient(135deg, var(--fp-primary-50) 0%, transparent 100%) !important;
 }

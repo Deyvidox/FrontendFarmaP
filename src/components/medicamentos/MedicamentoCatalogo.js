@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CCard,
   CRow,
@@ -33,6 +33,7 @@ import {
   cilUser
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { getMedicines, getMedicineCategories } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 
 const MedicamentoCatalogo = () => {
@@ -40,136 +41,49 @@ const MedicamentoCatalogo = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterCategory, setFilterCategory] = useState('TODAS');
   const [sortBy, setSortBy] = useState('nombre');
+  const [medicamentos, setMedicamentos] = useState([]);
+  const [categorias, setCategorias] = useState(['TODAS']);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   const itemsPerPage = 8;
 
-  // Datos quemados de medicamentos
-  const medicamentosQuemados = [
-    {
-      id: 1,
-      MedCodigoNacional: 'MED-001',
-      MedNombreComercial: 'Paracetamol 500mg',
-      MedNombreGenerico: 'Paracetamol',
-      MedPrincipioActivo: 'Paracetamol',
-      MedConcentracion: '500 mg',
-      FormaFarmaceutica: 'Tableta',
-      Laboratorio: 'Genfar',
-      Categoria: 'Analgésico',
-      MedRequiereReceta: false,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-01-15'
-    },
-    {
-      id: 2,
-      MedCodigoNacional: 'MED-002',
-      MedNombreComercial: 'Amoxicilina 250mg',
-      MedNombreGenerico: 'Amoxicilina',
-      MedPrincipioActivo: 'Amoxicilina Trihidratada',
-      MedConcentracion: '250 mg',
-      FormaFarmaceutica: 'Cápsula',
-      Laboratorio: 'Pfizer',
-      Categoria: 'Antibiótico',
-      MedRequiereReceta: true,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-01-20'
-    },
-    {
-      id: 3,
-      MedCodigoNacional: 'MED-003',
-      MedNombreComercial: 'Losartán 50mg',
-      MedNombreGenerico: 'Losartán',
-      MedPrincipioActivo: 'Losartán Potásico',
-      MedConcentracion: '50 mg',
-      FormaFarmaceutica: 'Tableta',
-      Laboratorio: 'Roche',
-      Categoria: 'Antihipertensivo',
-      MedRequiereReceta: true,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-01-25'
-    },
-    {
-      id: 4,
-      MedCodigoNacional: 'MED-004',
-      MedNombreComercial: 'Insulina NPH',
-      MedNombreGenerico: 'Insulina',
-      MedPrincipioActivo: 'Insulina Humana',
-      MedConcentracion: '100 UI/mL',
-      FormaFarmaceutica: 'Inyectable',
-      Laboratorio: 'Novo Nordisk',
-      Categoria: 'Antidiabético',
-      MedRequiereReceta: true,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-02-01'
-    },
-    {
-      id: 5,
-      MedCodigoNacional: 'MED-005',
-      MedNombreComercial: 'Omeprazol 20mg',
-      MedNombreGenerico: 'Omeprazol',
-      MedPrincipioActivo: 'Omeprazol',
-      MedConcentracion: '20 mg',
-      FormaFarmaceutica: 'Cápsula',
-      Laboratorio: 'AstraZeneca',
-      Categoria: 'Gastrointestinal',
-      MedRequiereReceta: false,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-02-05'
-    },
-    {
-      id: 6,
-      MedCodigoNacional: 'MED-006',
-      MedNombreComercial: 'Atorvastatina 40mg',
-      MedNombreGenerico: 'Atorvastatina',
-      MedPrincipioActivo: 'Atorvastatina Cálcica',
-      MedConcentracion: '40 mg',
-      FormaFarmaceutica: 'Tableta',
-      Laboratorio: 'Pfizer',
-      Categoria: 'Cardiovascular',
-      MedRequiereReceta: true,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-02-10'
-    },
-    {
-      id: 7,
-      MedCodigoNacional: 'MED-007',
-      MedNombreComercial: 'Salbutamol Inhalador',
-      MedNombreGenerico: 'Salbutamol',
-      MedPrincipioActivo: 'Salbutamol Sulfato',
-      MedConcentracion: '100 mcg/dosis',
-      FormaFarmaceutica: 'Inhalador',
-      Laboratorio: 'GSK',
-      Categoria: 'Respiratorio',
-      MedRequiereReceta: true,
-      MedEstado: 'INACTIVO',
-      MedCreado: '2024-02-15'
-    },
-    {
-      id: 8,
-      MedCodigoNacional: 'MED-008',
-      MedNombreComercial: 'Diclofenaco Gel 1%',
-      MedNombreGenerico: 'Diclofenaco',
-      MedPrincipioActivo: 'Diclofenaco Sódico',
-      MedConcentracion: '1%',
-      FormaFarmaceutica: 'Gel',
-      Laboratorio: 'Novartis',
-      Categoria: 'Antiinflamatorio',
-      MedRequiereReceta: false,
-      MedEstado: 'ACTIVO',
-      MedCreado: '2024-02-20'
-    }
-  ];
-
-  // Categorías únicas para filtro
-  const categorias = ['TODAS', ...new Set(medicamentosQuemados.map(m => m.Categoria))];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const medsRes = await getMedicines();
+        const catsRes = await getMedicineCategories();
+        
+        setMedicamentos(medsRes?.message?.medicines || []);
+        
+        const catList = ['TODAS'];
+        if (catsRes?.message) {
+          // Si catsRes es array u objeto listamos sus nombres
+          const cats = Array.isArray(catsRes.message) ? catsRes.message : (catsRes.message.categories || []);
+          cats.forEach(c => {
+            if (c.name) catList.push(c.name);
+          });
+        }
+        setCategorias(catList);
+      } catch (err) {
+        console.error('Error cargando catálogo:', err);
+        setError(err.message || 'Error al cargar catálogo de medicamentos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   // Filtrar y ordenar
-  let filteredMedicamentos = medicamentosQuemados.filter(med => {
+  let filteredMedicamentos = medicamentos.filter(med => {
     const matchesSearch = 
-      med.MedNombreComercial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.MedNombreGenerico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.MedCodigoNacional?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.MedPrincipioActivo?.toLowerCase().includes(searchTerm.toLowerCase());
+      (med.commercial_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (med.generic_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (med.national_code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (med.active_principle || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = filterCategory === 'TODAS' || med.Categoria === filterCategory;
+    const matchesCategory = filterCategory === 'TODAS' || med.category === filterCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -177,9 +91,9 @@ const MedicamentoCatalogo = () => {
   // Ordenar
   filteredMedicamentos.sort((a, b) => {
     switch(sortBy) {
-      case 'nombre': return a.MedNombreComercial.localeCompare(b.MedNombreComercial);
-      case 'categoria': return a.Categoria.localeCompare(b.Categoria);
-      case 'fecha': return new Date(b.MedCreado) - new Date(a.MedCreado);
+      case 'nombre': return (a.commercial_name || '').localeCompare(b.commercial_name || '');
+      case 'categoria': return (a.category || '').localeCompare(b.category || '');
+      case 'fecha': return new Date(b.created_at || 0) - new Date(a.created_at || 0);
       default: return 0;
     }
   });
@@ -192,34 +106,25 @@ const MedicamentoCatalogo = () => {
 
   // Estados visuales
   const getStatusBadge = (status) => {
+    if (!status) return <CBadge color="secondary">N/A</CBadge>;
     const statusConfig = {
-      'ACTIVO': { color: 'success', text: 'Activo' },
-      'INACTIVO': { color: 'danger', text: 'Inactivo' },
-      'DESCONTINUADO': { color: 'warning', text: 'Descontinuado' }
+      'ACTIVE': { color: 'success', text: 'Activo' },
+      'INACTIVE': { color: 'danger', text: 'Inactivo' },
+      'DISCONTINUED': { color: 'warning', text: 'Descontinuado' }
     };
     
-    const config = statusConfig[status] || { color: 'secondary', text: status };
+    const config = statusConfig[status.toUpperCase()] || { color: 'secondary', text: status };
     return <CBadge color={config.color}>{config.text}</CBadge>;
   };
 
-  const getRecetaBadge = (requiereReceta) => {
-    return requiereReceta ? 
+  const getRecetaBadge = (requiresPrescription) => {
+    return requiresPrescription ? 
       <CBadge color="danger">Con Receta</CBadge> : 
       <CBadge color="success">Sin Receta</CBadge>;
   };
 
   const getCategoryBadge = (categoria) => {
-    const categoryColors = {
-      'Analgésico': 'primary',
-      'Antibiótico': 'warning',
-      'Antihipertensivo': 'info',
-      'Antidiabético': 'success',
-      'Gastrointestinal': 'secondary',
-      'Cardiovascular': 'danger',
-      'Respiratorio': 'info',
-      'Antiinflamatorio': 'warning'
-    };
-    return <CBadge color={categoryColors[categoria] || 'secondary'}>{categoria}</CBadge>;
+    return <CBadge color="info">{categoria || 'Sin categoría'}</CBadge>;
   };
 
   // Handlers
@@ -252,6 +157,8 @@ const MedicamentoCatalogo = () => {
         </div>
       </CCardHeader>
       <CCardBody className="medicamento-card-body">
+        {error && <div className="alert alert-danger mb-4">{error}</div>}
+
         {/* Filtros y búsqueda */}
         <div className="medicamento-filters mb-4">
           <CRow className="g-3">
@@ -327,23 +234,29 @@ const MedicamentoCatalogo = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {currentMedicamentos.length > 0 ? (
+              {loading ? (
+                <CTableRow>
+                  <CTableDataCell colSpan="11" className="text-center py-5">
+                    Cargando medicamentos del catálogo...
+                  </CTableDataCell>
+                </CTableRow>
+              ) : currentMedicamentos.length > 0 ? (
                 currentMedicamentos.map((med) => (
                   <CTableRow key={med.id}>
                     <CTableDataCell>
-                      <strong>{med.MedCodigoNacional}</strong>
+                      <strong>{med.national_code || 'N/A'}</strong>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <strong>{med.MedNombreComercial}</strong>
+                      <strong>{med.commercial_name}</strong>
                     </CTableDataCell>
-                    <CTableDataCell>{med.MedNombreGenerico}</CTableDataCell>
-                    <CTableDataCell>{med.MedPrincipioActivo}</CTableDataCell>
-                    <CTableDataCell>{med.MedConcentracion}</CTableDataCell>
-                    <CTableDataCell>{med.FormaFarmaceutica}</CTableDataCell>
-                    <CTableDataCell>{med.Laboratorio}</CTableDataCell>
-                    <CTableDataCell>{getCategoryBadge(med.Categoria)}</CTableDataCell>
-                    <CTableDataCell>{getRecetaBadge(med.MedRequiereReceta)}</CTableDataCell>
-                    <CTableDataCell>{getStatusBadge(med.MedEstado)}</CTableDataCell>
+                    <CTableDataCell>{med.generic_name || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{med.active_principle || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{med.concentration || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{med.pharmaceutical_form || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{med.laboratory || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{getCategoryBadge(med.category)}</CTableDataCell>
+                    <CTableDataCell>{getRecetaBadge(med.requires_prescription)}</CTableDataCell>
+                    <CTableDataCell>{getStatusBadge(med.status)}</CTableDataCell>
                     <CTableDataCell>
                       <div className="d-flex gap-2 justify-content-center">
                         <CButton
@@ -398,7 +311,7 @@ const MedicamentoCatalogo = () => {
         </div>
 
         {/* Paginación */}
-        {totalPages > 1 && (
+        {!loading && totalPages > 1 && (
           <div className="d-flex justify-content-between align-items-center mt-4">
             <div className="text-muted">
               Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredMedicamentos.length)} de {filteredMedicamentos.length} medicamentos

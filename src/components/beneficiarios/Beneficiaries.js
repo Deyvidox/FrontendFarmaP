@@ -13,7 +13,7 @@ const Beneficiaries = () => {
     const loadBeneficiaries = async () => {
       try {
         const response = await getBeneficiaries();
-        setBeneficiarios(response?.message || []);
+        setBeneficiarios(response?.message?.beneficiaries || []);
       } catch (err) {
         console.error('Error cargando beneficiarios:', err);
         setError(err.message || 'Error al cargar beneficiarios');

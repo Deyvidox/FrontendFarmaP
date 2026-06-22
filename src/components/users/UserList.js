@@ -26,51 +26,57 @@ const UserList = ({ users }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
 
-  // Filtrar usuarios (solo para mostrar)
-  const filteredUsers = users.filter(user =>
-    user.UsuNombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.UsuCorreo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.RolNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.UsuDepartamento?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar usuarios
+  const filteredUsers = users.filter(user => {
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.role_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.department || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Paginación (solo para mostrar)
+  // Paginación
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const getStatusBadge = (status) => {
+    if (!status) return <CBadge color="secondary">Desconocido</CBadge>;
     const statusConfig = {
-      'ACTIVO': { color: 'success', text: 'Activo' },
-      'INACTIVO': { color: 'secondary', text: 'Inactivo' },
-      'SUSPENDIDO': { color: 'warning', text: 'Suspendido' }
+      'ACTIVE': { color: 'success', text: 'Activo' },
+      'ACTIVE_ES': { color: 'success', text: 'Activo' }, // Para compatibilidad
+      'INACTIVE': { color: 'secondary', text: 'Inactivo' },
+      'SUSPENDED': { color: 'warning', text: 'Suspendido' }
     };
     
-    const config = statusConfig[status] || { color: 'secondary', text: status };
+    const key = status.toUpperCase();
+    const config = statusConfig[key] || { color: 'secondary', text: status };
     return <CBadge color={config.color}>{config.text}</CBadge>;
   };
 
   const getRoleBadge = (rol) => {
+    if (!rol) return <CBadge color="secondary">Sin Rol</CBadge>;
     const roleConfig = {
-      'Administrador': 'danger',
-      'Farmacéutico': 'warning',
-      'Donante': 'primary',
-      'Asistente': 'info',
-      'Coordinador': 'success'
+      'ADMINISTRADOR': 'danger',
+      'ADMIN': 'danger',
+      'FARMACÉUTICO': 'warning',
+      'DONANTE': 'primary',
+      'ASISTENTE': 'info',
+      'COORDINADOR': 'success'
     };
     
-    return <CBadge color={roleConfig[rol] || 'secondary'}>{rol}</CBadge>;
+    return <CBadge color={roleConfig[rol.toUpperCase()] || 'secondary'}>{rol}</CBadge>;
   };
 
   const handleEditClick = () => {
-    // Solo muestra un mensaje en consola
-    console.log('Botón Editar clickeado (sin funcionalidad)');
+    console.log('Botón Editar clickeado');
   };
 
   const handleDeleteClick = () => {
-    // Solo muestra un mensaje en consola
-    console.log('Botón Eliminar clickeado (sin funcionalidad)');
+    console.log('Botón Eliminar clickeado');
   };
 
   return (
@@ -107,7 +113,6 @@ const UserList = ({ users }) => {
           <CTable responsive striped hover className="user-table">
             <CTableHead>
               <CTableRow>
-                <CTableHeaderCell>ID</CTableHeaderCell>
                 <CTableHeaderCell>Cédula/RIF</CTableHeaderCell>
                 <CTableHeaderCell>Nombre Completo</CTableHeaderCell>
                 <CTableHeaderCell>Email</CTableHeaderCell>
@@ -125,22 +130,19 @@ const UserList = ({ users }) => {
                 currentUsers.map((user) => (
                   <CTableRow key={user.id}>
                     <CTableDataCell>
-                      <strong>#{user.id}</strong>
+                      <strong>{user.identification_number || 'N/A'}</strong>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <strong>{user.UsuCedula}</strong>
+                      <strong>{user.first_name} {user.last_name}</strong>
                     </CTableDataCell>
+                    <CTableDataCell>{user.email}</CTableDataCell>
+                    <CTableDataCell>{user.phone || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{getRoleBadge(user.role_name)}</CTableDataCell>
+                    <CTableDataCell>{user.department || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{user.position || 'N/A'}</CTableDataCell>
+                    <CTableDataCell>{getStatusBadge(user.status)}</CTableDataCell>
                     <CTableDataCell>
-                      <strong>{user.UsuNombres} {user.UsuApellidos}</strong>
-                    </CTableDataCell>
-                    <CTableDataCell>{user.UsuCorreo}</CTableDataCell>
-                    <CTableDataCell>{user.UsuTelefono}</CTableDataCell>
-                    <CTableDataCell>{getRoleBadge(user.RolNombre)}</CTableDataCell>
-                    <CTableDataCell>{user.UsuDepartamento}</CTableDataCell>
-                    <CTableDataCell>{user.UsuCargo}</CTableDataCell>
-                    <CTableDataCell>{getStatusBadge(user.UsuEstado)}</CTableDataCell>
-                    <CTableDataCell>
-                      {new Date(user.UsuCreado).toLocaleDateString('es-ES')}
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString('es-ES') : 'N/A'}
                     </CTableDataCell>
                     <CTableDataCell>                      
                       <div className="user-actions-container">
@@ -166,7 +168,7 @@ const UserList = ({ users }) => {
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan="11" className="text-center py-4">
+                  <CTableDataCell colSpan="10" className="text-center py-4">
                     <div className="users-empty-state">
                       <CIcon icon={cilUser} className="users-empty-state-icon" />
                       <h5>No se encontraron usuarios</h5>

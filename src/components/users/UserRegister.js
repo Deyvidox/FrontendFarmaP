@@ -37,7 +37,7 @@ const UserRegister = () => {
     const loadRoles = async () => {
       try {
         const response = await getRoles()
-        setRoles(response?.message || [])
+        setRoles(response?.message?.roles || [])
       } catch (err) {
         console.error('Error cargando roles:', err)
         setAlert({ show: true, message: err.message || 'No se pudieron cargar los roles', type: 'danger' })
@@ -60,10 +60,15 @@ const UserRegister = () => {
 
     try {
       await registerUser({
-        usu_nombre: formValues.usu_nombre,
-        usu_correo: formValues.usu_correo,
+        first_name: formValues.usu_nombre,
+        last_name: formValues.usu_apellidos || null,
+        username: formValues.usu_correo.split('@')[0],
+        email: formValues.usu_correo,
         password: formValues.password,
-        rol_id: formValues.rol_id,
+        role_id: formValues.rol_id,
+        identification_number: formValues.usu_cedula || null,
+        phone: formValues.usu_telefono || null,
+        status: formValues.usu_estado === 'ACTIVO' ? 'Active' : (formValues.usu_estado === 'INACTIVO' ? 'Inactive' : 'Suspended'),
       })
       setAlert({ show: true, message: 'Usuario registrado exitosamente', type: 'success' })
       setFormValues({
@@ -255,11 +260,20 @@ const UserRegister = () => {
                       {loadingRoles ? (
                         <option value="">Cargando roles...</option>
                       ) : (
-                        roles.map((role) => (
-                          <option key={role.RolID} value={role.RolID}>
-                            {role.RolNombre}
-                          </option>
-                        ))
+                        roles.map((role) => {
+                          let displayName = role.name;
+                          if (role.name === 'Administrator') displayName = 'Administrador';
+                          else if (role.name === 'Warehouse Manager' || role.name === 'Pharmacist') displayName = 'Farmacéutico';
+                          else if (role.name === 'Social Worker' || role.name === 'Assistant') displayName = 'Asistente';
+                          else if (role.name === 'Donor') displayName = 'Donante';
+                          else if (role.name === 'Coordinator') displayName = 'Coordinador';
+                          
+                          return (
+                            <option key={role.id} value={role.id}>
+                              {displayName}
+                            </option>
+                          )
+                        })
                       )}
                     </CFormSelect>
                   </div>

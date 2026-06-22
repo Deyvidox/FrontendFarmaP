@@ -1,348 +1,76 @@
-/* Medicamentos - Estilos generales */
+/* Medicamentos.css — Module-specific overrides only */
+
 .medicamento-register-container,
 .medicamento-alertas-container,
-.medicamento-inventario-container {
-  padding: 0;
-}
+.medicamento-inventario-container { padding: 0; }
 
-/* Cards principales */
-.medicamento-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-.medicamento-card-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1.5rem;
-  border-radius: 12px 12px 0 0 !important;
-}
-
-.medicamento-card-header h5 {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  color: white;
-}
-
-.medicamento-card-body {
-  padding: 2rem;
-}
-
-/* Formulario de registro */
+.medicamento-card,
 .medicamento-register-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
-  animation: fadeInUp 0.5s ease-out;
+  animation: fp-fadeInUp 0.5s ease-out;
 }
 
+.medicamento-card-header,
+.medicamento-card .card-header,
 .medicamento-register-card .card-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1.5rem;
-  border-radius: 12px 12px 0 0 !important;
+  border-left: 4px solid var(--fp-primary);
+  background: linear-gradient(135deg, var(--fp-primary-50) 0%, transparent 100%) !important;
+  color: var(--fp-text) !important;
 }
 
+.medicamento-card-header h5,
 .medicamento-register-card .card-header h5 {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
+  color: var(--fp-text) !important;
 }
 
-.medicamento-register-card .card-body {
-  padding: 2rem;
-}
-
-/* Form Styles */
-.register-form-label {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.register-form-input,
-.register-form-select {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.register-form-input:focus,
-.register-form-select:focus {
-  border-color: #321fdb;
-  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.1);
-  background: white;
-}
-
-.register-form-input::placeholder {
-  color: #9ca3af;
-}
-
-/* Formulario específico para medicamentos */
-.medicamento-form-input {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.medicamento-form-input:focus {
-  border-color: #321fdb;
-  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.1);
-  background: white;
-}
-
-/* Form sections */
-.form-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eaeef2;
-}
-
-.form-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #321fdb;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.section-title .icon {
-  margin-right: 0.5rem;
-}
-
-/* Filtros */
+/* Filters */
 .medicamento-filters {
-  background: #f8f9fa;
+  background: var(--fp-bg);
   padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #eaeef2;
+  border-radius: var(--fp-radius-sm);
+  border: 1px solid var(--fp-border-light);
 }
 
-/* Tabla de medicamentos */
-.medicamento-table {
-  margin-bottom: 0;
-  width: 100%;
-}
+/* Status pills */
+.medicamento-status-critical { background: var(--fp-danger-bg); color: var(--fp-danger); border: 1px solid rgba(239,68,68,0.2); }
+.medicamento-status-warning { background: var(--fp-warning-bg); color: #b45309; border: 1px solid rgba(245,158,11,0.2); }
+.medicamento-status-safe { background: var(--fp-success-bg); color: var(--fp-success); border: 1px solid rgba(16,185,129,0.2); }
 
-.medicamento-table thead th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #eaeef2;
-  color: #2c3e50;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 1rem 1.25rem;
-  white-space: nowrap;
-}
-
-.medicamento-table tbody td {
-  padding: 1rem 1.25rem;
-  vertical-align: middle;
-  border-bottom: 1px solid #eaeef2;
-  color: #495057;
-  font-size: 0.95rem;
-}
-
-.medicamento-table tbody tr:hover {
-  background-color: rgba(50, 31, 219, 0.03);
-}
-
-/* Estados específicos para medicamentos */
-.medicamento-status-critical {
-  background-color: rgba(229, 83, 83, 0.1);
-  color: #e55353;
-  border: 1px solid rgba(229, 83, 83, 0.2);
-}
-
-.medicamento-status-warning {
-  background-color: rgba(249, 177, 21, 0.1);
-  color: #f9b115;
-  border: 1px solid rgba(249, 177, 21, 0.2);
-}
-
-.medicamento-status-safe {
-  background-color: rgba(46, 184, 92, 0.1);
-  color: #2eb85c;
-  border: 1px solid rgba(46, 184, 92, 0.2);
-}
-
-/* Botones de acción para medicamentos */
+/* Action buttons */
 .medicamento-action-btn {
   padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  border-radius: var(--fp-radius-xs);
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
   border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 
 .medicamento-action-btn-primary {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
   color: white;
 }
+.medicamento-action-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.3); }
 
-.medicamento-action-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(50, 31, 219, 0.3);
-}
+/* Empty state */
+.medicamento-empty-state { text-align: center; padding: 3rem; color: var(--fp-text-muted); }
+.medicamento-empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; color: var(--fp-primary); }
 
-.medicamento-action-btn-secondary {
-  background: white;
-  color: #6c757d;
-  border: 1px solid #e0e0e0;
-}
+/* Progress bars */
+.inventory-progress { height: 8px; border-radius: 4px; background: var(--fp-bg); overflow: hidden; }
+.inventory-progress .progress-bar { border-radius: 4px; transition: width 0.6s ease; }
 
-.medicamento-action-btn-secondary:hover {
-  background: #f8f9fa;
-  border-color: #d0d0d0;
-  color: #495057;
-}
+/* Alert borders */
+.alert-medicamento-critico { border-left: 4px solid var(--fp-danger); background: var(--fp-danger-bg); }
+.alert-medicamento-proximo { border-left: 4px solid var(--fp-warning); background: var(--fp-warning-bg); }
+.alert-medicamento-vencido { border-left: 4px solid #64748b; background: rgba(100,116,139,0.06); }
 
-/* Estado vacío */
-.medicamento-empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-}
+.med-icon-danger { color: var(--fp-danger); }
+.med-icon-warning { color: var(--fp-warning); }
+.med-icon-success { color: var(--fp-success); }
+.med-icon-info { color: var(--fp-info); }
 
-.medicamento-empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-  color: #321fdb;
-}
-
-/* Progress bars para inventario */
-.inventory-progress {
-  height: 8px;
-  border-radius: 4px;
-  background-color: #f8f9fa;
-  overflow: hidden;
-}
-
-.inventory-progress .progress-bar {
-  border-radius: 4px;
-  transition: width 0.6s ease;
-}
-
-/* Alertas específicas */
-.alert-medicamento-critico {
-  border-left: 4px solid #e55353;
-  background-color: rgba(229, 83, 83, 0.05);
-}
-
-.alert-medicamento-proximo {
-  border-left: 4px solid #f9b115;
-  background-color: rgba(249, 177, 21, 0.05);
-}
-
-.alert-medicamento-vencido {
-  border-left: 4px solid #636f83;
-  background-color: rgba(99, 111, 131, 0.05);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .medicamento-card-body,
-  .medicamento-register-card .card-body {
-    padding: 1.5rem;
-  }
-  
-  .medicamento-card-header,
-  .medicamento-register-card .card-header {
-    padding: 1.25rem;
-  }
-  
-  .medicamento-table thead {
-    display: none;
-  }
-  
-  .medicamento-table tbody tr {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid #eaeef2;
-    border-radius: 8px;
-  }
-  
-  .medicamento-table tbody td {
-    display: block;
-    text-align: right;
-    border-bottom: 1px solid #eaeef2;
-    position: relative;
-    padding-left: 50%;
-  }
-  
-  .medicamento-table tbody td:before {
-    content: attr(data-label);
-    position: absolute;
-    left: 1rem;
-    width: calc(50% - 2rem);
-    text-align: left;
-    font-weight: 600;
-    color: #2c3e50;
-  }
-  
-  .btn-group-responsive {
-    flex-direction: column;
-  }
-  
-  .medicamento-action-btn {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-}
-
-/* Animaciones */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Iconos específicos */
-.med-icon-danger {
-  color: #e55353;
-}
-
-.med-icon-warning {
-  color: #f9b115;
-}
-
-.med-icon-success {
-  color: #2eb85c;
-}
-
-.med-icon-info {
-  color: #39f;
+  .btn-group-responsive { flex-direction: column; }
+  .medicamento-action-btn { width: 100%; margin-bottom: 0.5rem; }
 }

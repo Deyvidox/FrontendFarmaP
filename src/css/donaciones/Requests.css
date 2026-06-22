@@ -1,34 +1,21 @@
-/* Requests Styles */
+/* Requests.css — Module-specific overrides only */
+
 .requests-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
-  animation: fadeInUp 0.5s ease-out;
+  animation: fp-fadeInUp 0.5s ease-out;
 }
 
 .requests-card .card-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1.5rem;
-  border-radius: 12px 12px 0 0 !important;
+  border-left: 4px solid var(--fp-primary);
+  background: linear-gradient(135deg, var(--fp-primary-50) 0%, transparent 100%) !important;
+  color: var(--fp-text) !important;
 }
 
 .requests-card .card-header h5 {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
+  color: var(--fp-text) !important;
 }
 
-/* Filter Buttons */
-.filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
+/* Filter buttons */
+.filter-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
 
 .filter-btn {
   border-radius: 20px;
@@ -38,292 +25,38 @@
   transition: all 0.2s ease;
 }
 
-.filter-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+.filter-btn:hover { transform: translateY(-2px); box-shadow: var(--fp-shadow-sm); }
 
-/* Table Styles */
-.requests-table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
+/* Priority badges */
+.badge-prioridad-alta { background: linear-gradient(135deg, var(--fp-danger), #dc2626); color: white; }
+.badge-prioridad-media { background: linear-gradient(135deg, var(--fp-warning), #d97706); color: white; }
+.badge-prioridad-baja { background: linear-gradient(135deg, var(--fp-success), #059669); color: white; }
 
-.requests-table thead th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #321fdb;
-  color: #321fdb;
-  font-weight: 600;
-  padding: 1rem;
-  font-size: 0.9rem;
-}
+/* Status badges */
+.badge-estado-pendiente { background: linear-gradient(135deg, var(--fp-warning), #d97706); color: white; }
+.badge-estado-proceso { background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark)); color: white; }
+.badge-estado-aprobada { background: linear-gradient(135deg, var(--fp-success), #059669); color: white; }
+.badge-estado-rechazada { background: linear-gradient(135deg, var(--fp-danger), #dc2626); color: white; }
+.badge-estado-completada { background: linear-gradient(135deg, var(--fp-info), #2563eb); color: white; }
 
-.requests-table tbody td {
-  padding: 1rem;
-  vertical-align: middle;
-  border-top: 1px solid #eaeef2;
-}
+/* Print styles */
+.print-document { background: white; padding: 2rem; border: 2px solid var(--fp-border); border-radius: var(--fp-radius-sm); }
+.print-header { border-bottom: 3px solid var(--fp-primary); padding-bottom: 1rem; margin-bottom: 2rem; }
+.print-header h4 { color: var(--fp-primary-dark); font-weight: 700; }
+.print-table th { background: var(--fp-primary-50); color: var(--fp-primary-dark); font-weight: 600; }
+.signature-line { border-top: 1px solid var(--fp-text); width: 250px; margin: 0 auto; padding-top: 0.5rem; }
+.print-footer { font-size: 0.8rem; color: var(--fp-text-muted); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--fp-border); }
 
-.requests-table tbody tr:hover {
-  background-color: rgba(50, 31, 219, 0.03);
-}
+.contact-info { font-size: 0.85rem; color: var(--fp-text-muted); }
+.table-row-hover:hover { background-color: var(--fp-primary-50) !important; cursor: pointer; }
+.quick-action-btn { border-radius: var(--fp-radius-xs); padding: 0.25rem 0.5rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem; }
 
-/* Status Badges */
-.badge-prioridad-alta {
-  background: linear-gradient(135deg, #e55353 0%, #c53030 100%);
-  color: white;
-}
-
-.badge-prioridad-media {
-  background: linear-gradient(135deg, #f6960b 0%, #c47a09 100%);
-  color: white;
-}
-
-.badge-prioridad-baja {
-  background: linear-gradient(135deg, #2eb85c 0%, #1f8c3f 100%);
-  color: white;
-}
-
-.badge-estado-pendiente {
-  background: linear-gradient(135deg, #f6960b 0%, #c47a09 100%);
-  color: white;
-}
-
-.badge-estado-proceso {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-}
-
-.badge-estado-aprobada {
-  background: linear-gradient(135deg, #2eb85c 0%, #1f8c3f 100%);
-  color: white;
-}
-
-.badge-estado-rechazada {
-  background: linear-gradient(135deg, #e55353 0%, #c53030 100%);
-  color: white;
-}
-
-.badge-estado-completada {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-}
-
-/* Button Styles */
-.btn-request-primary {
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  border: none;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-request-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(50, 31, 219, 0.3);
-}
-
-.btn-request-secondary {
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-weight: 500;
-  border: 1px solid #e0e0e0;
-  background: white;
-  color: #6c757d;
-  transition: all 0.2s ease;
-}
-
-.btn-request-secondary:hover {
-  background: #f8f9fa;
-  border-color: #d0d0d0;
-  color: #495057;
-}
-
-/* Action Buttons */
-.btn-action-sm {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  padding: 0;
-}
-
-.btn-action-sm:hover {
-  transform: scale(1.1);
-}
-
-/* Modal Styles */
-.requests-modal .modal-header {
-  background: linear-gradient(135deg, #321fdb 0%, #1f1498 100%);
-  color: white;
-  border-bottom: none;
-}
-
-.requests-modal .modal-title {
-  display: flex;
-  align-items: center;
-}
-
-/* Print Modal Styles */
-.print-document {
-  background: white;
-  padding: 2rem;
-  border: 2px solid #eaeef2;
-  border-radius: 8px;
-}
-
-.print-header {
-  border-bottom: 3px solid #321fdb;
-  padding-bottom: 1rem;
-  margin-bottom: 2rem;
-}
-
-.print-header h4 {
-  color: #321fdb;
-  font-weight: 700;
-}
-
-.print-header h5 {
-  color: #2c3e50;
-}
-
-.print-header h6 {
-  color: #6c757d;
-}
-
-.print-table th {
-  background-color: rgba(50, 31, 219, 0.1);
-  color: #321fdb;
-  font-weight: 600;
-}
-
-.signature-section {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 2px solid #eaeef2;
-}
-
-.signature-line {
-  border-top: 1px solid #2c3e50;
-  width: 250px;
-  margin: 0 auto;
-  padding-top: 0.5rem;
-}
-
-.print-footer {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eaeef2;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .requests-card .card-body {
-    padding: 1rem;
-  }
-  
-  .requests-card .card-header {
-    padding: 1rem;
-  }
-  
-  .filter-buttons {
-    justify-content: center;
-  }
-  
-  .filter-btn {
-    flex: 1;
-    min-width: 120px;
-    text-align: center;
-  }
-  
-  .btn-request-primary,
-  .btn-request-secondary {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  
-  .print-document {
-    padding: 1rem;
-  }
+  .filter-buttons { justify-content: center; }
+  .filter-btn { flex: 1; min-width: 120px; text-align: center; }
 }
 
 @media print {
-  .print-document {
-    border: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .modal-footer {
-    display: none;
-  }
-}
-
-/* Animation */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Loading States */
-.btn-loading {
-  position: relative;
-  color: transparent !important;
-}
-
-.btn-loading::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: 50%;
-  left: 50%;
-  margin-left: -8px;
-  margin-top: -8px;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-  border-right-color: transparent;
-  animation: spinner 0.75s linear infinite;
-}
-
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Contact Info */
-.contact-info {
-  font-size: 0.85rem;
-  color: #6c757d;
-}
-
-/* Hover Effects */
-.table-row-hover:hover {
-  background-color: rgba(50, 31, 219, 0.05) !important;
-  cursor: pointer;
-}
-
-/* Quick Action Buttons */
-.quick-action-btn {
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+  .print-document { border: none; padding: 0; margin: 0; }
+  .modal-footer { display: none; }
 }

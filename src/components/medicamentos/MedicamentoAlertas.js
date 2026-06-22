@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardHeader,
@@ -14,7 +14,8 @@ import {
   CProgress,
   CRow,
   CCol,
-  CButton
+  CButton,
+  CSpinner
 } from '@coreui/react';
 import { 
   cilWarning,
@@ -25,122 +26,41 @@ import {
   cilUser
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { getMedicineAlerts } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 
 const MedicamentoAlertas = () => {
   const [filterStatus, setFilterStatus] = useState('TODAS');
+  const [alertas, setAlertas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Datos quemados de alertas de vencimiento
-  const alertasQuemadas = [
-    {
-      id: 1,
-      LoteNumero: 'LOT-2024-001',
-      Medicamento: 'Paracetamol 500mg',
-      Laboratorio: 'Genfar',
-      FechaVencimiento: '2024-03-15',
-      DiasRestantes: 45,
-      Cantidad: 500,
-      Ubicacion: 'Estante A1',
-      EstadoAlerta: 'CRITICA',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 2,
-      LoteNumero: 'LOT-2024-002',
-      Medicamento: 'Amoxicilina 250mg',
-      Laboratorio: 'Pfizer',
-      FechaVencimiento: '2024-04-20',
-      DiasRestantes: 81,
-      Cantidad: 300,
-      Ubicacion: 'Estante B2',
-      EstadoAlerta: 'PROXIMA',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 3,
-      LoteNumero: 'LOT-2023-045',
-      Medicamento: 'Losartán 50mg',
-      Laboratorio: 'Roche',
-      FechaVencimiento: '2024-02-28',
-      DiasRestantes: 0,
-      Cantidad: 150,
-      Ubicacion: 'Estante C3',
-      EstadoAlerta: 'VENCIDA',
-      EstadoLote: 'RETIRADO'
-    },
-    {
-      id: 4,
-      LoteNumero: 'LOT-2024-003',
-      Medicamento: 'Insulina NPH',
-      Laboratorio: 'Novo Nordisk',
-      FechaVencimiento: '2024-05-10',
-      DiasRestantes: 101,
-      Cantidad: 200,
-      Ubicacion: 'Refrigerador 1',
-      EstadoAlerta: 'SEGURA',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 5,
-      LoteNumero: 'LOT-2024-004',
-      Medicamento: 'Omeprazol 20mg',
-      Laboratorio: 'AstraZeneca',
-      FechaVencimiento: '2024-03-05',
-      DiasRestantes: 35,
-      Cantidad: 400,
-      Ubicacion: 'Estante A2',
-      EstadoAlerta: 'CRITICA',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 6,
-      LoteNumero: 'LOT-2024-005',
-      Medicamento: 'Atorvastatina 40mg',
-      Laboratorio: 'Pfizer',
-      FechaVencimiento: '2024-06-30',
-      DiasRestantes: 152,
-      Cantidad: 250,
-      Ubicacion: 'Estante B1',
-      EstadoAlerta: 'SEGURA',
-      EstadoLote: 'DISPONIBLE'
-    },
-    {
-      id: 7,
-      LoteNumero: 'LOT-2023-050',
-      Medicamento: 'Salbutamol Inhalador',
-      Laboratorio: 'GSK',
-      FechaVencimiento: '2024-01-15',
-      DiasRestantes: -15,
-      Cantidad: 100,
-      Ubicacion: 'Estante D4',
-      EstadoAlerta: 'VENCIDA',
-      EstadoLote: 'RETIRADO'
-    },
-    {
-      id: 8,
-      LoteNumero: 'LOT-2024-006',
-      Medicamento: 'Diclofenaco Gel 1%',
-      Laboratorio: 'Novartis',
-      FechaVencimiento: '2024-04-01',
-      DiasRestantes: 62,
-      Cantidad: 350,
-      Ubicacion: 'Estante C2',
-      EstadoAlerta: 'PROXIMA',
-      EstadoLote: 'DISPONIBLE'
-    }
-  ];
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const response = await getMedicineAlerts();
+        setAlertas(response?.message?.alerts || []);
+      } catch (err) {
+        console.error('Error cargando alertas:', err);
+        setError(err.message || 'Error al cargar alertas de medicamentos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAlerts();
+  }, []);
 
   // Estadísticas
-  const totalAlertas = alertasQuemadas.length;
-  const alertasCriticas = alertasQuemadas.filter(a => a.EstadoAlerta === 'CRITICA').length;
-  const alertasProximas = alertasQuemadas.filter(a => a.EstadoAlerta === 'PROXIMA').length;
-  const alertasVencidas = alertasQuemadas.filter(a => a.EstadoAlerta === 'VENCIDA').length;
-  const alertasSeguras = alertasQuemadas.filter(a => a.EstadoAlerta === 'SEGURA').length;
+  const totalAlertas = alertas.length;
+  const alertasCriticas = alertas.filter(a => a.alert_status === 'CRITICA').length;
+  const alertasProximas = alertas.filter(a => a.alert_status === 'PROXIMA').length;
+  const alertasVencidas = alertas.filter(a => a.alert_status === 'VENCIDA').length;
+  const alertasSeguras = alertas.filter(a => a.alert_status === 'SEGURA').length;
 
   // Filtrar alertas
   const filteredAlertas = filterStatus === 'TODAS' 
-    ? alertasQuemadas 
-    : alertasQuemadas.filter(a => a.EstadoAlerta === filterStatus);
+    ? alertas 
+    : alertas.filter(a => a.alert_status === filterStatus);
 
   // Obtener color según estado de alerta
   const getAlertaColor = (estado) => {
@@ -198,6 +118,19 @@ const MedicamentoAlertas = () => {
   const handleVerDetallesClick = (lote) => {
     console.log('Ver detalles lote:', lote);
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <CSpinner color="primary" />
+        <p className="mt-3">Cargando alertas de medicamentos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <CAlert color="danger">{error}</CAlert>;
+  }
 
   return (
     <div className="medicamento-alertas-container">
@@ -332,41 +265,41 @@ const MedicamentoAlertas = () => {
                   filteredAlertas.map((alerta) => (
                     <CTableRow key={alerta.id}>
                       <CTableDataCell>
-                        <strong>{alerta.LoteNumero}</strong>
+                        <strong>{alerta.lot_number}</strong>
                       </CTableDataCell>
-                      <CTableDataCell>{alerta.Medicamento}</CTableDataCell>
-                      <CTableDataCell>{alerta.Laboratorio}</CTableDataCell>
+                      <CTableDataCell>{alerta.medicine}</CTableDataCell>
+                      <CTableDataCell>{alerta.laboratory || 'N/A'}</CTableDataCell>
                       <CTableDataCell>
-                        {new Date(alerta.FechaVencimiento).toLocaleDateString('es-ES')}
+                        {new Date(alerta.expiration_date).toLocaleDateString('es-ES')}
                       </CTableDataCell>
                       <CTableDataCell>
-                        <strong className={alerta.DiasRestantes < 0 ? 'text-danger' : ''}>
-                          {alerta.DiasRestantes < 0 ? 
-                            `${Math.abs(alerta.DiasRestantes)} días vencido` : 
-                            `${alerta.DiasRestantes} días`
+                        <strong className={alerta.days_remaining < 0 ? 'text-danger' : ''}>
+                          {alerta.days_remaining < 0 ? 
+                            `${Math.abs(alerta.days_remaining)} días vencido` : 
+                            `${alerta.days_remaining} días`
                           }
                         </strong>
                       </CTableDataCell>
                       <CTableDataCell>
-                        <CBadge color={getAlertaColor(alerta.EstadoAlerta)}>
-                          <CIcon icon={getAlertaIcon(alerta.EstadoAlerta)} className="me-1" />
-                          {alerta.EstadoAlerta}
+                        <CBadge color={getAlertaColor(alerta.alert_status)}>
+                          <CIcon icon={getAlertaIcon(alerta.alert_status)} className="me-1" />
+                          {alerta.alert_status}
                         </CBadge>
-                        <div className="small text-muted">{getAlertaText(alerta.DiasRestantes)}</div>
+                        <div className="small text-muted">{getAlertaText(alerta.days_remaining)}</div>
                       </CTableDataCell>
                       <CTableDataCell>
-                        <strong>{alerta.Cantidad}</strong> unidades
+                        <strong>{alerta.total_units}</strong> unidades
                       </CTableDataCell>
-                      <CTableDataCell>{alerta.Ubicacion}</CTableDataCell>
+                      <CTableDataCell>{alerta.warehouse_location || 'Sin asignar'}</CTableDataCell>
                       <CTableDataCell>
                         <div className="d-flex align-items-center">
                           <CProgress 
                             className="flex-grow-1 me-2" 
-                            value={getProgressValue(alerta.DiasRestantes)}
-                            color={getProgressColor(alerta.DiasRestantes)}
+                            value={getProgressValue(alerta.days_remaining)}
+                            color={getProgressColor(alerta.days_remaining)}
                             style={{ height: '8px' }}
                           />
-                          <small className="text-muted">{getProgressValue(alerta.DiasRestantes)}%</small>
+                          <small className="text-muted">{getProgressValue(alerta.days_remaining)}%</small>
                         </div>
                       </CTableDataCell>
                       <CTableDataCell>
@@ -380,7 +313,7 @@ const MedicamentoAlertas = () => {
                           >
                             Detalles
                           </CButton>
-                          {(alerta.EstadoAlerta === 'VENCIDA' || alerta.EstadoAlerta === 'CRITICA') && (
+                          {(alerta.alert_status === 'VENCIDA' || alerta.alert_status === 'CRITICA') && (
                             <CButton
                               color="danger"
                               size="sm"
