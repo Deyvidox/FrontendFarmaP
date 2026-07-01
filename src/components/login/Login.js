@@ -43,7 +43,7 @@ const Login = () => {
         const rolesData = response?.message?.roles || [];
         setRoles(rolesData);
         if (rolesData.length > 0) {
-          const beneficiarioRole = rolesData.find(r => r.name.toLowerCase().includes('beneficiario'));
+          const beneficiarioRole = rolesData.find(r => (r.name || '').toLowerCase().includes('beneficiario'));
           setRegForm((prev) => ({ ...prev, role_id: beneficiarioRole ? beneficiarioRole.id : rolesData[0].id }));
         }
       } catch (err) {
