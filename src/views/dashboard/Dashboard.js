@@ -90,7 +90,13 @@ const Dashboard = () => {
               donor: d.donor_name || 'Desconocido',
               type: d.donation_type || 'General',
               date: new Date(d.created_at).toLocaleDateString('es-ES'),
-              status: d.status ? d.status.toLowerCase() : 'pendiente'
+              status: (() => {
+                const s = d.status ? d.status.toLowerCase() : 'pendiente';
+                if (s === 'pending') return 'pendiente';
+                if (s === 'completed' || s === 'approved') return 'completada';
+                if (s === 'rejected') return 'rechazada';
+                return s;
+              })()
             }))
           setRecentDonations(recent)
         }

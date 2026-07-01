@@ -328,6 +328,17 @@ export const createCommunity = async (data) => {
   })
 }
 
+export const updateCommunity = async (id, data) => {
+  return request(`/catalogs/communities/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export const deleteCommunity = async (id) => {
+  return request(`/catalogs/communities/${id}`, { method: 'DELETE' })
+}
+
 export const getLaboratories = async () => {
   return request('/catalogs/laboratories')
 }

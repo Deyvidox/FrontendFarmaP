@@ -18,9 +18,9 @@ import {
   CModalBody,
   CModalFooter
 } from '@coreui/react';
-import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed, cilPlus, cilMedicalCross, cilTrash } from '@coreui/icons';
+import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed, cilPlus, cilMedicalCross, cilTrash, cilPencil } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { createBeneficiary, getCommunities, createCommunity, getMedicines, addBeneficiaryDisease, saveBeneficiaryMedicines } from 'src/services/api';
+import { createBeneficiary, getCommunities, createCommunity, updateCommunity, deleteCommunity, getMedicines, addBeneficiaryDisease, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 import { useEffect } from 'react';
 import { CBadge } from '@coreui/react';
@@ -50,6 +50,8 @@ const BeneficiaryRegister = () => {
   });
 
   const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [communityModalView, setCommunityModalView] = useState('list'); // 'list', 'create', 'edit'
+  const [editingCommunityId, setEditingCommunityId] = useState(null);
   const [communityForm, setCommunityForm] = useState({ name: '', municipality: '', parish: '', state_region: '' });
   const [savingCommunity, setSavingCommunity] = useState(false);
 
@@ -65,38 +67,75 @@ const BeneficiaryRegister = () => {
   const [selectedMedId, setSelectedMedId] = useState('');
   const [dosisInput, setDosisInput] = useState('');
 
+  const openCommunityModal = () => {
+    setCommunityModalView('list');
+    setShowCommunityModal(true);
+  };
+
   const handleCommunityChange = (e) => {
     setCommunityForm({ ...communityForm, [e.target.name]: e.target.value });
   };
 
-  const handleCreateCommunity = async () => {
+  const handleSaveCommunity = async () => {
     if (!communityForm.name) return;
     setSavingCommunity(true);
     try {
-      const response = await createCommunity({
-         name: communityForm.name,
-         municipality: communityForm.municipality,
-         parish: communityForm.parish,
-         state_region: communityForm.state_region
-      });
-      // reload communities
-      const commResponse = await getCommunities();
-      const updatedComms = commResponse?.message?.communities || [];
-      setComunidades(updatedComms);
-      
-      // select the newly created community if it has an ID returned
-      if (response?.message?.id) {
-         setFormValues(prev => ({ ...prev, comunidad_id: response.message.id }));
+      if (communityModalView === 'create') {
+        const response = await createCommunity({
+           name: communityForm.name,
+           municipality: communityForm.municipality,
+           parish: communityForm.parish,
+           state_region: communityForm.state_region
+        });
+        if (response?.message?.id) {
+           setFormValues(prev => ({ ...prev, comunidad_id: response.message.id }));
+        }
+        setAlert({ show: true, message: 'Comunidad añadida exitosamente', type: 'success' });
+      } else if (communityModalView === 'edit') {
+        await updateCommunity(editingCommunityId, {
+           name: communityForm.name,
+           municipality: communityForm.municipality,
+           parish: communityForm.parish,
+           state_region: communityForm.state_region
+        });
+        setAlert({ show: true, message: 'Comunidad actualizada exitosamente', type: 'success' });
       }
-      setShowCommunityModal(false);
-      setCommunityForm({ name: '', municipality: '', parish: '', state_region: '' });
-      setAlert({ show: true, message: 'Comunidad añadida exitosamente', type: 'success' });
+      
+      const commResponse = await getCommunities();
+      setComunidades(commResponse?.message?.communities || []);
+      setCommunityModalView('list');
     } catch (err) {
       console.error(err);
-      setAlert({ show: true, message: 'Error creando comunidad: ' + (err.message || 'Error desconocido'), type: 'danger' });
-      setShowCommunityModal(false);
+      setAlert({ show: true, message: 'Error guardando comunidad: ' + (err.message || 'Error desconocido'), type: 'danger' });
     } finally {
       setSavingCommunity(false);
+    }
+  };
+
+  const handleEditCommunity = (com) => {
+    setCommunityForm({ 
+      name: com.name || com.ComNombre || '', 
+      municipality: com.municipality || com.ComMunicipio || '', 
+      parish: com.parish || '', 
+      state_region: com.state_region || '' 
+    });
+    setEditingCommunityId(com.id);
+    setCommunityModalView('edit');
+  };
+
+  const handleDeleteCommunity = async (id) => {
+    if(!window.confirm("¿Estás seguro de eliminar esta comunidad?")) return;
+    try {
+      await deleteCommunity(id);
+      const commResponse = await getCommunities();
+      setComunidades(commResponse?.message?.communities || []);
+      setAlert({ show: true, message: 'Comunidad eliminada exitosamente', type: 'success' });
+      if (formValues.comunidad_id === id) {
+        setFormValues(prev => ({ ...prev, comunidad_id: '' }));
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({ show: true, message: 'Error eliminando comunidad: ' + (err.message || 'Error desconocido'), type: 'danger' });
     }
   };
 
@@ -487,7 +526,7 @@ const BeneficiaryRegister = () => {
                           </option>
                         ))}
                       </CFormSelect>
-                      <CButton type="button" color="primary" variant="outline" onClick={() => setShowCommunityModal(true)} title="Añadir nueva comunidad">
+                      <CButton type="button" color="primary" variant="outline" onClick={openCommunityModal} title="Gestionar comunidades">
                         <CIcon icon={cilPlus} />
                       </CButton>
                     </div>
@@ -762,53 +801,111 @@ const BeneficiaryRegister = () => {
         </CCardBody>
       </CCard>
 
-      {/* Modal para Crear Comunidad */}
-      <CModal visible={showCommunityModal} onClose={() => setShowCommunityModal(false)}>
+      {/* Modal para Gestionar Comunidades */}
+      <CModal visible={showCommunityModal} onClose={() => setShowCommunityModal(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>Agregar Nueva Comunidad</CModalTitle>
+          <CModalTitle>Gestionar Comunidades</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <div className="mb-3">
-            <CFormLabel>Nombre de la Comunidad <span className="text-danger">*</span></CFormLabel>
-            <CFormInput 
-              name="name" 
-              value={communityForm.name} 
-              onChange={handleCommunityChange} 
-              placeholder="Ej. Los Pinos"
-              required 
-            />
-          </div>
-          <div className="mb-3">
-            <CFormLabel>Municipio</CFormLabel>
-            <CFormInput 
-              name="municipality" 
-              value={communityForm.municipality} 
-              onChange={handleCommunityChange} 
-              placeholder="Ej. Sucre" 
-            />
-          </div>
-          <div className="mb-3">
-            <CFormLabel>Parroquia</CFormLabel>
-            <CFormInput 
-              name="parish" 
-              value={communityForm.parish} 
-              onChange={handleCommunityChange} 
-              placeholder="Ej. Petare" 
-            />
-          </div>
-          <div className="mb-3">
-            <CFormLabel>Estado / Región</CFormLabel>
-            <CFormInput 
-              name="state_region" 
-              value={communityForm.state_region} 
-              onChange={handleCommunityChange} 
-              placeholder="Ej. Táchira" 
-            />
-          </div>
+          {communityModalView === 'list' && (
+            <div>
+              <div className="d-flex justify-content-end mb-3">
+                <CButton color="success" className="text-white" onClick={() => {
+                  setCommunityForm({ name: '', municipality: '', parish: '', state_region: '' });
+                  setCommunityModalView('create');
+                }}>
+                  <CIcon icon={cilPlus} className="me-2" /> Agregar Comunidad
+                </CButton>
+              </div>
+              <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <table className="table table-hover table-striped border">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Municipio</th>
+                      <th>Parroquia</th>
+                      <th className="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comunidades.length === 0 ? (
+                      <tr><td colSpan="4" className="text-center">No hay comunidades registradas</td></tr>
+                    ) : (
+                      comunidades.map(com => (
+                        <tr key={com.id}>
+                          <td>{com.name || com.ComNombre}</td>
+                          <td>{com.municipality || com.ComMunicipio}</td>
+                          <td>{com.parish || '-'}</td>
+                          <td className="text-center">
+                            <CButton color="info" variant="ghost" size="sm" onClick={() => handleEditCommunity(com)} title="Editar">
+                              <CIcon icon={cilPencil} />
+                            </CButton>
+                            <CButton color="danger" variant="ghost" size="sm" onClick={() => handleDeleteCommunity(com.id)} title="Eliminar">
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {(communityModalView === 'create' || communityModalView === 'edit') && (
+            <div>
+              <div className="mb-3">
+                <CFormLabel>Nombre de la Comunidad <span className="text-danger">*</span></CFormLabel>
+                <CFormInput 
+                  name="name" 
+                  value={communityForm.name} 
+                  onChange={handleCommunityChange} 
+                  placeholder="Ej. Los Pinos"
+                  required 
+                />
+              </div>
+              <div className="mb-3">
+                <CFormLabel>Municipio</CFormLabel>
+                <CFormInput 
+                  name="municipality" 
+                  value={communityForm.municipality} 
+                  onChange={handleCommunityChange} 
+                  placeholder="Ej. Sucre" 
+                />
+              </div>
+              <div className="mb-3">
+                <CFormLabel>Parroquia</CFormLabel>
+                <CFormInput 
+                  name="parish" 
+                  value={communityForm.parish} 
+                  onChange={handleCommunityChange} 
+                  placeholder="Ej. Petare" 
+                />
+              </div>
+              <div className="mb-3">
+                <CFormLabel>Estado / Región</CFormLabel>
+                <CFormInput 
+                  name="state_region" 
+                  value={communityForm.state_region} 
+                  onChange={handleCommunityChange} 
+                  placeholder="Ej. Táchira" 
+                />
+              </div>
+            </div>
+          )}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowCommunityModal(false)}>Cancelar</CButton>
-          <CButton color="primary" onClick={handleCreateCommunity}>Guardar</CButton>
+          {communityModalView === 'list' ? (
+            <CButton color="secondary" onClick={() => setShowCommunityModal(false)}>Cerrar</CButton>
+          ) : (
+            <>
+              <CButton color="secondary" onClick={() => setCommunityModalView('list')}>Cancelar</CButton>
+              <CButton color="primary" onClick={handleSaveCommunity} disabled={savingCommunity}>
+                {savingCommunity ? 'Guardando...' : 'Guardar'}
+              </CButton>
+            </>
+          )}
         </CModalFooter>
       </CModal>
 

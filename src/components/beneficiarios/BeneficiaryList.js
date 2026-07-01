@@ -413,12 +413,23 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                   <CTableDataCell data-label="Teléfono">{beneficiary.phone_personal || 'N/A'}</CTableDataCell>
                   <CTableDataCell data-label="Prioridad">
                     <CBadge color={getPriorityColor(beneficiary.priority_level)}>
-                      {beneficiary.priority_level}
+                      {(() => {
+                        const p = beneficiary.priority_level || '';
+                        if (p.toUpperCase() === 'HIGH') return 'ALTA';
+                        if (p.toUpperCase() === 'MEDIUM') return 'MEDIA';
+                        if (p.toUpperCase() === 'LOW') return 'BAJA';
+                        return p;
+                      })()}
                     </CBadge>
                   </CTableDataCell>
                   <CTableDataCell data-label="Estado">
                     <span className={`beneficiary-status ${(beneficiary.status || 'Active').toLowerCase()}`}>
-                      {beneficiary.status || 'Active'}
+                      {(() => {
+                        const s = beneficiary.status || 'Active';
+                        if (s.toLowerCase() === 'active') return 'Activo';
+                        if (s.toLowerCase() === 'inactive') return 'Inactivo';
+                        return s;
+                      })()}
                     </span>
                   </CTableDataCell>
                   <CTableDataCell data-label="Acciones">
