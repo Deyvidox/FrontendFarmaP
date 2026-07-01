@@ -43,7 +43,8 @@ const Login = () => {
         const rolesData = response?.message?.roles || [];
         setRoles(rolesData);
         if (rolesData.length > 0) {
-          setRegForm((prev) => ({ ...prev, role_id: rolesData[0].id }));
+          const beneficiarioRole = rolesData.find(r => r.name.toLowerCase().includes('beneficiario'));
+          setRegForm((prev) => ({ ...prev, role_id: beneficiarioRole ? beneficiarioRole.id : rolesData[0].id }));
         }
       } catch (err) {
         // Silenciar error de roles — no bloquear el flujo
@@ -87,7 +88,7 @@ const Login = () => {
     try {
       await registerUser(regForm);
       setRegSuccess('Usuario registrado exitosamente. Ya puedes iniciar sesión.');
-      setRegForm({
+      setRegForm((prev) => ({
         first_name: '',
         last_name: '',
         username: '',
@@ -97,8 +98,8 @@ const Login = () => {
         date_of_birth: '',
         phone: '',
         address: '',
-        role_id: roles.length > 0 ? roles[0].id : '',
-      });
+        role_id: prev.role_id,
+      }));
       // Cambiar al login después de 2 segundos
       setTimeout(() => {
         setActiveTab('login');
@@ -483,31 +484,7 @@ const Login = () => {
                       </div>
                     </div>
 
-                    {/* Rol */}
-                    {roles.length > 0 && (
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="reg-role">Rol</label>
-                        <div className="input-wrapper">
-                          <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                          </svg>
-                          <select
-                            id="reg-role"
-                            className="form-input form-select"
-                            name="role_id"
-                            value={regForm.role_id}
-                            onChange={handleRegChange}
-                            required
-                          >
-                            {roles.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    )}
+
 
                     {regError && (
                       <div className="error-alert" role="alert" id="register-error">
