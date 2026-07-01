@@ -1,81 +1,83 @@
 import React, { useEffect, useState } from 'react';
 import {
-  CCard,
-  CRow,
-  CCol,
-  CCardHeader,
-  CCardBody,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-  CBadge,
-  CInputGroup,
-  CFormInput,
-  CInputGroupText,
-  CPagination,
-  CPaginationItem,
-  CButton,
-  CDropdown,
-  CDropdownToggle,
-  CDropdownMenu,
-  CDropdownItem
+  CCard, CRow, CCol, CCardHeader, CCardBody, CTable, CTableHead, CTableRow,
+  CTableHeaderCell, CTableBody, CTableDataCell, CBadge, CInputGroup, CFormInput,
+  CInputGroupText, CPagination, CPaginationItem, CButton, CDropdown,
+  CDropdownToggle, CDropdownMenu, CDropdownItem, CModal, CModalHeader,
+  CModalTitle, CModalBody, CModalFooter, CForm, CFormLabel, CFormSelect, CSpinner
 } from '@coreui/react';
 import { 
-  cilMedicalCross, 
-  cilSearch, 
-  cilPencil, 
-  cilTrash,
-  cilFilter,
-  cilSortAscending,
-  cilUser
+  cilMedicalCross, cilSearch, cilPencil, cilTrash, cilFilter, 
+  cilSortAscending, cilUser
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { getMedicines, getMedicineCategories } from 'src/services/api';
+import { 
+  getMedicines, getMedicineCategories, getMedicineById, updateMedicine, deleteMedicine,
+  getLaboratories, getPharmaceuticalForms
+} from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
+import HelpButton from '../common/HelpButton';
 
 const MedicamentoCatalogo = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [filterCategory, setFilterCategory] = useState('TODAS');
   const [sortBy, setSortBy] = useState('nombre');
+  
   const [medicamentos, setMedicamentos] = useState([]);
   const [categorias, setCategorias] = useState(['TODAS']);
+  const [laboratories, setLaboratories] = useState([]);
+  const [pharmaceuticalForms, setPharmaceuticalForms] = useState([]);
+  const [categories, setCategories] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
+  // Modals state
+  const [viewModal, setViewModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedMed, setSelectedMed] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [editForm, setEditForm] = useState({});
+
   const itemsPerPage = 8;
 
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [medsRes, catsRes, labRes, formRes] = await Promise.all([
+        getMedicines(),
+        getMedicineCategories(),
+        getLaboratories(),
+        getPharmaceuticalForms()
+      ]);
+      
+      setMedicamentos(medsRes?.message?.medicines || []);
+      
+      const catList = ['TODAS'];
+      const rawCategories = Array.isArray(catsRes.message) ? catsRes.message : (catsRes.message?.categories || []);
+      rawCategories.forEach(c => {
+        if (c.name) catList.push(c.name);
+      });
+      setCategories(rawCategories);
+      setCategorias(catList);
+      
+      setLaboratories(Array.isArray(labRes.message) ? labRes.message : (labRes.message?.laboratories || []));
+      setPharmaceuticalForms(Array.isArray(formRes.message) ? formRes.message : (formRes.message?.pharmaceuticalForms || []));
+      
+    } catch (err) {
+      console.error('Error cargando catálogo:', err);
+      setError(err.message || 'Error al cargar catálogo de medicamentos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const medsRes = await getMedicines();
-        const catsRes = await getMedicineCategories();
-        
-        setMedicamentos(medsRes?.message?.medicines || []);
-        
-        const catList = ['TODAS'];
-        if (catsRes?.message) {
-          // Si catsRes es array u objeto listamos sus nombres
-          const cats = Array.isArray(catsRes.message) ? catsRes.message : (catsRes.message.categories || []);
-          cats.forEach(c => {
-            if (c.name) catList.push(c.name);
-          });
-        }
-        setCategorias(catList);
-      } catch (err) {
-        console.error('Error cargando catálogo:', err);
-        setError(err.message || 'Error al cargar catálogo de medicamentos');
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
 
-  // Filtrar y ordenar
   let filteredMedicamentos = medicamentos.filter(med => {
     const matchesSearch = 
       (med.commercial_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,7 +90,6 @@ const MedicamentoCatalogo = () => {
     return matchesSearch && matchesCategory;
   });
 
-  // Ordenar
   filteredMedicamentos.sort((a, b) => {
     switch(sortBy) {
       case 'nombre': return (a.commercial_name || '').localeCompare(b.commercial_name || '');
@@ -98,13 +99,11 @@ const MedicamentoCatalogo = () => {
     }
   });
 
-  // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentMedicamentos = filteredMedicamentos.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredMedicamentos.length / itemsPerPage);
 
-  // Estados visuales
   const getStatusBadge = (status) => {
     if (!status) return <CBadge color="secondary">N/A</CBadge>;
     const statusConfig = {
@@ -112,239 +111,404 @@ const MedicamentoCatalogo = () => {
       'INACTIVE': { color: 'danger', text: 'Inactivo' },
       'DISCONTINUED': { color: 'warning', text: 'Descontinuado' }
     };
-    
     const config = statusConfig[status.toUpperCase()] || { color: 'secondary', text: status };
     return <CBadge color={config.color}>{config.text}</CBadge>;
   };
 
   const getRecetaBadge = (requiresPrescription) => {
-    return requiresPrescription ? 
-      <CBadge color="danger">Con Receta</CBadge> : 
-      <CBadge color="success">Sin Receta</CBadge>;
+    return requiresPrescription ? <CBadge color="danger">Con Receta</CBadge> : <CBadge color="success">Sin Receta</CBadge>;
   };
 
   const getCategoryBadge = (categoria) => {
     return <CBadge color="info">{categoria || 'Sin categoría'}</CBadge>;
   };
 
-  // Handlers
-  const handleEditClick = (medicamento) => {
-    console.log('Editar medicamento:', medicamento);
+  const handleViewClick = async (med) => {
+    try {
+      const res = await getMedicineById(med.id);
+      setSelectedMed(res.message.medicine);
+      setViewModal(true);
+    } catch (err) {
+      alert('Error cargando detalles del medicamento');
+    }
   };
 
-  const handleDeleteClick = (medicamento) => {
-    console.log('Eliminar medicamento:', medicamento);
+  const handleEditClick = async (med) => {
+    try {
+      const res = await getMedicineById(med.id);
+      const data = res.message.medicine;
+      setSelectedMed(data);
+      setEditForm({
+        national_code: data.national_code || '',
+        commercial_name: data.commercial_name || '',
+        generic_name: data.generic_name || '',
+        active_principle: data.active_principle || '',
+        concentration: data.concentration || '',
+        pharmaceutical_form_id: data.pharmaceutical_form_id || '',
+        administration_route: data.administration_route || '',
+        laboratory_id: data.laboratory_id || '',
+        category_id: data.category_id || '',
+        sanitary_registration: data.sanitary_registration || '',
+        requires_prescription: data.requires_prescription || false,
+        storage_conditions: data.storage_conditions || '',
+        storage_temperature: data.storage_temperature || '',
+        unit_measure: data.unit_measure || '',
+        units_per_presentation: data.units_per_presentation || 1
+      });
+      setEditModal(true);
+    } catch (err) {
+      alert('Error cargando datos para editar');
+    }
   };
 
-  const handleViewClick = (medicamento) => {
-    console.log('Ver medicamento:', medicamento);
+  const handleDeleteClick = (med) => {
+    setSelectedMed(med);
+    setDeleteModal(true);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await updateMedicine(selectedMed.id, editForm);
+      setEditModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.message || 'Error actualizando medicamento');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    setActionLoading(true);
+    try {
+      await deleteMedicine(selectedMed.id);
+      setDeleteModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.message || 'Error eliminando medicamento');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
-    <CCard className="medicamento-card">
-      <CCardHeader className="medicamento-card-header">
-        <div className="d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">
-            <CIcon icon={cilMedicalCross} className="me-2" />
-            Catálogo de Medicamentos
-          </h5>
-          <div className="d-flex gap-2">
+    <>
+      <CCard className="medicamento-card">
+        <CCardHeader className="medicamento-card-header">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">
+              <CIcon icon={cilMedicalCross} className="me-2" />
+              Catálogo de Medicamentos
+              <HelpButton title="Manual de Usuario – Catálogo de Medicamentos">
+                <div>
+                  <p>Muestra el registro base de todos los medicamentos en el sistema.</p>
+                  <h6>Lista del catálogo</h6>
+                  <div className="card p-3 mb-3 bg-light">
+                    <div className="row small">
+                      <div className="col-3 fw-bold">(1) Medicamento</div>
+                      <div className="col-2 fw-bold">(2) Código Nac.</div>
+                      <div className="col-3 fw-bold">(3) Laboratorio / Cat.</div>
+                      <div className="col-2 fw-bold">(4) Receta</div>
+                      <div className="col-2 fw-bold">(5) Acciones</div>
+                    </div>
+                    <hr/>
+                    <div className="row small text-muted">
+                      <div className="col-3">Paracetamol 500mg</div>
+                      <div className="col-2">N/A</div>
+                      <div className="col-3">Genfar / Analgésicos</div>
+                      <div className="col-2">No</div>
+                      <div className="col-2">👁 ✏ 🗑</div>
+                    </div>
+                  </div>
+                  <ol>
+                    <li><strong>Medicamento:</strong> Nombre comercial y concentración.</li>
+                    <li><strong>Código Nacional:</strong> Identificador oficial si existe.</li>
+                    <li><strong>Lab / Categoría:</strong> Fabricante y grupo terapéutico.</li>
+                    <li><strong>Receta:</strong> Indica si requiere récipe médico.</li>
+                    <li><strong>Acciones:</strong>
+                      <ul>
+                        <li><strong>Ver:</strong> Ficha técnica completa.</li>
+                        <li><strong>Editar:</strong> Modificar propiedades.</li>
+                        <li><strong>Eliminar:</strong> Lo remueve del catálogo.</li>
+                      </ul>
+                    </li>
+                  </ol>
+                  <p className="text-muted"><em>Nota: Esta pantalla no muestra inventario, solo la información técnica.</em></p>
+                </div>
+              </HelpButton>
+            </h5>
             <CButton color="primary" size="sm">
               <CIcon icon={cilMedicalCross} className="me-1" />
               Nuevo Medicamento
             </CButton>
           </div>
-        </div>
-      </CCardHeader>
-      <CCardBody className="medicamento-card-body">
-        {error && <div className="alert alert-danger mb-4">{error}</div>}
+        </CCardHeader>
+        <CCardBody className="medicamento-card-body">
+          {error && <div className="alert alert-danger mb-4">{error}</div>}
 
-        {/* Filtros y búsqueda */}
-        <div className="medicamento-filters mb-4">
-          <CRow className="g-3">
-            <CCol md={6}>
-              <CInputGroup>
-                <CInputGroupText>
-                  <CIcon icon={cilSearch} />
-                </CInputGroupText>
-                <CFormInput
-                  placeholder="Buscar por nombre, código o principio activo..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="medicamento-form-input"
-                />
-              </CInputGroup>
-            </CCol>
-            <CCol md={3}>
-              <CDropdown>
-                <CDropdownToggle color="secondary" className="w-100">
-                  <CIcon icon={cilFilter} className="me-2" />
-                  Categoría: {filterCategory}
-                </CDropdownToggle>
-                <CDropdownMenu className="w-100">
-                  {categorias.map((cat, index) => (
-                    <CDropdownItem 
-                      key={index} 
-                      onClick={() => {
-                        setFilterCategory(cat);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      {cat}
-                    </CDropdownItem>
-                  ))}
-                </CDropdownMenu>
-              </CDropdown>
-            </CCol>
-            <CCol md={3}>
-              <CDropdown>
-                <CDropdownToggle color="secondary" className="w-100">
-                  <CIcon icon={cilSortAscending} className="me-2" />
-                  Ordenar por
-                </CDropdownToggle>
-                <CDropdownMenu className="w-100">
-                  <CDropdownItem onClick={() => setSortBy('nombre')}>Nombre</CDropdownItem>
-                  <CDropdownItem onClick={() => setSortBy('categoria')}>Categoría</CDropdownItem>
-                  <CDropdownItem onClick={() => setSortBy('fecha')}>Fecha</CDropdownItem>
-                </CDropdownMenu>
-              </CDropdown>
-            </CCol>
-          </CRow>
-        </div>
+          <div className="medicamento-filters mb-4">
+            <CRow className="g-3">
+              <CCol md={6}>
+                <CInputGroup>
+                  <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
+                  <CFormInput
+                    placeholder="Buscar por nombre, código o principio activo..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                    className="medicamento-form-input"
+                  />
+                  {searchTerm && (
+                    <CButton color="secondary" variant="outline" onClick={() => { setSearchTerm(''); setCurrentPage(1); }}>&#x2715;</CButton>
+                  )}
+                </CInputGroup>
+                {searchTerm && <div className="text-muted small mt-1">{filteredMedicamentos.length} resultado(s) de {medicamentos.length} total</div>}
+              </CCol>
+              <CCol md={3}>
+                <CDropdown>
+                  <CDropdownToggle color="secondary" className="w-100">
+                    <CIcon icon={cilFilter} className="me-2" />
+                    Categoría: {filterCategory}
+                  </CDropdownToggle>
+                  <CDropdownMenu className="w-100">
+                    {categorias.map((cat, index) => (
+                      <CDropdownItem key={index} onClick={() => { setFilterCategory(cat); setCurrentPage(1); }}>
+                        {cat}
+                      </CDropdownItem>
+                    ))}
+                  </CDropdownMenu>
+                </CDropdown>
+              </CCol>
+              <CCol md={3}>
+                <CDropdown>
+                  <CDropdownToggle color="secondary" className="w-100">
+                    <CIcon icon={cilSortAscending} className="me-2" />
+                    Ordenar por
+                  </CDropdownToggle>
+                  <CDropdownMenu className="w-100">
+                    <CDropdownItem onClick={() => setSortBy('nombre')}>Nombre</CDropdownItem>
+                    <CDropdownItem onClick={() => setSortBy('categoria')}>Categoría</CDropdownItem>
+                    <CDropdownItem onClick={() => setSortBy('fecha')}>Fecha</CDropdownItem>
+                  </CDropdownMenu>
+                </CDropdown>
+              </CCol>
+            </CRow>
+          </div>
 
-        {/* Tabla de medicamentos */}
-        <div className="table-responsive">
-          <CTable hover responsive className="medicamento-table">
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Código</CTableHeaderCell>
-                <CTableHeaderCell>Nombre Comercial</CTableHeaderCell>
-                <CTableHeaderCell>Nombre Genérico</CTableHeaderCell>
-                <CTableHeaderCell>Principio Activo</CTableHeaderCell>
-                <CTableHeaderCell>Concentración</CTableHeaderCell>
-                <CTableHeaderCell>Forma</CTableHeaderCell>
-                <CTableHeaderCell>Laboratorio</CTableHeaderCell>
-                <CTableHeaderCell>Categoría</CTableHeaderCell>
-                <CTableHeaderCell>Receta</CTableHeaderCell>
-                <CTableHeaderCell>Estado</CTableHeaderCell>
-                <CTableHeaderCell className="text-center">Acciones</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {loading ? (
+          <div className="table-responsive">
+            <CTable hover responsive className="medicamento-table">
+              <CTableHead>
                 <CTableRow>
-                  <CTableDataCell colSpan="11" className="text-center py-5">
-                    Cargando medicamentos del catálogo...
-                  </CTableDataCell>
+                  <CTableHeaderCell>Código</CTableHeaderCell>
+                  <CTableHeaderCell>Nombre Comercial</CTableHeaderCell>
+                  <CTableHeaderCell>Principio Activo</CTableHeaderCell>
+                  <CTableHeaderCell>Concentración</CTableHeaderCell>
+                  <CTableHeaderCell>Laboratorio</CTableHeaderCell>
+                  <CTableHeaderCell>Categoría</CTableHeaderCell>
+                  <CTableHeaderCell>Estado</CTableHeaderCell>
+                  <CTableHeaderCell className="text-center">Acciones</CTableHeaderCell>
                 </CTableRow>
-              ) : currentMedicamentos.length > 0 ? (
-                currentMedicamentos.map((med) => (
-                  <CTableRow key={med.id}>
-                    <CTableDataCell>
-                      <strong>{med.national_code || 'N/A'}</strong>
+              </CTableHead>
+              <CTableBody>
+                {loading ? (
+                  <CTableRow>
+                    <CTableDataCell colSpan="8" className="text-center py-5">
+                      Cargando medicamentos...
                     </CTableDataCell>
-                    <CTableDataCell>
-                      <strong>{med.commercial_name}</strong>
-                    </CTableDataCell>
-                    <CTableDataCell>{med.generic_name || 'N/A'}</CTableDataCell>
-                    <CTableDataCell>{med.active_principle || 'N/A'}</CTableDataCell>
-                    <CTableDataCell>{med.concentration || 'N/A'}</CTableDataCell>
-                    <CTableDataCell>{med.pharmaceutical_form || 'N/A'}</CTableDataCell>
-                    <CTableDataCell>{med.laboratory || 'N/A'}</CTableDataCell>
-                    <CTableDataCell>{getCategoryBadge(med.category)}</CTableDataCell>
-                    <CTableDataCell>{getRecetaBadge(med.requires_prescription)}</CTableDataCell>
-                    <CTableDataCell>{getStatusBadge(med.status)}</CTableDataCell>
-                    <CTableDataCell>
-                      <div className="d-flex gap-2 justify-content-center">
-                        <CButton
-                          color="primary"
-                          size="sm"
-                          className="medicamento-action-btn medicamento-action-btn-primary"
-                          onClick={() => handleViewClick(med)}
-                          title="Ver detalles"
-                        >
-                          <CIcon icon={cilUser} />
-                        </CButton>
-                        <CButton
-                          color="warning"
-                          size="sm"
-                          className="medicamento-action-btn medicamento-action-btn-secondary"
-                          onClick={() => handleEditClick(med)}
-                          title="Editar"
-                        >
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                        <CButton
-                          color="danger"
-                          size="sm"
-                          className="medicamento-action-btn medicamento-action-btn-secondary"
-                          onClick={() => handleDeleteClick(med)}
-                          title="Eliminar"
-                        >
-                          <CIcon icon={cilTrash} />
-                        </CButton>
+                  </CTableRow>
+                ) : currentMedicamentos.length > 0 ? (
+                  currentMedicamentos.map((med) => (
+                    <CTableRow key={med.id}>
+                      <CTableDataCell><strong>{med.national_code || 'N/A'}</strong></CTableDataCell>
+                      <CTableDataCell><strong>{med.commercial_name}</strong></CTableDataCell>
+                      <CTableDataCell>{med.active_principle || 'N/A'}</CTableDataCell>
+                      <CTableDataCell>{med.concentration || 'N/A'}</CTableDataCell>
+                      <CTableDataCell>{med.laboratory || 'N/A'}</CTableDataCell>
+                      <CTableDataCell>{getCategoryBadge(med.category)}</CTableDataCell>
+                      <CTableDataCell>{getStatusBadge(med.status)}</CTableDataCell>
+                      <CTableDataCell>
+                        <div className="d-flex gap-2 justify-content-center">
+                          <CButton color="info" variant="outline" size="sm" onClick={() => handleViewClick(med)} title="Ver detalles">
+                            <CIcon icon={cilUser} />
+                          </CButton>
+                          <CButton color="warning" variant="outline" size="sm" onClick={() => handleEditClick(med)} title="Editar">
+                            <CIcon icon={cilPencil} />
+                          </CButton>
+                          <CButton color="danger" variant="outline" size="sm" onClick={() => handleDeleteClick(med)} title="Eliminar">
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </div>
+                      </CTableDataCell>
+                    </CTableRow>
+                  ))
+                ) : (
+                  <CTableRow>
+                    <CTableDataCell colSpan="8" className="text-center py-5">
+                      <div className="medicamento-empty-state">
+                        <CIcon icon={cilMedicalCross} className="medicamento-empty-state-icon" />
+                        <h5>No se encontraron medicamentos</h5>
                       </div>
                     </CTableDataCell>
                   </CTableRow>
-                ))
-              ) : (
-                <CTableRow>
-                  <CTableDataCell colSpan="11" className="text-center py-5">
-                    <div className="medicamento-empty-state">
-                      <CIcon icon={cilMedicalCross} className="medicamento-empty-state-icon" />
-                      <h5>No se encontraron medicamentos</h5>
-                      <p className="text-muted">
-                        {searchTerm || filterCategory !== 'TODAS' 
-                          ? 'No hay medicamentos que coincidan con tu búsqueda' 
-                          : 'No hay medicamentos registrados en el sistema'
-                        }
-                      </p>
-                    </div>
-                  </CTableDataCell>
-                </CTableRow>
-              )}
-            </CTableBody>
-          </CTable>
-        </div>
-
-        {/* Paginación */}
-        {!loading && totalPages > 1 && (
-          <div className="d-flex justify-content-between align-items-center mt-4">
-            <div className="text-muted">
-              Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredMedicamentos.length)} de {filteredMedicamentos.length} medicamentos
-            </div>
-            <CPagination>
-              <CPaginationItem
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
-              >
-                Anterior
-              </CPaginationItem>
-              
-              {[...Array(totalPages)].map((_, index) => (
-                <CPaginationItem
-                  key={index + 1}
-                  active={currentPage === index + 1}
-                  onClick={() => setCurrentPage(index + 1)}
-                >
-                  {index + 1}
-                </CPaginationItem>
-              ))}
-              
-              <CPaginationItem
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Siguiente
-              </CPaginationItem>
-            </CPagination>
+                )}
+              </CTableBody>
+            </CTable>
           </div>
-        )}
-      </CCardBody>
-    </CCard>
+
+          {!loading && totalPages > 1 && (
+            <div className="d-flex justify-content-between align-items-center mt-4">
+              <div className="text-muted">
+                Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredMedicamentos.length)} de {filteredMedicamentos.length} medicamentos
+              </div>
+              <CPagination>
+                <CPaginationItem disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
+                  Anterior
+                </CPaginationItem>
+                {[...Array(totalPages)].map((_, index) => (
+                  <CPaginationItem key={index + 1} active={currentPage === index + 1} onClick={() => setCurrentPage(index + 1)}>
+                    {index + 1}
+                  </CPaginationItem>
+                ))}
+                <CPaginationItem disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
+                  Siguiente
+                </CPaginationItem>
+              </CPagination>
+            </div>
+          )}
+        </CCardBody>
+      </CCard>
+
+      {/* Modal Ver Detalles */}
+      <CModal visible={viewModal} onClose={() => setViewModal(false)} size="lg">
+        <CModalHeader closeButton>
+          <CModalTitle>Detalles del Medicamento</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {selectedMed && (
+            <CRow>
+              <CCol md={6} className="mb-3">
+                <strong>Nombre Comercial:</strong> {selectedMed.commercial_name}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Nombre Genérico:</strong> {selectedMed.generic_name}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Código Nacional:</strong> {selectedMed.national_code}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Principio Activo:</strong> {selectedMed.active_principle}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Concentración:</strong> {selectedMed.concentration}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Laboratorio:</strong> {selectedMed.laboratory}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Categoría:</strong> {selectedMed.category}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Forma Farmacéutica:</strong> {selectedMed.pharmaceutical_form}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Registro Sanitario:</strong> {selectedMed.sanitary_registration}
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <strong>Requiere Receta:</strong> {selectedMed.requires_prescription ? 'Sí' : 'No'}
+              </CCol>
+            </CRow>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setViewModal(false)}>Cerrar</CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* Modal Editar */}
+      <CModal visible={editModal} onClose={() => setEditModal(false)} size="lg">
+        <CModalHeader closeButton>
+          <CModalTitle>Editar Medicamento</CModalTitle>
+        </CModalHeader>
+        <CForm onSubmit={submitEdit}>
+          <CModalBody>
+            <CRow>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Nombre Comercial</CFormLabel>
+                <CFormInput name="commercial_name" value={editForm.commercial_name || ''} onChange={handleEditChange} required />
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Nombre Genérico</CFormLabel>
+                <CFormInput name="generic_name" value={editForm.generic_name || ''} onChange={handleEditChange} />
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Principio Activo</CFormLabel>
+                <CFormInput name="active_principle" value={editForm.active_principle || ''} onChange={handleEditChange} />
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Concentración</CFormLabel>
+                <CFormInput name="concentration" value={editForm.concentration || ''} onChange={handleEditChange} />
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Categoría</CFormLabel>
+                <CFormSelect name="category_id" value={editForm.category_id || ''} onChange={handleEditChange} required>
+                  <option value="">Seleccione...</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </CFormSelect>
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Laboratorio</CFormLabel>
+                <CFormSelect name="laboratory_id" value={editForm.laboratory_id || ''} onChange={handleEditChange} required>
+                  <option value="">Seleccione...</option>
+                  {laboratories.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </CFormSelect>
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Forma Farmacéutica</CFormLabel>
+                <CFormSelect name="pharmaceutical_form_id" value={editForm.pharmaceutical_form_id || ''} onChange={handleEditChange} required>
+                  <option value="">Seleccione...</option>
+                  {pharmaceuticalForms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </CFormSelect>
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Código Nacional</CFormLabel>
+                <CFormInput name="national_code" value={editForm.national_code || ''} onChange={handleEditChange} />
+              </CCol>
+            </CRow>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setEditModal(false)}>Cancelar</CButton>
+            <CButton color="primary" type="submit" disabled={actionLoading}>
+              {actionLoading ? <CSpinner size="sm"/> : 'Guardar Cambios'}
+            </CButton>
+          </CModalFooter>
+        </CForm>
+      </CModal>
+
+      {/* Modal Eliminar */}
+      <CModal visible={deleteModal} onClose={() => setDeleteModal(false)}>
+        <CModalHeader closeButton>
+          <CModalTitle>Confirmar Eliminación</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          ¿Está seguro que desea eliminar el medicamento <strong>{selectedMed?.commercial_name}</strong>? Esta acción lo desactivará en el sistema.
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setDeleteModal(false)}>Cancelar</CButton>
+          <CButton color="danger" onClick={confirmDelete} disabled={actionLoading}>
+            {actionLoading ? <CSpinner size="sm"/> : 'Eliminar'}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </>
   );
 };
 

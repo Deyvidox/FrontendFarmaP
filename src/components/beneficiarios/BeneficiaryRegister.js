@@ -18,11 +18,14 @@ import {
   CModalBody,
   CModalFooter
 } from '@coreui/react';
-import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed, cilPlus } from '@coreui/icons';
+import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed, cilPlus, cilMedicalCross, cilTrash } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { createBeneficiary, getCommunities, createCommunity } from 'src/services/api';
+import { createBeneficiary, getCommunities, createCommunity, getMedicines, addBeneficiaryDisease, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 import { useEffect } from 'react';
+import { CBadge } from '@coreui/react';
+
+import HelpButton from '../common/HelpButton';
 
 const BeneficiaryRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' });
@@ -41,7 +44,7 @@ const BeneficiaryRegister = () => {
     contacto_emergencia: '',
     telefono_emergencia: '',
     personas_dependientes: 0,
-    ingresos_mensuales: '',
+    profesion: '',
     nivel_prioridad: 'MEDIA',
     observaciones: '',
   });
@@ -49,6 +52,18 @@ const BeneficiaryRegister = () => {
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [communityForm, setCommunityForm] = useState({ name: '', municipality: '', parish: '', state_region: '' });
   const [savingCommunity, setSavingCommunity] = useState(false);
+
+  // Estados para Enfermedades (texto libre)
+  const [enfermedades, setEnfermedades] = useState([]);
+  const [nuevaEnfermedad, setNuevaEnfermedad] = useState('');
+  const [estadoEnfermedad, setEstadoEnfermedad] = useState('ESTABLE');
+  const [obsEnfermedad, setObsEnfermedad] = useState('');
+
+  // Estados para Medicamentos (catálogo)
+  const [medicinesCatalog, setMedicinesCatalog] = useState([]);
+  const [medicamentos, setMedicamentos] = useState([]);
+  const [selectedMedId, setSelectedMedId] = useState('');
+  const [dosisInput, setDosisInput] = useState('');
 
   const handleCommunityChange = (e) => {
     setCommunityForm({ ...communityForm, [e.target.name]: e.target.value });
@@ -85,16 +100,21 @@ const BeneficiaryRegister = () => {
     }
   };
 
+  // Cargar comunidades y medicamentos
   useEffect(() => {
-    const loadComunidades = async () => {
+    const fetchCatalogs = async () => {
       try {
-        const response = await getCommunities();
-        setComunidades(response?.message?.communities || []);
+        const [commRes, medRes] = await Promise.all([
+          getCommunities(),
+          getMedicines(),
+        ]);
+        setComunidades(commRes?.message?.communities || []);
+        setMedicinesCatalog(medRes?.message?.medicines || []);
       } catch (err) {
-        console.error('Error cargando comunidades:', err);
+        console.error('Error cargando catálogos:', err);
       }
     };
-    loadComunidades();
+    fetchCatalogs();
   }, []);
 
   const handleChange = (e) => {
@@ -124,16 +144,48 @@ const BeneficiaryRegister = () => {
         emergency_contact: formValues.contacto_emergencia || null,
         emergency_phone: formValues.telefono_emergencia || null,
         dependents: formValues.personas_dependientes ? parseInt(formValues.personas_dependientes) : 0,
-        monthly_income: formValues.ingresos_mensuales ? parseFloat(formValues.ingresos_mensuales) : null,
+        occupation: formValues.profesion || null,
         priority_level: formValues.nivel_prioridad === 'ALTA' ? 'High' : (formValues.nivel_prioridad === 'BAJA' ? 'Low' : 'Medium'),
       };
 
-      await createBeneficiary(requestData);
+      const res = await createBeneficiary(requestData);
+      
+      const newId = res?.message?.beneficiary?.id || res?.message?.id;
+
+      // Guardar enfermedades (texto libre)
+      for (const enf of enfermedades) {
+        try {
+          await addBeneficiaryDisease(newId, {
+            disease_id: enf.nombre,
+            current_status: enf.estado || null,
+            observations: enf.observaciones || null,
+          });
+        } catch (diseaseErr) {
+          console.error('Error guardando enfermedad:', diseaseErr);
+        }
+      }
+
+      // Guardar medicamentos
+      if (medicamentos.length > 0) {
+        try {
+          await saveBeneficiaryMedicines(newId, {
+            medicines: medicamentos.map(m => ({
+              medicine_id: m.medicine_id,
+              dosage_instructions: m.dosis || ''
+            }))
+          });
+        } catch (medErr) {
+          console.error('Error guardando medicamentos:', medErr);
+        }
+      }
+
       setAlert({
         show: true,
-        message: 'Beneficiario registrado exitosamente',
+        message: 'Beneficiario registrado exitosamente.',
         type: 'success',
       });
+      
+      // Limpiar todo
       setFormValues({
         cedula: '',
         nombres: '',
@@ -147,10 +199,12 @@ const BeneficiaryRegister = () => {
         contacto_emergencia: '',
         telefono_emergencia: '',
         personas_dependientes: 0,
-        ingresos_mensuales: '',
+        profesion: '',
         nivel_prioridad: 'MEDIA',
         observaciones: '',
       });
+      setEnfermedades([]);
+      setMedicamentos([]);
     } catch (err) {
       console.error('Error registrando beneficiario:', err);
       setAlert({ show: true, message: err.message || 'Error al registrar beneficiario', type: 'danger' });
@@ -174,20 +228,86 @@ const BeneficiaryRegister = () => {
       contacto_emergencia: '',
       telefono_emergencia: '',
       personas_dependientes: 0,
-      ingresos_mensuales: '',
+      profesion: '',
       nivel_prioridad: 'MEDIA',
       observaciones: '',
     });
+    setEnfermedades([]);
+    setMedicamentos([]);
+    setNuevaEnfermedad('');
+    setEstadoEnfermedad('ESTABLE');
+    setObsEnfermedad('');
+    setSelectedMedId('');
+    setDosisInput('');
+  };
+
+  const handleAddEnfermedad = () => {
+    if (!nuevaEnfermedad.trim()) return;
+    setEnfermedades([...enfermedades, {
+      nombre: nuevaEnfermedad.trim(),
+      estado: estadoEnfermedad,
+      observaciones: obsEnfermedad.trim()
+    }]);
+    setNuevaEnfermedad('');
+    setEstadoEnfermedad('ESTABLE');
+    setObsEnfermedad('');
+  };
+
+  const handleRemoveEnfermedad = (index) => {
+    setEnfermedades(enfermedades.filter((_, i) => i !== index));
+  };
+
+  const handleAddMedicamento = () => {
+    if (!selectedMedId) return;
+    if (medicamentos.find(m => m.medicine_id === selectedMedId)) return;
+    const medObj = medicinesCatalog.find(m => m.id === selectedMedId);
+    setMedicamentos([...medicamentos, {
+      medicine_id: medObj.id,
+      nombre_comercial: medObj.commercial_name,
+      nombre_generico: medObj.generic_name,
+      dosis: dosisInput.trim()
+    }]);
+    setSelectedMedId('');
+    setDosisInput('');
+  };
+
+  const handleRemoveMedicamento = (medicineId) => {
+    setMedicamentos(medicamentos.filter(m => m.medicine_id !== medicineId));
   };
 
 
   return (
     <div className="beneficiary-register-container">
       <CCard className="beneficiary-register-card">
-        <CCardHeader>
+        <CCardHeader className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">
             <CIcon icon={cilUser} className="me-2" />
             Registrar Beneficiario
+            <HelpButton title="Manual de Usuario – Registrar Beneficiario">
+              <div>
+                <p>Agrega un nuevo beneficiario al sistema.</p>
+                <h6>Formulario de registro</h6>
+                <div className="card p-3 mb-3 bg-light">
+                  <div className="row g-2 small">
+                    <div className="col-md-6"><span className="fw-bold">(1) Cédula *</span><br/>V-12345678</div>
+                    <div className="col-md-6"><span className="fw-bold">(2) Nombres *</span><br/>María</div>
+                    <div className="col-md-6"><span className="fw-bold">(3) Apellidos *</span><br/>Gómez</div>
+                    <div className="col-md-6"><span className="fw-bold">(4) Comunidad *</span><br/>Seleccione...</div>
+                    <div className="col-md-6"><span className="fw-bold">(5) Prioridad *</span><br/>ALTA / MEDIA / BAJA</div>
+                    <div className="col-md-6"><span className="fw-bold">(6) Teléfono</span><br/>+58 414 1234567</div>
+                  </div>
+                </div>
+                <ol>
+                  <li><strong>Cédula:</strong> Requerido. Ej: V-12345678.</li>
+                  <li><strong>Nombres:</strong> Nombres completos.</li>
+                  <li><strong>Apellidos:</strong> Apellidos completos.</li>
+                  <li><strong>Comunidad:</strong> Sector donde reside. Si no aparece, creala en catálogos.</li>
+                  <li><strong>Prioridad:</strong> Nivel de urgencia o vulnerabilidad general.</li>
+                  <li><strong>Teléfono:</strong> Opcional. Útil para contacto rápido.</li>
+                </ol>
+                <p className="text-muted"><em>Nota: Al hacer clic en "Registrar", los datos se guardan y la lista se actualiza.</em></p>
+              </div>
+            </HelpButton>
           </h5>
         </CCardHeader>
         <CCardBody>
@@ -443,19 +563,17 @@ const BeneficiaryRegister = () => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="BenIngresosMensuales" className="register-form-label">
-                      Ingresos Mensuales (Bs)
+                    <CFormLabel htmlFor="BenProfesion" className="register-form-label">
+                      Profesión/Trabajo
                     </CFormLabel>
                     <CFormInput
-                      type="number"
-                      id="BenIngresosMensuales"
-                      name="ingresos_mensuales"
+                      type="text"
+                      id="BenProfesion"
+                      name="profesion"
                       className="register-form-input"
-                      min="0"
-                      step="0.01"
-                      value={formValues.ingresos_mensuales}
+                      value={formValues.profesion}
                       onChange={handleChange}
-                      placeholder="0.00"
+                      placeholder="Ej: Docente, Comerciante, Jubilado..."
                     />
                   </div>
                 </CCol>
@@ -492,6 +610,134 @@ const BeneficiaryRegister = () => {
                   </div>
                 </CCol>
               </CRow>
+            </div>
+
+            {/* Enfermedades */}
+            <div className="form-section">
+              <h6 className="section-title">
+                <CIcon icon={cilMedicalCross} className="icon me-2" />
+                Enfermedades
+              </h6>
+              <CRow className="align-items-end mb-3">
+                <CCol md={4}>
+                  <div className="mb-2">
+                    <CFormLabel htmlFor="BenNuevaEnfermedad" className="register-form-label">Enfermedad</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="BenNuevaEnfermedad"
+                      className="register-form-input"
+                      placeholder="Ej: Hipertensión, Diabetes..."
+                      value={nuevaEnfermedad}
+                      onChange={(e) => setNuevaEnfermedad(e.target.value)}
+                    />
+                  </div>
+                </CCol>
+                <CCol md={3}>
+                  <div className="mb-2">
+                    <CFormLabel htmlFor="BenEstadoEnfermedad" className="register-form-label">Estado</CFormLabel>
+                    <CFormSelect id="BenEstadoEnfermedad" className="register-form-select" value={estadoEnfermedad} onChange={(e) => setEstadoEnfermedad(e.target.value)}>
+                      <option value="ESTABLE">Estable</option>
+                      <option value="MODERADO">Moderado</option>
+                      <option value="GRAVE">Grave</option>
+                      <option value="CRÍTICO">Crítico</option>
+                      <option value="CONTROLADO">Controlado</option>
+                    </CFormSelect>
+                  </div>
+                </CCol>
+                <CCol md={3}>
+                  <div className="mb-2">
+                    <CFormLabel htmlFor="BenObsEnfermedad" className="register-form-label">Observaciones</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="BenObsEnfermedad"
+                      className="register-form-input"
+                      placeholder="Detalles (opcional)"
+                      value={obsEnfermedad}
+                      onChange={(e) => setObsEnfermedad(e.target.value)}
+                    />
+                  </div>
+                </CCol>
+                <CCol md={2}>
+                  <div className="mb-2">
+                    <CButton color="success" className="w-100 text-white" type="button" onClick={handleAddEnfermedad}>
+                      <CIcon icon={cilPlus} className="me-1" /> Agregar
+                    </CButton>
+                  </div>
+                </CCol>
+              </CRow>
+              {enfermedades.length > 0 && (
+                <div className="mb-3">
+                  {enfermedades.map((enf, i) => (
+                    <div key={i} className="d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded border">
+                      <div>
+                        <span className="fw-bold">{enf.nombre}</span>
+                        <CBadge color={enf.estado === 'CRÍTICO' ? 'danger' : enf.estado === 'GRAVE' ? 'warning' : enf.estado === 'MODERADO' ? 'info' : 'success'} className="ms-2">{enf.estado}</CBadge>
+                        {enf.observaciones && <small className="text-muted ms-2">— {enf.observaciones}</small>}
+                      </div>
+                      <CButton color="danger" variant="ghost" size="sm" type="button" onClick={() => handleRemoveEnfermedad(i)}>
+                        <CIcon icon={cilTrash} />
+                      </CButton>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Medicamentos */}
+            <div className="form-section">
+              <h6 className="section-title">
+                <CIcon icon={cilMedicalCross} className="icon me-2" />
+                Medicamentos Requeridos
+              </h6>
+              <CRow className="align-items-end mb-3">
+                <CCol md={5}>
+                  <div className="mb-2">
+                    <CFormLabel htmlFor="BenSelectMedicamento" className="register-form-label">Medicamento</CFormLabel>
+                    <CFormSelect id="BenSelectMedicamento" className="register-form-select" value={selectedMedId} onChange={(e) => setSelectedMedId(e.target.value)}>
+                      <option value="">Seleccione medicamento...</option>
+                      {medicinesCatalog.map(m => (
+                        <option key={m.id} value={m.id}>{m.commercial_name} ({m.generic_name})</option>
+                      ))}
+                    </CFormSelect>
+                  </div>
+                </CCol>
+                <CCol md={5}>
+                  <div className="mb-2">
+                    <CFormLabel htmlFor="BenDosis" className="register-form-label">Dosificación</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="BenDosis"
+                      className="register-form-input"
+                      placeholder="Ej: 1 tableta cada 8 horas"
+                      value={dosisInput}
+                      onChange={(e) => setDosisInput(e.target.value)}
+                    />
+                  </div>
+                </CCol>
+                <CCol md={2}>
+                  <div className="mb-2">
+                    <CButton color="success" className="w-100 text-white" type="button" onClick={handleAddMedicamento}>
+                      <CIcon icon={cilPlus} className="me-1" /> Agregar
+                    </CButton>
+                  </div>
+                </CCol>
+              </CRow>
+              {medicamentos.length > 0 && (
+                <div className="mb-3">
+                  {medicamentos.map((med) => (
+                    <div key={med.medicine_id} className="d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded border">
+                      <div>
+                        <span className="fw-bold">{med.nombre_comercial}</span>
+                        <small className="text-muted ms-2">({med.nombre_generico})</small>
+                        {med.dosis && <span className="text-primary ms-2">— {med.dosis}</span>}
+                      </div>
+                      <CButton color="danger" variant="ghost" size="sm" type="button" onClick={() => handleRemoveMedicamento(med.medicine_id)}>
+                        <CIcon icon={cilTrash} />
+                      </CButton>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="d-flex gap-2 btn-group-responsive">
@@ -561,14 +807,11 @@ const BeneficiaryRegister = () => {
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowCommunityModal(false)}>
-            Cancelar
-          </CButton>
-          <CButton color="primary" onClick={handleCreateCommunity} disabled={!communityForm.name || savingCommunity}>
-            {savingCommunity ? 'Guardando...' : 'Guardar Comunidad'}
-          </CButton>
+          <CButton color="secondary" onClick={() => setShowCommunityModal(false)}>Cancelar</CButton>
+          <CButton color="primary" onClick={handleCreateCommunity}>Guardar</CButton>
         </CModalFooter>
       </CModal>
+
 
     </div>
   );

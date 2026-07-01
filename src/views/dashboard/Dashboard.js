@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
@@ -13,7 +13,8 @@ import {
   CTableHeaderCell,
   CTableRow,
   CBadge,
-  CContainer
+  CContainer,
+  CSpinner
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -27,30 +28,81 @@ import {
   cilPeople,
   cilArrowTop,
   cilArrowBottom,
+  cilBell
 } from '@coreui/icons'
 
+import { getDashboardStats, getMedicineInventory, getDonations } from '../../services/api'
+
+import HelpButton from '../../components/common/HelpButton'
+
 const Dashboard = () => {
-  const statsData = {
-    totalMedicines: 1245,
-    activeDonors: 89,
-    pendingDonations: 12,
-    monthlyDistributed: 345
-  }
+  const [loading, setLoading] = useState(true)
+  const [statsData, setStatsData] = useState({
+    beneficiaries: 0,
+    donations: 0,
+    activeDeliveries: 0,
+    expiringAlerts: 0
+  })
+  const [criticalMedications, setCriticalMedications] = useState([])
+  const [recentDonations, setRecentDonations] = useState([])
 
-  const criticalMedications = [
-    { id: 1, name: 'Insulina Glargina', stock: 12, minStock: 50, status: 'crítico' },
-    { id: 2, name: 'Amoxicilina 500mg', stock: 18, minStock: 100, status: 'bajo' },
-    { id: 3, name: 'Paracetamol', stock: 245, minStock: 200, status: 'normal' },
-    { id: 4, name: 'Losartán 50mg', stock: 22, minStock: 150, status: 'crítico' },
-    { id: 5, name: 'Metformina 850mg', stock: 65, minStock: 120, status: 'normal' }
-  ]
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        const [statsRes, inventoryRes, donationsRes] = await Promise.all([
+          getDashboardStats(),
+          getMedicineInventory(),
+          getDonations()
+        ])
 
-  const recentDonations = [
-    { id: 1, donor: 'Laboratorio Pharma', type: 'Medicamentos', value: '$2,500', date: '15/03/2024', status: 'completada' },
-    { id: 2, donor: 'Hospital Central', type: 'Equipos', value: '$1,800', date: '14/03/2024', status: 'pendiente' },
-    { id: 3, donor: 'Fundación Salud', type: 'Medicamentos', value: '$3,200', date: '13/03/2024', status: 'completada' },
-    { id: 4, donor: 'Farmacia', type: 'Insumos', value: '$950', date: '12/03/2024', status: 'procesando' }
-  ]
+        if (statsRes && statsRes.message && statsRes.message.stats) {
+          const stats = statsRes.message.stats
+          setStatsData({
+            beneficiaries: stats.beneficiaries || 0,
+            donations: stats.donations || 0,
+            activeDeliveries: stats.activeDeliveries || 0,
+            expiringAlerts: stats.expiringAlerts || 0
+          })
+        }
+
+        if (inventoryRes && inventoryRes.message && inventoryRes.message.inventory) {
+          // Filter to critical/low stock (e.g. available <= minimum)
+          const critical = inventoryRes.message.inventory
+            .filter(item => item.stock_status === 'Critical' || item.stock_status === 'Low' || item.available_quantity <= item.minimum_stock)
+            .map(item => ({
+              id: item.id,
+              name: item.medicine,
+              stock: item.available_quantity,
+              minStock: item.minimum_stock,
+              status: item.stock_status === 'Critical' || item.available_quantity === 0 ? 'crítico' : 'bajo'
+            }))
+            .slice(0, 5) // top 5
+          setCriticalMedications(critical)
+        }
+
+        if (donationsRes && donationsRes.message && donationsRes.message.donations) {
+          const recent = donationsRes.message.donations
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 4)
+            .map(d => ({
+              id: d.id,
+              donor: d.donor_name || 'Desconocido',
+              type: d.donation_type || 'General',
+              date: new Date(d.created_at).toLocaleDateString('es-ES'),
+              status: d.status ? d.status.toLowerCase() : 'pendiente'
+            }))
+          setRecentDonations(recent)
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   const inventoryPercentage = 62
   const donationCompletion = 78
@@ -65,55 +117,86 @@ const Dashboard = () => {
 
   const statCards = [
     {
-      label: 'Medicamentos en Inventario',
-      value: statsData.totalMedicines.toLocaleString(),
-      icon: cilMedicalCross,
-      colorClass: 'teal',
-      trend: '+12.5%',
-      trendUp: true,
-    },
-    {
-      label: 'Donantes Activos',
-      value: statsData.activeDonors,
+      label: 'Beneficiarios Activos',
+      value: statsData.beneficiaries.toLocaleString(),
       icon: cilPeople,
-      colorClass: 'emerald',
-      trend: '+8.2%',
+      colorClass: 'teal',
+      trend: '+2.5%',
       trendUp: true,
     },
     {
-      label: 'Donaciones Pendientes',
-      value: statsData.pendingDonations,
+      label: 'Donaciones Totales',
+      value: statsData.donations.toLocaleString(),
+      icon: cilCash,
+      colorClass: 'emerald',
+      trend: '+5.2%',
+      trendUp: true,
+    },
+    {
+      label: 'Entregas Activas',
+      value: statsData.activeDeliveries.toLocaleString(),
       icon: cilTruck,
       colorClass: 'amber',
-      trend: '-3.1%',
+      trend: '-1.1%',
       trendUp: false,
     },
     {
-      label: 'Distribuidos este mes',
-      value: statsData.monthlyDistributed,
-      icon: cilHospital,
-      colorClass: 'blue',
-      trend: '+15.7%',
-      trendUp: true,
+      label: 'Alertas de Vencimiento',
+      value: statsData.expiringAlerts.toLocaleString(),
+      icon: cilBell,
+      colorClass: 'danger',
+      trend: 'Crítico',
+      trendUp: false,
     },
   ]
+
+  if (loading) {
+    return (
+      <CContainer fluid className="p-3 p-md-4 d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+        <CSpinner color="primary" />
+      </CContainer>
+    )
+  }
 
   return (
     <CContainer fluid className="p-3 p-md-4">
       {/* Welcome Header */}
-      <div className="mb-4 fp-animate-in" style={{ padding: '0.25rem 0' }}>
-        <h2 style={{ 
-          fontWeight: 800, 
-          fontSize: '1.6rem', 
-          color: 'var(--fp-text)',
-          marginBottom: '0.25rem',
-          letterSpacing: '-0.02em'
-        }}>
-          {getGreeting()} 👋
-        </h2>
-        <p style={{ color: 'var(--fp-text-muted)', margin: 0, fontSize: '0.9rem' }}>
-          Aquí tienes un resumen de tu sistema FarmaPatria
-        </p>
+      <div className="mb-4 fp-animate-in d-flex justify-content-between align-items-start" style={{ padding: '0.25rem 0' }}>
+        <div>
+          <h2 style={{ 
+            fontWeight: 800, 
+            fontSize: '1.6rem', 
+            color: 'var(--fp-text)',
+            marginBottom: '0.25rem',
+            letterSpacing: '-0.02em'
+          }}>
+            {getGreeting()} 👋
+          </h2>
+          <p style={{ color: 'var(--fp-text-muted)', margin: 0, fontSize: '0.9rem' }}>
+            Aquí tienes un resumen de tu sistema FarmaPatria
+          </p>
+        </div>
+        <HelpButton title="Manual de Usuario – Panel Principal">
+          <div>
+            <p>Bienvenido al panel principal de FarmaPatria. Aquí verás un resumen del sistema.</p>
+            <h6>Vista general</h6>
+            <div className="card p-3 mb-3 bg-light">
+              <div className="d-flex justify-content-between">
+                <div className="card text-center border-primary p-2"><strong>(1) Beneficiarios</strong></div>
+                <div className="card text-center border-success p-2"><strong>(2) Medicamentos</strong></div>
+                <div className="card text-center border-warning p-2"><strong>(3) Donaciones</strong></div>
+                <div className="card text-center border-danger p-2"><strong>(4) Alertas</strong></div>
+              </div>
+            </div>
+            <ol>
+              <li><strong>Tarjeta Beneficiarios:</strong> Número total de beneficiarios registrados en el sistema.</li>
+              <li><strong>Tarjeta Medicamentos:</strong> Cantidad de medicamentos en el catálogo.</li>
+              <li><strong>Tarjeta Donaciones:</strong> Donaciones activas o recibidas.</li>
+              <li><strong>Tarjeta Alertas:</strong> Lotes con fecha de vencimiento próxima o ya vencidos.</li>
+            </ol>
+            <p className="text-muted"><em>Consejo: Si alguna cifra no aparece, verifica tu conexión o los permisos de usuario.</em></p>
+          </div>
+        </HelpButton>
       </div>
 
       {/* Stats Cards */}
@@ -159,7 +242,7 @@ const Dashboard = () => {
             <CCardHeader className="fp-card-header-accent">
               <h6 className="mb-0">
                 <CIcon icon={cilChart} className="me-2" style={{ color: 'var(--fp-primary)' }} />
-                Nivel de Inventario
+                Nivel de Inventario (Muestra)
               </h6>
             </CCardHeader>
             <CCardBody>
@@ -174,7 +257,7 @@ const Dashboard = () => {
                 style={{ height: '10px' }}
               />
               <small style={{ color: 'var(--fp-text-muted)', fontSize: '0.82rem' }}>
-                1,245 de 2,000 medicamentos disponibles
+                Referencia visual de capacidad
               </small>
             </CCardBody>
           </CCard>
@@ -185,7 +268,7 @@ const Dashboard = () => {
             <CCardHeader className="fp-card-header-accent">
               <h6 className="mb-0">
                 <CIcon icon={cilCash} className="me-2" style={{ color: 'var(--fp-success)' }} />
-                Completitud de Donaciones
+                Completitud de Donaciones (Muestra)
               </h6>
             </CCardHeader>
             <CCardBody>
@@ -200,7 +283,7 @@ const Dashboard = () => {
                 style={{ height: '10px' }}
               />
               <small style={{ color: 'var(--fp-text-muted)', fontSize: '0.82rem' }}>
-                32 de 41 donaciones procesadas este mes
+                Porcentaje histórico estimado
               </small>
             </CCardBody>
           </CCard>
@@ -214,7 +297,7 @@ const Dashboard = () => {
             <CCardHeader className="fp-card-header-accent">
               <h6 className="mb-0">
                 <CIcon icon={cilWarning} className="me-2" style={{ color: 'var(--fp-danger)' }} />
-                Medicamentos Críticos
+                Medicamentos Críticos (Bajo Stock)
               </h6>
             </CCardHeader>
             <CCardBody style={{ padding: '0 !important' }}>
@@ -227,28 +310,36 @@ const Dashboard = () => {
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {criticalMedications.map((med) => (
-                    <CTableRow key={med.id}>
-                      <CTableDataCell>
-                        <strong style={{ color: 'var(--fp-text)' }}>{med.name}</strong>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <span style={{ fontWeight: 500 }}>{med.stock}</span>
-                        <span style={{ color: 'var(--fp-text-muted)', fontSize: '0.8rem' }}> / {med.minStock}</span>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge
-                          color={
-                            med.status === 'crítico' ? 'danger'
-                              : med.status === 'bajo' ? 'warning'
-                              : 'success'
-                          }
-                        >
-                          {med.status}
-                        </CBadge>
+                  {criticalMedications.length > 0 ? (
+                    criticalMedications.map((med) => (
+                      <CTableRow key={med.id}>
+                        <CTableDataCell>
+                          <strong style={{ color: 'var(--fp-text)' }}>{med.name}</strong>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <span style={{ fontWeight: 500 }}>{med.stock}</span>
+                          <span style={{ color: 'var(--fp-text-muted)', fontSize: '0.8rem' }}> / {med.minStock}</span>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge
+                            color={
+                              med.status === 'crítico' ? 'danger'
+                                : med.status === 'bajo' ? 'warning'
+                                : 'success'
+                            }
+                          >
+                            {med.status.toUpperCase()}
+                          </CBadge>
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <CTableRow>
+                      <CTableDataCell colSpan="3" className="text-center text-muted">
+                        No hay medicamentos con stock crítico.
                       </CTableDataCell>
                     </CTableRow>
-                  ))}
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>
@@ -274,26 +365,34 @@ const Dashboard = () => {
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {recentDonations.map((donation) => (
-                    <CTableRow key={donation.id}>
-                      <CTableDataCell>
-                        <strong style={{ color: 'var(--fp-text)' }}>{donation.donor}</strong>
-                      </CTableDataCell>
-                      <CTableDataCell>{donation.type}</CTableDataCell>
-                      <CTableDataCell style={{ color: 'var(--fp-text-muted)' }}>{donation.date}</CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge
-                          color={
-                            donation.status === 'completada' ? 'success'
-                              : donation.status === 'pendiente' ? 'warning'
-                              : 'info'
-                          }
-                        >
-                          {donation.status}
-                        </CBadge>
+                  {recentDonations.length > 0 ? (
+                    recentDonations.map((donation) => (
+                      <CTableRow key={donation.id}>
+                        <CTableDataCell>
+                          <strong style={{ color: 'var(--fp-text)' }}>{donation.donor}</strong>
+                        </CTableDataCell>
+                        <CTableDataCell>{donation.type}</CTableDataCell>
+                        <CTableDataCell style={{ color: 'var(--fp-text-muted)' }}>{donation.date}</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge
+                            color={
+                              donation.status === 'completed' || donation.status === 'completada' ? 'success'
+                                : donation.status === 'pending' || donation.status === 'pendiente' ? 'warning'
+                                : 'info'
+                            }
+                          >
+                            {donation.status.toUpperCase()}
+                          </CBadge>
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <CTableRow>
+                      <CTableDataCell colSpan="4" className="text-center text-muted">
+                        No hay donaciones recientes.
                       </CTableDataCell>
                     </CTableRow>
-                  ))}
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>
@@ -305,30 +404,24 @@ const Dashboard = () => {
       <CRow>
         <CCol>
           <CCard className="fp-animate-in" style={{ 
-            background: 'linear-gradient(135deg, var(--fp-primary) 0%, var(--fp-primary-dark) 100%)',
             border: 'none',
-            color: 'white'
+            backgroundColor: 'rgba(0,0,0,0.03)'
           }}>
             <CCardBody className="text-center py-4">
-              <CIcon icon={cilChart} size="xxl" className="mb-3" style={{ opacity: 0.9 }} />
-              <h4 style={{ fontWeight: 800, marginBottom: '0.25rem' }}>Sistema FarmaPatria</h4>
-              <p style={{ opacity: 0.8, marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              <CIcon icon={cilChart} size="xxl" className="mb-3 text-primary" style={{ opacity: 0.9 }} />
+              <h4 style={{ fontWeight: 800, marginBottom: '0.25rem', color: 'var(--fp-text, #333)' }}>Sistema FarmaPatria</h4>
+              <p style={{ opacity: 0.8, marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--fp-text-muted, #666)' }}>
                 Plataforma para la gestión eficiente de donaciones farmacéuticas
               </p>
               <div className="d-flex justify-content-center gap-4 gap-md-5">
-                {[
-                  { value: '15', label: 'Hospitales beneficiados' },
-                  { value: '2,340', label: 'Pacientes atendidos' },
-                  { value: '89%', label: 'Eficiencia del sistema' },
-                ].map((item, i) => (
-                  <div key={i} className="text-center" style={{ 
-                    padding: '0 1rem',
-                    borderRight: i < 2 ? '1px solid rgba(255,255,255,0.2)' : 'none'
-                  }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{item.value}</div>
-                    <div style={{ fontSize: '0.78rem', opacity: 0.75 }}>{item.label}</div>
+                <div className="text-center" style={{ padding: '0 1rem' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--fp-primary, #198754)' }}>
+                    {statsData.beneficiaries.toLocaleString()}
                   </div>
-                ))}
+                  <div style={{ fontSize: '0.78rem', opacity: 0.75, color: 'var(--fp-text-secondary, #555)' }}>
+                    Beneficiarios Atendidos
+                  </div>
+                </div>
               </div>
             </CCardBody>
           </CCard>

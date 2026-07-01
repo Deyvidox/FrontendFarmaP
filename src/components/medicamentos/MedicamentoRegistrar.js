@@ -30,6 +30,7 @@ import {
   getMedicineCategories,
   createMedicine,
 } from 'src/services/api';
+import HelpButton from '../common/HelpButton';
 import '../../css/medicamentos/Medicamentos.css';
 
 const MedicamentoRegistrar = () => {
@@ -209,9 +210,45 @@ const MedicamentoRegistrar = () => {
     <div className="medicamento-register-container">
       <CCard className="medicamento-register-card">
         <CCardHeader>
-          <h5 className="mb-0">
+          <h5 className="mb-0 d-flex align-items-center">
             <CIcon icon={cilMedicalCross} className="me-2" />
             Registrar Nuevo Medicamento
+            <HelpButton title="Manual de Usuario – Registrar Medicamento">
+              <div>
+                <p>Da de alta un nuevo medicamento en el catálogo.</p>
+                <h6>Formulario de registro</h6>
+                <div className="card p-3 mb-3 bg-light">
+                  <div className="row g-2 small">
+                    <div className="col-md-6"><span className="fw-bold">(1) Código Nacional</span><br/>OPCIONAL</div>
+                    <div className="col-md-6"><span className="fw-bold">(2) Nombre Comercial *</span><br/>Ej: Paracetamol</div>
+                    <div className="col-md-6"><span className="fw-bold">(3) Nombre Genérico</span><br/>Ej: Acetaminofén</div>
+                    <div className="col-md-6"><span className="fw-bold">(4) Principio Activo</span><br/>Ej: Paracetamol 500mg</div>
+                    <div className="col-md-4"><span className="fw-bold">(5) Concentración</span><br/>500</div>
+                    <div className="col-md-4"><span className="fw-bold">(6) Forma Farmacéutica *</span><br/>Seleccione</div>
+                    <div className="col-md-4"><span className="fw-bold">(7) Vía de Admin.</span><br/>Oral</div>
+                    <div className="col-md-6"><span className="fw-bold">(8) Laboratorio *</span><br/>Seleccione</div>
+                    <div className="col-md-6"><span className="fw-bold">(9) Categoría *</span><br/>Seleccione</div>
+                    <div className="col-md-6"><span className="fw-bold">(10) Requiere Receta</span><br/>Sí / No</div>
+                    <div className="col-md-6"><span className="fw-bold">(11) Unidad de Medida</span><br/>Tabletas, mL...</div>
+                    <div className="col-12"><span className="fw-bold">(12) Condiciones de Almacenamiento</span><br/>Mantener a 2°C-8°C</div>
+                  </div>
+                </div>
+                <ol>
+                  <li><strong>Código Nacional:</strong> Opcional. Identificador oficial del ministerio.</li>
+                  <li><strong>Nombre Comercial:</strong> Requerido. Nombre con el que se vende.</li>
+                  <li><strong>Nombre Genérico:</strong> Nombre del principio activo.</li>
+                  <li><strong>Principio Activo:</strong> Sustancia activa.</li>
+                  <li><strong>Concentración:</strong> Cantidad del principio activo por unidad.</li>
+                  <li><strong>Forma Farmacéutica:</strong> Tableta, jarabe, etc. Seleccione de la lista.</li>
+                  <li><strong>Vía de Administración:</strong> Oral, tópica, etc.</li>
+                  <li><strong>Laboratorio:</strong> Fabricante. Requerido. Si no aparece, registre uno en Catálogos.</li>
+                  <li><strong>Categoría:</strong> Analgésico, antibiótico... Requerido.</li>
+                  <li><strong>Requiere Receta:</strong> Indica si es de venta controlada.</li>
+                  <li><strong>Unidad de Medida:</strong> Cómo se cuenta (tabletas, mL).</li>
+                  <li><strong>Condiciones de Almacenamiento:</strong> Temperatura y protección necesaria.</li>
+                </ol>
+              </div>
+            </HelpButton>
           </h5>
         </CCardHeader>
         <CCardBody>

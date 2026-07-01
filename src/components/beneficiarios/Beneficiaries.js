@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CContainer } from '@coreui/react';
 import BeneficiaryList from "./BeneficiaryList";
 import { getBeneficiaries } from 'src/services/api';
@@ -9,20 +9,22 @@ const Beneficiaries = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadBeneficiaries = async () => {
-      try {
-        const response = await getBeneficiaries();
-        setBeneficiarios(response?.message?.beneficiaries || []);
-      } catch (err) {
-        console.error('Error cargando beneficiarios:', err);
-        setError(err.message || 'Error al cargar beneficiarios');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadBeneficiaries();
+  const loadBeneficiaries = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getBeneficiaries();
+      setBeneficiarios(response?.message?.beneficiaries || []);
+    } catch (err) {
+      console.error('Error cargando beneficiarios:', err);
+      setError(err.message || 'Error al cargar beneficiarios');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadBeneficiaries();
+  }, [loadBeneficiaries]);
 
   return (
     <CContainer fluid className="beneficiaries-container">
@@ -31,7 +33,7 @@ const Beneficiaries = () => {
       ) : error ? (
         <div className="alert alert-danger">{error}</div>
       ) : (
-        <BeneficiaryList beneficiaries={beneficiarios} />
+        <BeneficiaryList beneficiaries={beneficiarios} onRefresh={loadBeneficiaries} />
       )}
     </CContainer>
   );

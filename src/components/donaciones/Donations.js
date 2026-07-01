@@ -1,128 +1,149 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  CCard,
-  CCardHeader,
-  CCardBody,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-  CBadge,
-  CButton,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CRow,
-  CCol,
-  CForm,
-  CFormInput,
-  CFormLabel,
-  CFormSelect,
-  CFormTextarea
+  CCard, CCardHeader, CCardBody, CTable, CTableHead, CTableRow,
+  CTableHeaderCell, CTableBody, CTableDataCell, CBadge, CButton,
+  CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
+  CRow, CCol, CSpinner, CForm, CFormLabel, CFormInput, CFormSelect,
+  CInputGroup, CInputGroupText
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { 
-  cilPlus, 
-  cilPencil, 
-  cilTrash, 
-  cilPrint,
-  cilCalendar,
-  cilUser,
-  cilDollar,
-  cilCheckCircle,
-  cilWarning,
-  cilDrop
+  cilPencil, cilTrash, cilPrint, cilDrop, cilSearch
 } from '@coreui/icons';
-
+import { getDonations, getDonationById, updateDonation, deleteDonation } from '../../services/api';
+import HelpButton from '../common/HelpButton';
 
 const Donations = () => {
-  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [donations, setDonations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchCriteria, setSearchCriteria] = useState('donante');
+  
+  // Modals state
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState(null);
+  
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [editForm, setEditForm] = useState({});
 
-  // Datos de donaciones
-  const donations = [
-    {
-      id: 1,
-      donacionId: 'DON-2024-001',
-      donante: 'Laboratorio Pfizer C.A.',
-      fechaRecepcion: '2024-01-15',
-      tipoDonacion: 'Medicamentos',
-      cantidadItems: 15,
-      valorEstimado: 4500.00,
-      estado: 'RECIBIDO',
-      almacenDestino: 'Almacén Central',
-      observaciones: 'Medicamentos para diabetes'
-    },
-    {
-      id: 2,
-      donacionId: 'DON-2024-002',
-      donante: 'Farmacias SAAS',
-      fechaRecepcion: '2024-01-20',
-      tipoDonacion: 'Insumos Médicos',
-      cantidadItems: 8,
-      valorEstimado: 3200.50,
-      estado: 'EN INSPECCIÓN',
-      almacenDestino: 'Almacén Norte',
-      observaciones: 'Jeringas y agujas estériles'
-    },
-    {
-      id: 3,
-      donacionId: 'DON-2024-003',
-      donante: 'Distribuidora Médica Unida',
-      fechaRecepcion: '2024-01-25',
-      tipoDonacion: 'Medicamentos',
-      cantidadItems: 25,
-      valorEstimado: 7800.00,
-      estado: 'PROCESADO',
-      almacenDestino: 'Almacén Central',
-      observaciones: 'Medicamentos varios'
-    },
-    {
-      id: 4,
-      donacionId: 'DON-2024-004',
-      donante: 'Hospital Central',
-      fechaRecepcion: '2024-02-01',
-      tipoDonacion: 'Equipamiento',
-      cantidadItems: 3,
-      valorEstimado: 12500.00,
-      estado: 'RECIBIDO',
-      almacenDestino: 'Bodega Principal',
-      observaciones: 'Monitores de signos vitales'
-    },
-    {
-      id: 5,
-      donacionId: 'DON-2024-005',
-      donante: 'Fundación Ayuda Médica',
-      fechaRecepcion: '2024-02-05',
-      tipoDonacion: 'Medicamentos',
-      cantidadItems: 18,
-      valorEstimado: 5600.75,
-      estado: 'EN INSPECCIÓN',
-      almacenDestino: 'Almacén Sur',
-      observaciones: 'Antibióticos y analgésicos'
+  const fetchDonations = async () => {
+    setLoading(true);
+    try {
+      const response = await getDonations();
+      if (response?.message?.donations) {
+        setDonations(response.message.donations);
+      }
+    } catch (err) {
+      console.error('Error fetching donations:', err);
+      setError('Error al cargar las donaciones');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Donantes registrados
-  const donors = [
-    { id: 1, nombre: 'Laboratorio Pfizer C.A.', rif: 'J-301234567' },
-    { id: 2, nombre: 'Farmacias SAAS', rif: 'J-302345678' },
-    { id: 3, nombre: 'Distribuidora Médica Unida', rif: 'J-303456789' },
-    { id: 4, nombre: 'Hospital Central', rif: 'J-304567890' },
-    { id: 5, nombre: 'Fundación Ayuda Médica', rif: 'J-305678901' }
-  ];
+  useEffect(() => {
+    fetchDonations();
+  }, []);
 
-  const getEstadoColor = (estado) => {
-    switch(estado) {
-      case 'RECIBIDO': return 'success';
-      case 'EN INSPECCIÓN': return 'warning';
-      case 'PROCESADO': return 'info';
-      case 'RECHAZADO': return 'danger';
-      default: return 'secondary';
+  const totalDonaciones = donations.length;
+  const enInspeccion = donations.filter(d => d.status === 'Inspected' || d.status === 'InProcess').length;
+
+  const getEstadoInfo = (status) => {
+    switch(status) {
+      case 'Received': return { label: 'Recibido', color: 'success' };
+      case 'Inspected': return { label: 'Inspeccionado', color: 'info' };
+      case 'InProcess': return { label: 'En Proceso', color: 'warning' };
+      case 'Accepted': return { label: 'Aceptado', color: 'primary' };
+      case 'Verified': return { label: 'Verificado', color: 'info' };
+      case 'Rejected': return { label: 'Rechazado', color: 'danger' };
+      case 'Quarantined': return { label: 'En Cuarentena', color: 'dark' };
+      default: return { label: status || 'Desconocido', color: 'secondary' };
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatCurrency = (value) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '—';
+    return `$${num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const getShortId = (id) => {
+    if (!id) return '';
+    return `DON-${id.substring(0, 8).toUpperCase()}`;
+  };
+
+  const handleViewDetails = async (donation) => {
+    setSelectedDonation(donation);
+    setShowDetailsModal(true);
+    setLoadingDetail(true);
+    try {
+      const response = await getDonationById(donation.id);
+      if (response?.message?.donation) {
+        setSelectedDonation(response.message.donation);
+      }
+    } catch (err) {
+      console.error('Error fetching donation detail:', err);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleEditClick = async (donation) => {
+    setSelectedDonation(donation);
+    setEditForm({
+      donor_id: donation.donor_id || '',
+      donation_type_id: donation.donation_type_id || '',
+      reception_date: donation.reception_date ? donation.reception_date.split('T')[0] : '',
+      document_number: donation.document_number || '',
+      transport_conditions: donation.transport_conditions || '',
+      observations: donation.observations || '',
+      status: donation.status || 'Received'
+    });
+    setEditModal(true);
+  };
+
+  const handleDeleteClick = (donation) => {
+    setSelectedDonation(donation);
+    setDeleteModal(true);
+  };
+
+  const handleEditChange = (e) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await updateDonation(selectedDonation.id, editForm);
+      setEditModal(false);
+      fetchDonations();
+    } catch (err) {
+      alert(err.message || 'Error actualizando donación');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    setActionLoading(true);
+    try {
+      await deleteDonation(selectedDonation.id);
+      setDeleteModal(false);
+      fetchDonations();
+    } catch (err) {
+      alert(err.message || 'Error eliminando donación');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -134,268 +155,271 @@ const Donations = () => {
             <h5 className="mb-0">
               <CIcon icon={cilDrop} className="me-2" />
               Gestión de Donaciones
+              <HelpButton title="Manual de Usuario – Gestión de Donaciones">
+                <div>
+                  <p>Aquí aparecen todas las donaciones registradas en el sistema.</p>
+                  <h6>Lista de donaciones</h6>
+                  <div className="card p-3 mb-3 bg-light">
+                    <div className="row small">
+                      <div className="col-2 fw-bold">(1) ID / Ref.</div>
+                      <div className="col-3 fw-bold">(2) Donante</div>
+                      <div className="col-2 fw-bold">(3) Fecha</div>
+                      <div className="col-2 fw-bold">(4) Estado</div>
+                      <div className="col-3 fw-bold">(5) Acciones</div>
+                    </div>
+                    <hr/>
+                    <div className="row small text-muted">
+                      <div className="col-2">DON-202301</div>
+                      <div className="col-3">Cruz Roja</div>
+                      <div className="col-2">10-10-2023</div>
+                      <div className="col-2"><span className="badge bg-info">En Proceso</span></div>
+                      <div className="col-3">👁 ✏ 🗑</div>
+                    </div>
+                  </div>
+                  <ol>
+                    <li><strong>ID / Referencia:</strong> Identificador único de la donación.</li>
+                    <li><strong>Donante:</strong> Nombre de la institución o persona que dona.</li>
+                    <li><strong>Fecha:</strong> Fecha de recepción.</li>
+                    <li><strong>Estado:</strong> Recibido, En Proceso, Verificado, Rechazado.</li>
+                    <li><strong>Acciones:</strong>
+                      <ul>
+                        <li><strong>Ver:</strong> Detalles completos y medicamentos donados.</li>
+                        <li><strong>Editar:</strong> Modificar estado o almacén de destino.</li>
+                        <li><strong>Eliminar:</strong> Borra la donación si hubo error.</li>
+                      </ul>
+                    </li>
+                  </ol>
+                </div>
+              </HelpButton>
             </h5>
-            <div className="d-flex gap-2">
-              <CButton color="secondary">
-                <CIcon icon={cilPrint} className="me-1" />
-                Reporte
-              </CButton>
-            </div>
+
           </div>
         </CCardHeader>
         
         <CCardBody>
-          {/* Resumen */}
           <CRow className="mb-4">
-            <CCol md={3}>
+            <CCol md={4}>
               <div className="card text-center border-primary">
                 <div className="card-body">
-                  <div className="h4 text-primary mb-0">5</div>
+                  <div className="h4 text-primary mb-0">{totalDonaciones}</div>
                   <small className="text-muted">Donaciones Totales</small>
                 </div>
               </div>
             </CCol>
-            <CCol md={3}>
-              <div className="card text-center border-success">
-                <div className="card-body">
-                  <div className="h4 text-success mb-0">$23,600.25</div>
-                  <small className="text-muted">Valor Total</small>
-                </div>
-              </div>
-            </CCol>
-            <CCol md={3}>
+            <CCol md={4}>
               <div className="card text-center border-warning">
                 <div className="card-body">
-                  <div className="h4 text-warning mb-0">2</div>
+                  <div className="h4 text-warning mb-0">{enInspeccion}</div>
                   <small className="text-muted">En Inspección</small>
                 </div>
               </div>
             </CCol>
-            <CCol md={3}>
+            <CCol md={4}>
               <div className="card text-center border-info">
                 <div className="card-body">
-                  <div className="h4 text-info mb-0">69</div>
+                  <div className="h4 text-info mb-0">—</div>
                   <small className="text-muted">Items Totales</small>
                 </div>
               </div>
             </CCol>
           </CRow>
 
-          {/* Lista de Donaciones */}
-          <CTable hover responsive>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>ID Donación</CTableHeaderCell>
-                <CTableHeaderCell>Donante</CTableHeaderCell>
-                <CTableHeaderCell>Fecha Recepción</CTableHeaderCell>
-                <CTableHeaderCell>Tipo</CTableHeaderCell>
-                <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                <CTableHeaderCell>Valor Estimado</CTableHeaderCell>
-                <CTableHeaderCell>Estado</CTableHeaderCell>
-                <CTableHeaderCell>Acciones</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {donations.map(donation => (
-                <CTableRow key={donation.id}>
-                  <CTableDataCell>
-                    <strong>{donation.donacionId}</strong>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <div>{donation.donante}</div>
-                    <small className="text-muted">{donation.almacenDestino}</small>
-                  </CTableDataCell>
-                  <CTableDataCell>{donation.fechaRecepcion}</CTableDataCell>
-                  <CTableDataCell>{donation.tipoDonacion}</CTableDataCell>
-                  <CTableDataCell>{donation.cantidadItems} items</CTableDataCell>
-                  <CTableDataCell>
-                    <strong>${donation.valorEstimado.toFixed(2)}</strong>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <CBadge color={getEstadoColor(donation.estado)}>
-                      {donation.estado}
-                    </CBadge>
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <div className="d-flex gap-1">
-                      <CButton 
-                        color="info" 
-                        size="sm"
-                        onClick={() => setShowDetailsModal(true)}
-                      >
-                        <CIcon icon={cilPencil} />
-                      </CButton>
-                      <CButton color="warning" size="sm">
-                        <CIcon icon={cilPencil} />
-                      </CButton>
-                      <CButton color="danger" size="sm">
-                        <CIcon icon={cilTrash} />
-                      </CButton>
-                    </div>
-                  </CTableDataCell>
+          {loading ? (
+            <div className="text-center my-5">
+              <CSpinner color="primary" />
+              <div className="mt-2">Cargando donaciones...</div>
+            </div>
+          ) : error ? (
+            <div className="alert alert-danger text-center">{error}</div>
+          ) : (
+            <>
+              <CRow className="mb-3">
+                <CCol md={3} xs={12} className="mb-2 mb-md-0">
+                  <CFormSelect
+                    value={searchCriteria}
+                    onChange={(e) => { setSearchCriteria(e.target.value); setSearchTerm(''); }}
+                  >
+                    <option value="donante">Donante</option>
+                    <option value="tipo">Tipo</option>
+                    <option value="estado">Estado</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol md={9} xs={12}>
+                  <CInputGroup>
+                    <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
+                    <CFormInput
+                      placeholder={`Buscar por ${searchCriteria}...`}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    {searchTerm && (
+                      <CButton color="secondary" variant="outline" onClick={() => setSearchTerm('')}>&#x2715;</CButton>
+                    )}
+                  </CInputGroup>
+                </CCol>
+              </CRow>
+              {searchTerm && (
+                <div className="text-muted small mb-2">
+                  {donations.filter(d => {
+                    const q = searchTerm.trim().toLowerCase();
+                    if (searchCriteria === 'tipo') return (d.donation_type || '').toLowerCase().includes(q);
+                    if (searchCriteria === 'estado') return (getEstadoInfo(d.status).label || '').toLowerCase().includes(q);
+                    return (d.donor_name || '').toLowerCase().includes(q);
+                  }).length} resultado(s) de {donations.length} total
+                </div>
+              )}
+            <CTable hover responsive>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>ID Donación</CTableHeaderCell>
+                  <CTableHeaderCell>Donante</CTableHeaderCell>
+                  <CTableHeaderCell>Fecha Recepción</CTableHeaderCell>
+                  <CTableHeaderCell>Tipo</CTableHeaderCell>
+
+                  <CTableHeaderCell>Estado</CTableHeaderCell>
+                  <CTableHeaderCell>Acciones</CTableHeaderCell>
                 </CTableRow>
-              ))}
-            </CTableBody>
-          </CTable>
+              </CTableHead>
+              <CTableBody>
+                {donations.length === 0 ? (
+                  <CTableRow>
+                    <CTableDataCell colSpan="7" className="text-center">
+                      {searchTerm ? 'No se encontraron donaciones' : 'No hay donaciones registradas'}
+                    </CTableDataCell>
+                  </CTableRow>
+                ) : (
+                  donations
+                    .filter(d => {
+                      const q = searchTerm.trim().toLowerCase();
+                      if (!q) return true;
+                      if (searchCriteria === 'tipo') return (d.donation_type || '').toLowerCase().includes(q);
+                      if (searchCriteria === 'estado') return (getEstadoInfo(d.status).label || '').toLowerCase().includes(q);
+                      return (d.donor_name || '').toLowerCase().includes(q);
+                    })
+                    .map(donation => {
+                    const estado = getEstadoInfo(donation.status);
+                    return (
+                      <CTableRow key={donation.id}>
+                        <CTableDataCell>
+                          <strong>{getShortId(donation.id)}</strong>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div>{donation.donor_name || '—'}</div>
+                          <small className="text-muted">{donation.rif_cedula || ''}</small>
+                        </CTableDataCell>
+                        <CTableDataCell>{formatDate(donation.reception_date)}</CTableDataCell>
+                        <CTableDataCell>{donation.donation_type || '—'}</CTableDataCell>
+
+                        <CTableDataCell>
+                          <CBadge color={estado.color}>
+                            {estado.label}
+                          </CBadge>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div className="d-flex gap-1">
+                            <CButton color="info" size="sm" title="Ver detalles" onClick={() => handleViewDetails(donation)}>
+                              <CIcon icon={cilSearch} />
+                            </CButton>
+                            <CButton color="warning" size="sm" title="Editar" onClick={() => handleEditClick(donation)}>
+                              <CIcon icon={cilPencil} />
+                            </CButton>
+                            <CButton color="danger" size="sm" title="Eliminar" onClick={() => handleDeleteClick(donation)}>
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </div>
+                        </CTableDataCell>
+                      </CTableRow>
+                    );
+                  })
+                )}
+              </CTableBody>
+            </CTable>
+            </>
+          )}
         </CCardBody>
       </CCard>
 
-      {/* Modal Nueva Donación */}
-      <CModal size="lg" visible={showDonationModal} onClose={() => setShowDonationModal(false)}>
-        <CModalHeader>
-          <CModalTitle>
-            <CIcon icon={cilDrop} className="me-2" />
-            Registrar Nueva Donación
-          </CModalTitle>
+      {/* Modal Detalles */}
+      <CModal size="lg" visible={showDetailsModal} onClose={() => setShowDetailsModal(false)}>
+        <CModalHeader closeButton>
+          <CModalTitle>Detalles de Donación{selectedDonation ? ` - ${getShortId(selectedDonation.id)}` : ''}</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
-            <CRow>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="donante">Donante</CFormLabel>
-                  <CFormSelect id="donante" required>
-                    <option value="">Seleccionar donante</option>
-                    {donors.map(donor => (
-                      <option key={donor.id} value={donor.id}>
-                        {donor.nombre} - {donor.rif}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </div>
-              </CCol>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="fecha">Fecha de Recepción</CFormLabel>
-                  <CFormInput type="date" id="fecha" required />
-                </div>
-              </CCol>
-            </CRow>
+          {loadingDetail ? (
+            <div className="text-center my-3"><CSpinner color="primary" size="sm" /><span className="ms-2">Cargando detalles...</span></div>
+          ) : selectedDonation ? (
+            <>
+              <CRow className="mb-3">
+                <CCol md={6}>
+                  <div className="mb-2"><strong>Donante:</strong> {selectedDonation.donor_name || '—'}</div>
+                  <div className="mb-2"><strong>RIF:</strong> {selectedDonation.rif_cedula || '—'}</div>
+                  <div className="mb-2"><strong>Fecha Recepción:</strong> {formatDate(selectedDonation.reception_date)}</div>
+                  <div className="mb-2"><strong>Documento:</strong> {selectedDonation.document_number || '—'}</div>
+                </CCol>
+                <CCol md={6}>
+                  <div className="mb-2"><strong>Tipo:</strong> {selectedDonation.donation_type || '—'}</div>
 
-            <CRow>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="tipo">Tipo de Donación</CFormLabel>
-                  <CFormSelect id="tipo" required>
-                    <option value="">Seleccionar tipo</option>
-                    <option value="MEDICAMENTOS">Medicamentos</option>
-                    <option value="INSUMOS">Insumos Médicos</option>
-                    <option value="EQUIPOS">Equipamiento</option>
-                    <option value="DINERO">Dinero</option>
-                  </CFormSelect>
-                </div>
-              </CCol>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="documento">N° Documento</CFormLabel>
-                  <CFormInput type="text" id="documento" placeholder="Ej: FACT-001-2024" />
-                </div>
-              </CCol>
-            </CRow>
-
-            <CRow>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="valor">Valor Estimado (USD)</CFormLabel>
-                  <CFormInput type="number" step="0.01" id="valor" placeholder="0.00" />
-                </div>
-              </CCol>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="almacen">Almacén Destino</CFormLabel>
-                  <CFormSelect id="almacen" required>
-                    <option value="">Seleccionar almacén</option>
-                    <option value="CENTRAL">Almacén Central</option>
-                    <option value="NORTE">Almacén Norte</option>
-                    <option value="SUR">Almacén Sur</option>
-                    <option value="BODEGA">Bodega Principal</option>
-                  </CFormSelect>
-                </div>
-              </CCol>
-            </CRow>
-
-            <div className="mb-3">
-              <CFormLabel htmlFor="observaciones">Observaciones</CFormLabel>
-              <CFormTextarea id="observaciones" rows="3" />
-            </div>
-          </CForm>
+                  <div className="mb-2"><strong>Estado:</strong> <CBadge color={getEstadoInfo(selectedDonation.status).color}>{getEstadoInfo(selectedDonation.status).label}</CBadge></div>
+                  <div className="mb-2"><strong>Almacén:</strong> {selectedDonation.destination_warehouse || '—'}</div>
+                </CCol>
+              </CRow>
+              {selectedDonation.transport_conditions && <div className="mb-2"><strong>Condiciones de Transporte:</strong> {selectedDonation.transport_conditions}</div>}
+              {selectedDonation.observations && <div className="mb-2"><strong>Observaciones:</strong> {selectedDonation.observations}</div>}
+            </>
+          ) : null}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowDonationModal(false)}>
-            Cancelar
-          </CButton>
-          <CButton color="primary">
-            <CIcon icon={cilCheckCircle} className="me-1" />
-            Registrar Donación
-          </CButton>
+          <CButton color="secondary" onClick={() => setShowDetailsModal(false)}>Cerrar</CButton>
+          <CButton color="primary" onClick={() => window.print()}><CIcon icon={cilPrint} className="me-1" /> Imprimir Acta</CButton>
         </CModalFooter>
       </CModal>
 
-      {/* Modal Detalles Donación */}
-      <CModal size="lg" visible={showDetailsModal} onClose={() => setShowDetailsModal(false)}>
-        <CModalHeader>
-          <CModalTitle>Detalles de Donación - DON-2024-001</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CRow className="mb-3">
-            <CCol md={6}>
-              <div className="mb-2">
-                <strong>Donante:</strong> Laboratorio Pfizer C.A.
-              </div>
-              <div className="mb-2">
-                <strong>RIF:</strong> J-301234567
-              </div>
-              <div className="mb-2">
-                <strong>Fecha Recepción:</strong> 2024-01-15
-              </div>
-            </CCol>
-            <CCol md={6}>
-              <div className="mb-2">
-                <strong>Tipo:</strong> Medicamentos
-              </div>
-              <div className="mb-2">
-                <strong>Valor Estimado:</strong> $4,500.00
-              </div>
-              <div className="mb-2">
-                <strong>Estado:</strong> <CBadge color="success">RECIBIDO</CBadge>
-              </div>
-            </CCol>
-          </CRow>
+      {/* Modal Editar */}
+      <CModal visible={editModal} onClose={() => setEditModal(false)}>
+        <CModalHeader closeButton><CModalTitle>Editar Donación</CModalTitle></CModalHeader>
+        <CForm onSubmit={submitEdit}>
+          <CModalBody>
+            <div className="mb-3">
+              <CFormLabel>Estado</CFormLabel>
+              <CFormSelect name="status" value={editForm.status || ''} onChange={handleEditChange}>
+                <option value="Received">Recibido</option>
+                <option value="Inspected">Inspeccionado</option>
+                <option value="InProcess">En Proceso</option>
+                <option value="Accepted">Aceptado</option>
+                <option value="Verified">Verificado</option>
+                <option value="Rejected">Rechazado</option>
+                <option value="Quarantined">En Cuarentena</option>
+              </CFormSelect>
+            </div>
+            <div className="mb-3">
+              <CFormLabel>Fecha de Recepción</CFormLabel>
+              <CFormInput type="date" name="reception_date" value={editForm.reception_date || ''} onChange={handleEditChange} />
+            </div>
+            <div className="mb-3">
+              <CFormLabel>Nro Documento</CFormLabel>
+              <CFormInput name="document_number" value={editForm.document_number || ''} onChange={handleEditChange} />
+            </div>
+            <div className="mb-3">
+              <CFormLabel>Observaciones</CFormLabel>
+              <CFormInput name="observations" value={editForm.observations || ''} onChange={handleEditChange} />
+            </div>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setEditModal(false)}>Cancelar</CButton>
+            <CButton color="primary" type="submit" disabled={actionLoading}>{actionLoading ? <CSpinner size="sm"/> : 'Guardar'}</CButton>
+          </CModalFooter>
+        </CForm>
+      </CModal>
 
-          <h6>Medicamentos Recibidos</h6>
-          <CTable hover responsive small>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Medicamento</CTableHeaderCell>
-                <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                <CTableHeaderCell>Lote</CTableHeaderCell>
-                <CTableHeaderCell>Vencimiento</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              <CTableRow>
-                <CTableDataCell>Metformina 850mg</CTableDataCell>
-                <CTableDataCell>500 unidades</CTableDataCell>
-                <CTableDataCell>LOT-12345</CTableDataCell>
-                <CTableDataCell>2025-06-30</CTableDataCell>
-              </CTableRow>
-              <CTableRow>
-                <CTableDataCell>Losartán 50mg</CTableDataCell>
-                <CTableDataCell>300 unidades</CTableDataCell>
-                <CTableDataCell>LOT-12346</CTableDataCell>
-                <CTableDataCell>2025-08-15</CTableDataCell>
-              </CTableRow>
-            </CTableBody>
-          </CTable>
+      {/* Modal Eliminar */}
+      <CModal visible={deleteModal} onClose={() => setDeleteModal(false)}>
+        <CModalHeader closeButton><CModalTitle>Confirmar Eliminación</CModalTitle></CModalHeader>
+        <CModalBody>
+          ¿Está seguro que desea eliminar la donación <strong>{getShortId(selectedDonation?.id)}</strong>?
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowDetailsModal(false)}>
-            Cerrar
-          </CButton>
-          <CButton color="primary">
-            <CIcon icon={cilPrint} className="me-1" />
-            Imprimir Acta
-          </CButton>
+          <CButton color="secondary" onClick={() => setDeleteModal(false)}>Cancelar</CButton>
+          <CButton color="danger" onClick={confirmDelete} disabled={actionLoading}>{actionLoading ? <CSpinner size="sm"/> : 'Eliminar'}</CButton>
         </CModalFooter>
       </CModal>
     </>

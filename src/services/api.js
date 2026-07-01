@@ -120,6 +120,34 @@ export const deleteBeneficiary = async (id) => {
   return request(`/beneficiaries/${id}`, { method: 'DELETE' })
 }
 
+export const saveBeneficiaryMedicalHistory = async (id, data) => {
+  return request(`/beneficiaries/${id}/medical-history`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export const saveBeneficiaryMedicines = async (id, data) => {
+  return request(`/beneficiaries/${id}/medicines`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export const addBeneficiaryDisease = async (id, data) => {
+  return request(`/beneficiaries/${id}/diseases`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export const addBeneficiaryVulnerability = async (id, data) => {
+  return request(`/beneficiaries/${id}/vulnerabilities`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 // ============================================================
 // MEDICAMENTOS
 // ============================================================
@@ -157,6 +185,25 @@ export const getMedicineInventory = async () => {
   return request('/medicines/inventory')
 }
 
+export const getLotById = async (id) => {
+  return request(`/medicines/lots/${id}`)
+}
+
+export const retireLot = async (id) => {
+  return request(`/medicines/lots/${id}/retire`, { method: 'PUT' })
+}
+
+export const createInventoryMovement = async (data) => {
+  return request('/medicines/inventory/movements', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export const getLotMovements = async (lotId) => {
+  return request(`/medicines/inventory/movements/${lotId}`)
+}
+
 // ============================================================
 // DONACIONES
 // ============================================================
@@ -189,6 +236,25 @@ export const deleteDonation = async (id) => {
 export const getDonors = async () => {
   return request('/donations/donors')
 }
+
+export const createDonor = async (data) => {
+  return request('/donations/donors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export const updateDonor = async (id, data) => {
+  return request(`/donations/donors/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export const deleteDonor = async (id) => {
+  return request(`/donations/donors/${id}`, { method: 'DELETE' })
+}
+
 
 // ============================================================
 // SOLICITUDES
@@ -238,6 +304,14 @@ export const updateDelivery = async (id, data) => {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+}
+
+export const notifyDelivery = async (id) => {
+  return request(`/deliveries/${id}/notify`, { method: 'POST' })
+}
+
+export const deleteDelivery = async (id) => {
+  return request(`/deliveries/${id}`, { method: 'DELETE' })
 }
 
 // ============================================================
@@ -319,5 +393,27 @@ export const deleteProviderRequest = async (id) => {
 }
 
 export const getProviders = async () => {
-  return request('/provider-requests/providers')
+  return request('/providers')
+}
+
+export const getProviderById = async (id) => {
+  return request(`/providers/${id}`)
+}
+
+export const createProvider = async (data) => {
+  return request('/providers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export const updateProvider = async (id, data) => {
+  return request(`/providers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export const deleteProvider = async (id) => {
+  return request(`/providers/${id}`, { method: 'DELETE' })
 }

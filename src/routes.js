@@ -14,13 +14,15 @@ const MedicamentoInventario = React.lazy(() => import('./components/medicamentos
 // BENEFICIARIOS
 const Beneficiaries = React.lazy(() => import('./components/beneficiarios/Beneficiaries'))
 const BeneficiaryRegister = React.lazy(() => import('./components/beneficiarios/BeneficiaryRegister'))
-const BeneficiaryMedical = React.lazy(() => import('./components/beneficiarios/BeneficiaryMedical'))
+
 const Donations = React.lazy(() => import('./components/donaciones/Donations'));
 const Requests = React.lazy(() => import('./components/donaciones/Requests'));
 const Deliveries = React.lazy(() => import('./components/entregas/Deliveries'));
 const DonationRegister = React.lazy(() => import('./components/donaciones/DonationRegister'));
 const RequestRegister = React.lazy(() => import('./components/donaciones//RequestRegister'));
 const DeliveryRegister = React.lazy(() => import('./components/entregas/DeliveryRegister'));
+const Donors = React.lazy(() => import('./components/donantes/Donors'));
+const Providers = React.lazy(() => import('./components/proveedores/Providers'));
 
 const routes = [
   // LOGIN
@@ -41,13 +43,15 @@ const routes = [
     // BENEFICIARIOS 
   { path: '/beneficiarios/lista', name: 'Lista de Beneficiarios', element: Beneficiaries },
   { path: '/beneficiarios/registrar', name: 'Registrar Beneficiario', element: BeneficiaryRegister },
-  { path: '/beneficiarios/medico', name: 'Historial Médico', element: BeneficiaryMedical },
-    // DONACIONES
+
+  // DONACIONES
   { path: '/donaciones/lista', name: 'Donaciones', element: Donations },
   { path: '/donaciones/nueva', name: 'Nueva Donación', element: DonationRegister },
+  { path: '/donaciones/donantes', name: 'Gestión de Donantes', element: Donors },
   // SOLICITUDES
   { path: '/solicitudes/lista', name: 'Solicitudes', element: Requests },
   { path: '/solicitudes/nueva', name: 'Nueva Solicitud', element: RequestRegister },
+  { path: '/solicitudes/proveedores', name: 'Gestión de Proveedores', element: Providers },
   // ENTREGAS
   { path: '/entregas/lista', name: 'Entregas', element: Deliveries },
   { path: '/entregas/nueva', name: 'Nueva Entrega', element: DeliveryRegister },

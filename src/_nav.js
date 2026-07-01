@@ -84,12 +84,6 @@ const _nav = [
       to: '/beneficiarios/lista',
       icon: <CIcon icon={cilList} customClassName="nav-icon" />,
     },
-    {
-      component: CNavItem,
-      name: 'Historial Médico',
-      to: '/beneficiarios/medico',
-      icon: <CIcon icon={cilMedicalCross} customClassName="nav-icon" />,
-    },
   ],
 },
 {
@@ -134,6 +128,12 @@ const _nav = [
       to: '/donaciones/nueva',
       icon: <CIcon icon={cilPlus} customClassName="nav-icon" />,
     },
+    {
+      component: CNavItem,
+      name: 'Gestión de Donantes',
+      to: '/donaciones/donantes',
+      icon: <CIcon icon={cilUserFollow} customClassName="nav-icon" />,
+    },
   ],
 },
 {
@@ -152,6 +152,12 @@ const _nav = [
       name: 'Nueva Solicitud',
       to: '/solicitudes/nueva',
       icon: <CIcon icon={cilPlus} customClassName="nav-icon" />,
+    },
+    {
+      component: CNavItem,
+      name: 'Gestión de Proveedores',
+      to: '/solicitudes/proveedores',
+      icon: <CIcon icon={cilStorage} customClassName="nav-icon" />,
     },
   ],
 },

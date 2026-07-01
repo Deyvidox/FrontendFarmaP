@@ -15,10 +15,15 @@ import {
   CModalHeader,
   CModalTitle,
   CModalBody,
+  CFormSelect,
+  CFormInput,
+  CInputGroup,
+  CInputGroupText,
   CModalFooter,
   CRow,
   CCol
 } from '@coreui/react';
+import { cilSearch } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { 
   cilClipboard,
@@ -27,15 +32,21 @@ import {
   cilWarning,
   cilCheckCircle,
   cilClock,
-  cilUser
+  cilUser,
+  cilInfo,
+  cilPencil,
+  cilTrash
 } from '@coreui/icons';
 import { getProviderRequests } from '../../services/api';
+import HelpButton from '../common/HelpButton';
 
 const Requests = () => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchCriteria, setSearchCriteria] = useState('proveedor');
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -82,6 +93,14 @@ const Requests = () => {
     setShowPrintModal(true);
   };
 
+  const handleEmailRequest = (request) => {
+    window.alert(`Simulando envío de correo para la solicitud ${request.id}`);
+  };
+
+  const handleUserRequest = (request) => {
+    window.alert(`Simulando visualización del usuario responsable para la solicitud ${request.id}`);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString();
@@ -97,14 +116,88 @@ const Requests = () => {
       <CCard className="mb-4">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">
+            <h5 className="mb-0 d-flex align-items-center">
               <CIcon icon={cilClipboard} className="me-2" />
               Solicitudes de Medicamentos a Proveedores
+              <HelpButton title="Manual de Usuario – Solicitudes a Proveedores">
+                <div>
+                  <p>Gestiona las órdenes de compra y requerimientos enviados a laboratorios o distribuidoras.</p>
+                  <h6>Lista de Solicitudes</h6>
+                  <div className="card p-3 mb-3 bg-light">
+                    <div className="row small">
+                      <div className="col-2 fw-bold">(1) Solicitud</div>
+                      <div className="col-3 fw-bold">(2) Proveedor</div>
+                      <div className="col-2 fw-bold">(3) Tipo/Fecha</div>
+                      <div className="col-2 fw-bold">(4) Estado</div>
+                      <div className="col-3 fw-bold">(5) Acciones</div>
+                    </div>
+                    <hr/>
+                    <div className="row small text-muted">
+                      <div className="col-2">REQ-0042</div>
+                      <div className="col-3">Droguería Nena</div>
+                      <div className="col-2">Emergencia<br/><small>12/10/23</small></div>
+                      <div className="col-2"><span className="badge bg-warning">Pendiente</span></div>
+                      <div className="col-3">🖨 👁 ✏ 🗑</div>
+                    </div>
+                  </div>
+                  <ol>
+                    <li><strong>Solicitud:</strong> Número de requerimiento (ID).</li>
+                    <li><strong>Proveedor:</strong> Laboratorio o distribuidora destino.</li>
+                    <li><strong>Tipo/Fecha:</strong> Indica si es Emergencia o Rutinaria y cuándo se creó.</li>
+                    <li><strong>Estado:</strong> Pendiente, En Proceso, Aprobada, Rechazada.</li>
+                    <li><strong>Acciones:</strong>
+                      <ul>
+                        <li><strong>Imprimir (🖨):</strong> Genera PDF de la orden.</li>
+                        <li><strong>Ver (👁):</strong> Lista de medicamentos solicitados.</li>
+                        <li><strong>Editar (✏):</strong> Cambiar estado o observaciones.</li>
+                        <li><strong>Eliminar (🗑):</strong> Cancela la solicitud.</li>
+                      </ul>
+                    </li>
+                  </ol>
+                </div>
+              </HelpButton>
             </h5>
           </div>
         </CCardHeader>
-        
         <CCardBody>
+          {/* Buscador Unificado */}
+          <CRow className="mb-3">
+            <CCol md={3} xs={12} className="mb-2 mb-md-0">
+              <CFormSelect
+                value={searchCriteria}
+                onChange={(e) => { setSearchCriteria(e.target.value); setSearchTerm(''); }}
+              >
+                <option value="proveedor">Proveedor</option>
+                <option value="departamento">Departamento</option>
+                <option value="prioridad">Prioridad</option>
+              </CFormSelect>
+            </CCol>
+            <CCol md={9} xs={12}>
+              <CInputGroup>
+                <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
+                <CFormInput
+                  placeholder={`Buscar por ${searchCriteria}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <CButton color="secondary" variant="outline" onClick={() => setSearchTerm('')}>&#x2715;</CButton>
+                )}
+              </CInputGroup>
+            </CCol>
+          </CRow>
+
+          {searchTerm && (
+            <div className="text-muted small mb-2">
+              {requests.filter(r => {
+                const q = searchTerm.trim().toLowerCase();
+                if (searchCriteria === 'departamento') return (r.department || '').toLowerCase().includes(q);
+                if (searchCriteria === 'prioridad') return (r.general_priority || '').toLowerCase().includes(q);
+                return (r.provider_name || '').toLowerCase().includes(q);
+              }).length} resultado(s) de {requests.length} total
+            </div>
+          )}
+
           {/* Filtros Rápidos */}
           <div className="mb-4">
             <div className="d-flex flex-wrap gap-2">
@@ -150,8 +243,16 @@ const Requests = () => {
                     <CTableDataCell colSpan="8" className="text-center">No hay solicitudes registradas</CTableDataCell>
                   </CTableRow>
                 ) : (
-                  requests.map(request => (
-                    <CTableRow key={request.id}>
+                  requests
+                    .filter(r => {
+                      const q = searchTerm.trim().toLowerCase();
+                      if (!q) return true;
+                      if (searchCriteria === 'departamento') return (r.department || '').toLowerCase().includes(q);
+                      if (searchCriteria === 'prioridad') return (r.general_priority || '').toLowerCase().includes(q);
+                      return (r.provider_name || '').toLowerCase().includes(q);
+                    })
+                    .map(request => (
+                      <CTableRow key={request.id}>
                       <CTableDataCell>
                         <strong>{getShortId(request.id)}</strong>
                       </CTableDataCell>
@@ -180,13 +281,14 @@ const Requests = () => {
                             color="primary" 
                             size="sm"
                             onClick={() => handlePrintRequest(request)}
+                            title="Imprimir"
                           >
                             <CIcon icon={cilPrint} />
                           </CButton>
-                          <CButton color="info" size="sm">
+                          <CButton color="info" size="sm" onClick={() => handleEmailRequest(request)} title="Enviar por correo">
                             <CIcon icon={cilEnvelopeClosed} />
                           </CButton>
-                          <CButton color="warning" size="sm">
+                          <CButton color="warning" size="sm" onClick={() => handleUserRequest(request)} title="Ver Usuario">
                             <CIcon icon={cilUser} />
                           </CButton>
                         </div>

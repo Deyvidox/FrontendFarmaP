@@ -106,8 +106,9 @@ const AppHeader = () => {
           <AppHeaderDropdown />
         </CHeaderNav>
       </CContainer>
-      <CContainer className="px-4" fluid>
+      <CContainer className="px-4 d-flex justify-content-between align-items-center" fluid>
         <AppBreadcrumb />
+        <div id="help-button-portal"></div>
       </CContainer>
     </CHeader>
   )

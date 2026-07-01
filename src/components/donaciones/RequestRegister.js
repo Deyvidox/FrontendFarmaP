@@ -22,6 +22,7 @@ import { cilSave, cilReload, cilClipboard, cilPlus, cilTrash } from '@coreui/ico
 import CIcon from '@coreui/icons-react'
 import '../../css/donaciones/RequestRegister.css'
 import { getProviders, getMedicines, createProviderRequest } from '../../services/api'
+import HelpButton from '../common/HelpButton'
 
 const RequestRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
@@ -195,9 +196,32 @@ const RequestRegister = () => {
     <div className="request-register-container">
       <CCard className="request-register-card">
         <CCardHeader>
-          <h5 className="mb-0">
+          <h5 className="mb-0 d-flex align-items-center">
             <CIcon icon={cilClipboard} className="me-2" />
             Solicitar Medicamentos a Proveedores
+            <HelpButton title="Manual de Usuario – Nueva Solicitud a Proveedor">
+              <div>
+                <p>Crea una nueva solicitud (orden de compra) de medicamentos a un proveedor.</p>
+                <h6>Formulario de Solicitud</h6>
+                <div className="card p-3 mb-3 bg-light">
+                  <div className="row g-2 small">
+                    <div className="col-md-6"><span className="fw-bold">(1) Proveedor *</span><br/>Seleccione...</div>
+                    <div className="col-md-6"><span className="fw-bold">(2) Tipo *</span><br/>Emergencia / Rutinaria</div>
+                    <div className="col-12"><span className="fw-bold">(3) Justificación / Notas</span><br/>Para campaña de vacunación...</div>
+                    <div className="col-12 mt-3"><span className="fw-bold">(4) Medicamentos Solicitados</span><br/><button className="btn btn-sm border">Añadir Artículo</button></div>
+                    <div className="col-md-6 mt-3"><span className="fw-bold">(5) Solicitante</span><br/>Dr. López</div>
+                  </div>
+                </div>
+                <ol>
+                  <li><strong>Proveedor:</strong> Selecciona el laboratorio/distribuidora. (Cargado de catálogos).</li>
+                  <li><strong>Tipo:</strong> Define la prioridad (Emergencia o Rutinaria).</li>
+                  <li><strong>Justificación:</strong> Motivo de la solicitud (Opcional pero recomendado).</li>
+                  <li><strong>Medicamentos Solicitados:</strong> Agrega los ítems que requieres, indicando cantidades específicas.</li>
+                  <li><strong>Solicitante:</strong> Persona o departamento que hace el requerimiento.</li>
+                </ol>
+                <p className="text-muted"><em>Al guardar, la solicitud quedará en estado "Pendiente" en la bandeja principal.</em></p>
+              </div>
+            </HelpButton>
           </h5>
         </CCardHeader>
         <CCardBody>
