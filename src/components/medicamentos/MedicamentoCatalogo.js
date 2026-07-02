@@ -209,48 +209,27 @@ const MedicamentoCatalogo = () => {
             <h5 className="mb-0">
               <CIcon icon={cilMedicalCross} className="me-2" />
               Catálogo de Medicamentos
-              <HelpButton title="Manual de Usuario – Catálogo de Medicamentos">
-                <div>
-                  <p>Muestra el registro base de todos los medicamentos en el sistema.</p>
-                  <h6>Lista del catálogo</h6>
-                  <div className="card p-3 mb-3 bg-light">
-                    <div className="row small">
-                      <div className="col-3 fw-bold">(1) Medicamento</div>
-                      <div className="col-2 fw-bold">(2) Código Nac.</div>
-                      <div className="col-3 fw-bold">(3) Laboratorio / Cat.</div>
-                      <div className="col-2 fw-bold">(4) Receta</div>
-                      <div className="col-2 fw-bold">(5) Acciones</div>
-                    </div>
-                    <hr/>
-                    <div className="row small text-muted">
-                      <div className="col-3">Paracetamol 500mg</div>
-                      <div className="col-2">N/A</div>
-                      <div className="col-3">Genfar / Analgésicos</div>
-                      <div className="col-2">No</div>
-                      <div className="col-2">👁 ✏ 🗑</div>
-                    </div>
+              <HelpButton title="Manual de Usuario - Catálogo de Medicamentos">
+                <div className="text-muted">
+                  <p><strong>Búsqueda</strong></p>
+                  <ul>
+                    <li>Búsqueda: placeholder "Buscar por nombre, código o principio activo..."</li>
+                  </ul>
+                  <p><strong>Columnas:</strong></p>
+                  <p>Código | Nombre Comercial | Principio Activo | Concentración | Laboratorio | Categoría | Estado | Acciones</p>
+                  <p><strong>Datos de ejemplo:</strong></p>
+                  <div className="table-responsive">
+                    <table className="table table-sm table-bordered">
+                      <tbody>
+                        <tr><td>P-00789 | Amoxicilina 500mg | Amoxicilina | 500 mg | Laboratorios Vargas S.A. | Antibiótico | Activo</td></tr>
+                        <tr><td>P-00123 | Losartán 50mg | Losartán | 50 mg | Laboratorios Vargas S.A. | Antihipertensivo | Activo</td></tr>
+                        <tr><td>P-00456 | Metformina 850mg | Metformina | 850 mg | Pharma Internacional C.A. | Antidiabético | Activo</td></tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <ol>
-                    <li><strong>Medicamento:</strong> Nombre comercial y concentración.</li>
-                    <li><strong>Código Nacional:</strong> Identificador oficial si existe.</li>
-                    <li><strong>Lab / Categoría:</strong> Fabricante y grupo terapéutico.</li>
-                    <li><strong>Receta:</strong> Indica si requiere récipe médico.</li>
-                    <li><strong>Acciones:</strong>
-                      <ul>
-                        <li><strong>Ver:</strong> Ficha técnica completa.</li>
-                        <li><strong>Editar:</strong> Modificar propiedades.</li>
-                        <li><strong>Eliminar:</strong> Lo remueve del catálogo.</li>
-                      </ul>
-                    </li>
-                  </ol>
-                  <p className="text-muted"><em>Nota: Esta pantalla no muestra inventario, solo la información técnica.</em></p>
                 </div>
               </HelpButton>
             </h5>
-            <CButton color="primary" size="sm">
-              <CIcon icon={cilMedicalCross} className="me-1" />
-              Nuevo Medicamento
-            </CButton>
           </div>
         </CCardHeader>
         <CCardBody className="medicamento-card-body">
@@ -436,7 +415,23 @@ const MedicamentoCatalogo = () => {
       {/* Modal Editar */}
       <CModal visible={editModal} onClose={() => setEditModal(false)} size="lg">
         <CModalHeader closeButton>
-          <CModalTitle>Editar Medicamento</CModalTitle>
+          <CModalTitle className="d-flex align-items-center gap-3">
+            <div>Editar Medicamento</div>
+            <HelpButton title="Manual de Usuario - Editar Medicamento">
+              <div className="text-muted">
+                <ul>
+                  <li>Nombre Comercial: "Metformina 850mg"</li>
+                  <li>Nombre Genérico: "Metformina clorhidrato"</li>
+                  <li>Principio Activo: "Metformina"</li>
+                  <li>Concentración: "850 mg"</li>
+                  <li>Categoría: "Antidiabético"</li>
+                  <li>Laboratorio: "Pharma Internacional C.A."</li>
+                  <li>Forma Farmacéutica: "Seleccione..."</li>
+                  <li>Código Nacional: "P-00456"</li>
+                </ul>
+              </div>
+            </HelpButton>
+          </CModalTitle>
         </CModalHeader>
         <CForm onSubmit={submitEdit}>
           <CModalBody>

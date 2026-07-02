@@ -114,36 +114,26 @@ const UserRegister = () => {
             <CIcon icon={cilUser} className="me-2" />
             Registrar Usuario
             <HelpButton title="Manual de Usuario – Registrar Usuario">
-              <div>
-                <p>Este formulario crea una cuenta de acceso. Sigue los pasos.</p>
-                <h6>Formulario de registro</h6>
-                <div className="card p-3 mb-3 bg-light">
-                  <div className="row g-2">
-                    <div className="col-md-6"><small className="fw-bold">(1) Cédula/RIF</small><br/><small className="text-muted">V-12345678</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(2) Nombres</small><br/><small className="text-muted">Ingrese los nombres</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(3) Apellidos</small><br/><small className="text-muted">Ingrese los apellidos</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(4) Email</small><br/><small className="text-muted">usuario@donaciones.com</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(5) Teléfono</small><br/><small className="text-muted">+58 412 1234567</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(6) Cargo</small><br/><small className="text-muted">Cargo del usuario</small></div>
-                    <div className="col-12"><small className="fw-bold">(7) Rol</small><br/><small className="text-muted">Seleccione un rol</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(8) Departamento</small><br/><small className="text-muted">Departamento</small></div>
-                    <div className="col-md-6"><small className="fw-bold">(9) Estado</small><br/><small className="text-muted">Activo</small></div>
-                    <div className="col-12"><small className="fw-bold">(10) Contraseña</small><br/><small className="text-muted">Ingrese contraseña</small></div>
-                  </div>
-                </div>
-                <ol>
-                  <li><strong>Cédula/RIF:</strong> Obligatorio. Debe comenzar con V- o J- según persona natural o jurídica. Ej: V-12345678.</li>
-                  <li><strong>Nombres:</strong> Nombre real del usuario. Sin caracteres especiales.</li>
-                  <li><strong>Apellidos:</strong> Igual, sin tildes para evitar problemas de búsqueda.</li>
-                  <li><strong>Email:</strong> Correo válido. Será usado para iniciar sesión.</li>
-                  <li><strong>Teléfono:</strong> Formato +58 412 1234567. Útil para notificaciones.</li>
-                  <li><strong>Cargo:</strong> Puesto del usuario (ej. Farmacéutico).</li>
-                  <li><strong>Rol:</strong> Selecciona de la lista. Define los permisos. Si no ves opciones, recarga o contacta al administrador.</li>
-                  <li><strong>Departamento:</strong> Área de trabajo.</li>
-                  <li><strong>Estado:</strong> Por defecto Activo. Se puede cambiar luego.</li>
-                  <li><strong>Contraseña:</strong> Mínimo 8 caracteres. Se recomienda combinar letras y números.</li>
-                </ol>
-                <p className="text-muted"><em>Nota: Tras guardar, el usuario podrá iniciar sesión inmediatamente.</em></p>
+              <div className="text-muted">
+                <p><strong>Información Personal</strong></p>
+                <ul>
+                  <li>Cédula/RIF: placeholder "V-12345678 o J-301234567"</li>
+                  <li>Nombres: placeholder "Ingrese los nombres"</li>
+                  <li>Apellidos: placeholder "Ingrese los apellidos"</li>
+                  <li>Email: placeholder "usuario@donaciones.com"</li>
+                  <li>Teléfono: placeholder "+58 412 1234567"</li>
+                  <li>Cargo: placeholder "Cargo del usuario"</li>
+                </ul>
+                <p><strong>Información Profesional</strong></p>
+                <ul>
+                  <li>Rol: placeholder "Seleccione un rol"</li>
+                  <li>Departamento: placeholder "Departamento"</li>
+                </ul>
+                <p><strong>Estado</strong>: placeholder "Activo"</p>
+                <p><strong>Seguridad</strong></p>
+                <ul>
+                  <li>Contraseña: placeholder "Ingrese contraseña"</li>
+                </ul>
               </div>
             </HelpButton>
           </h5>

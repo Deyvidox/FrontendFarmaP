@@ -199,35 +199,28 @@ const MedicamentoAlertas = () => {
             <h5 className="mb-0">
               <CIcon icon={cilBell} className="me-2" />
               Alertas de Vencimiento
-              <HelpButton title="Manual de Usuario – Alertas de Vencimiento">
-                <div>
-                  <p>Controla los lotes próximos a vencer o ya vencidos.</p>
-                  <h6>Tabla de Alertas</h6>
-                  <div className="card p-3 mb-3 bg-light">
-                    <div className="row small">
-                      <div className="col-2 fw-bold">(1) Lote</div>
-                      <div className="col-3 fw-bold">(2) Medicamento</div>
-                      <div className="col-2 fw-bold">(3) Vencimiento</div>
-                      <div className="col-2 fw-bold">(4) Estado</div>
-                      <div className="col-3 fw-bold">(5) Acción</div>
-                    </div>
-                    <hr/>
-                    <div className="row small text-muted">
-                      <div className="col-2">L-2023X</div>
-                      <div className="col-3">Ibuprofeno</div>
-                      <div className="col-2">15-05-2023</div>
-                      <div className="col-2"><span className="badge bg-danger">Vencido</span></div>
-                      <div className="col-3"><button className="btn btn-sm btn-danger text-white">Retirar</button></div>
-                    </div>
+              <HelpButton title="Manual de Usuario - Alertas de Vencimiento">
+                <div className="text-muted">
+                  <p><strong>Indicadores superiores</strong></p>
+                  <ul>
+                    <li>"3 Lotes Totales", "1,710 Unidades Disponibles", "3 Lotes Óptimos", "0 Lotes Críticos/Bajos"</li>
+                  </ul>
+                  <p><strong>Tarjetas de resumen</strong></p>
+                  <ul>
+                    <li>"Alertas Críticas: 1", "Próximas a Vencer: 0", "Ya Vencidas: 2", "Seguras / Sin Alerta: ..."</li>
+                  </ul>
+                  <p><strong>Tabla de lotes (columnas)</strong></p>
+                  <p>Lote | Medicamento | Laboratorio | Fecha Vencimiento | Días Restantes | Estado | Cantidad | Ubicación | Progreso | Acciones</p>
+                  <p><strong>Datos de ejemplo:</strong></p>
+                  <div className="table-responsive">
+                    <table className="table table-sm table-bordered">
+                      <tbody>
+                        <tr><td>LOTE-202512 | Amoxicilina 500mg | Laboratorios Vargas S.A. | 1/9/2026 | 61 días | PROXIMA (Vence en 3 meses) | 300 unidades | Almacén General | 40%</td></tr>
+                        <tr><td>LOTE-202505 | Losartán 50mg | Laboratorios Vargas S.A. | 15/1/2027 | 197 días | SEGURA (Vence en más de 3 meses) | 500 unidades | Estante A-3 | 10%</td></tr>
+                        <tr><td>LOTE-202510 | Metformina 850mg | Pharma Internacional C.A. | 20/2/2027 | 233 días | SEGURA (Vence en más de 3 meses) | 1000 unidades | Estante B-1 | 10%</td></tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <ol>
-                    <li><strong>Lote:</strong> Número de lote afectado.</li>
-                    <li><strong>Medicamento:</strong> Producto del lote.</li>
-                    <li><strong>Vencimiento:</strong> Fecha de caducidad.</li>
-                    <li><strong>Estado:</strong> Vencido (Rojo), Crítico (&lt;30 días, Naranja) o Próximo (Amarillo).</li>
-                    <li><strong>Acción (Retirar):</strong> Remueve las unidades restantes del inventario general y las marca como cuarentena o desechadas.</li>
-                  </ol>
-                  <p className="text-muted"><em>Nota: Use los botones superiores para filtrar rápidamente entre Críticas, Próximas y Vencidas.</em></p>
                 </div>
               </HelpButton>
             </h5>

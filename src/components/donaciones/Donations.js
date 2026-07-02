@@ -155,40 +155,27 @@ const Donations = () => {
             <h5 className="mb-0">
               <CIcon icon={cilDrop} className="me-2" />
               Gestión de Donaciones
-              <HelpButton title="Manual de Usuario – Gestión de Donaciones">
-                <div>
-                  <p>Aquí aparecen todas las donaciones registradas en el sistema.</p>
-                  <h6>Lista de donaciones</h6>
-                  <div className="card p-3 mb-3 bg-light">
-                    <div className="row small">
-                      <div className="col-2 fw-bold">(1) ID / Ref.</div>
-                      <div className="col-3 fw-bold">(2) Donante</div>
-                      <div className="col-2 fw-bold">(3) Fecha</div>
-                      <div className="col-2 fw-bold">(4) Estado</div>
-                      <div className="col-3 fw-bold">(5) Acciones</div>
-                    </div>
-                    <hr/>
-                    <div className="row small text-muted">
-                      <div className="col-2">DON-202301</div>
-                      <div className="col-3">Cruz Roja</div>
-                      <div className="col-2">10-10-2023</div>
-                      <div className="col-2"><span className="badge bg-info">En Proceso</span></div>
-                      <div className="col-3">👁 ✏ 🗑</div>
-                    </div>
+              <HelpButton title="Manual de Usuario - Gestión de Donaciones">
+                <div className="text-muted">
+                  <p><strong>Resumen</strong></p>
+                  <ul>
+                    <li>"2 Donaciones Totales", "0 En Inspección", "— Items Totales"</li>
+                  </ul>
+                  <p><strong>Filtro</strong></p>
+                  <ul>
+                    <li>Filtro: placeholder "Buscar por donante..."</li>
+                  </ul>
+                  <p><strong>Columnas:</strong></p>
+                  <p>ID Donación | Donante | Fecha Recepción | Tipo | Estado | Acciones</p>
+                  <p><strong>Datos de ejemplo:</strong></p>
+                  <div className="table-responsive">
+                    <table className="table table-sm table-bordered">
+                      <tbody>
+                        <tr><td>DON-5046980D | Ministerio de Salud (G-20001234-1) | 26/6/2026 | Equipamiento | Recibido</td></tr>
+                        <tr><td>DON-D4F0E840 | Vargas S.A. (J-30012345-1) | 10/3/2025 | Medicamentos | Aceptado</td></tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <ol>
-                    <li><strong>ID / Referencia:</strong> Identificador único de la donación.</li>
-                    <li><strong>Donante:</strong> Nombre de la institución o persona que dona.</li>
-                    <li><strong>Fecha:</strong> Fecha de recepción.</li>
-                    <li><strong>Estado:</strong> Recibido, En Proceso, Verificado, Rechazado.</li>
-                    <li><strong>Acciones:</strong>
-                      <ul>
-                        <li><strong>Ver:</strong> Detalles completos y medicamentos donados.</li>
-                        <li><strong>Editar:</strong> Modificar estado o almacén de destino.</li>
-                        <li><strong>Eliminar:</strong> Borra la donación si hubo error.</li>
-                      </ul>
-                    </li>
-                  </ol>
                 </div>
               </HelpButton>
             </h5>

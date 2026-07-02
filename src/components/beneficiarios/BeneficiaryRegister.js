@@ -331,20 +331,33 @@ const BeneficiaryRegister = () => {
                     <div className="col-md-6"><span className="fw-bold">(1) Cédula *</span><br/>V-12345678</div>
                     <div className="col-md-6"><span className="fw-bold">(2) Nombres *</span><br/>María</div>
                     <div className="col-md-6"><span className="fw-bold">(3) Apellidos *</span><br/>Gómez</div>
-                    <div className="col-md-6"><span className="fw-bold">(4) Comunidad *</span><br/>Seleccione...</div>
-                    <div className="col-md-6"><span className="fw-bold">(5) Prioridad *</span><br/>ALTA / MEDIA / BAJA</div>
-                    <div className="col-md-6"><span className="fw-bold">(6) Teléfono</span><br/>+58 414 1234567</div>
+                    <div className="col-md-6"><span className="fw-bold">(4) Fecha Nac.</span><br/>dd/mm/aaaa</div>
+                    <div className="col-md-6"><span className="fw-bold">(5) Género</span><br/>Seleccione</div>
+                    <div className="col-md-6"><span className="fw-bold">(6) Dependientes</span><br/>0</div>
+                    <div className="col-md-6"><span className="fw-bold">(7) Teléfono</span><br/>+58 412 1234567</div>
+                    <div className="col-md-6"><span className="fw-bold">(8) Email</span><br/>beneficiario@ejemplo.com</div>
+                    <div className="col-md-6"><span className="fw-bold">(9) Comunidad *</span><br/>Seleccione una comunidad</div>
+                    <div className="col-md-6"><span className="fw-bold">(10) Dirección</span><br/>Calle, casa, referencia...</div>
+                    <div className="col-md-6"><span className="fw-bold">(11) Contacto Emerg.</span><br/>Nombre completo</div>
+                    <div className="col-md-6"><span className="fw-bold">(12) Tel. Emergencia</span><br/>+58 412 9876543</div>
+                    <div className="col-md-6"><span className="fw-bold">(13) Profesión</span><br/>Ej: Docente, Jubilado...</div>
+                    <div className="col-md-6"><span className="fw-bold">(14) Prioridad *</span><br/>ALTA / MEDIA / BAJA</div>
                   </div>
                 </div>
                 <ol>
                   <li><strong>Cédula:</strong> Requerido. Ej: V-12345678.</li>
-                  <li><strong>Nombres:</strong> Nombres completos.</li>
-                  <li><strong>Apellidos:</strong> Apellidos completos.</li>
-                  <li><strong>Comunidad:</strong> Sector donde reside. Si no aparece, creala en catálogos.</li>
+                  <li><strong>Nombres / Apellidos:</strong> Nombres y apellidos completos.</li>
+                  <li><strong>Fecha Nac.:</strong> Fecha de nacimiento.</li>
+                  <li><strong>Género:</strong> Masculino o Femenino.</li>
+                  <li><strong>Dependientes:</strong> Personas que dependen del beneficiario.</li>
+                  <li><strong>Teléfono / Email:</strong> Datos de contacto.</li>
+                  <li><strong>Comunidad:</strong> Sector donde reside. Si no aparece, créala en catálogos.</li>
+                  <li><strong>Dirección:</strong> Dirección detallada de residencia.</li>
+                  <li><strong>Contacto de Emergencia:</strong> Nombre y teléfono de emergencia.</li>
+                  <li><strong>Profesión:</strong> Ocupación actual.</li>
                   <li><strong>Prioridad:</strong> Nivel de urgencia o vulnerabilidad general.</li>
-                  <li><strong>Teléfono:</strong> Opcional. Útil para contacto rápido.</li>
                 </ol>
-                <p className="text-muted"><em>Nota: Al hacer clic en "Registrar", los datos se guardan y la lista se actualiza.</em></p>
+                <p className="text-muted"><em>Nota: También puede agregar enfermedades y medicamentos requeridos en las secciones inferiores del formulario.</em></p>
               </div>
             </HelpButton>
           </h5>

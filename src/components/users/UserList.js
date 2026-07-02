@@ -164,7 +164,7 @@ const UserList = ({ users, onRefresh }) => {
             <h5 className="mb-0 d-flex align-items-center">
               <CIcon icon={cilUser} className="me-2" />
               Lista de Usuarios
-              <HelpButton title="Manual de Usuario – Gestión de Usuarios">
+              <HelpButton title="Manual de Usuario – Lista de Usuarios">
                 <div>
                   <p>Administra todas las cuentas del sistema.</p>
                   <h6>Lista de usuarios</h6>
@@ -173,25 +173,31 @@ const UserList = ({ users, onRefresh }) => {
                       <div className="col-2 fw-bold">(1) Cédula</div>
                       <div className="col-2 fw-bold">(2) Nombre</div>
                       <div className="col-2 fw-bold">(3) Email</div>
-                      <div className="col-2 fw-bold">(4) Rol</div>
-                      <div className="col-2 fw-bold">(5) Estado</div>
-                      <div className="col-2 fw-bold">(6) Acciones</div>
+                      <div className="col-1 fw-bold">(4) Rol</div>
+                      <div className="col-1 fw-bold">(5) Depto.</div>
+                      <div className="col-1 fw-bold">(6) Cargo</div>
+                      <div className="col-1 fw-bold">(7) Estado</div>
+                      <div className="col-2 fw-bold">(8) Acciones</div>
                     </div>
                     <hr/>
                     <div className="row small text-muted">
-                      <div className="col-2">V-12345678</div>
-                      <div className="col-2">Juan Pérez</div>
-                      <div className="col-2">juan@mail.com</div>
-                      <div className="col-2"><span className="badge bg-warning text-dark">Coord.</span></div>
-                      <div className="col-2"><span className="badge bg-success">Activo</span></div>
+                      <div className="col-2">V-29129307</div>
+                      <div className="col-2">Pedro Porro</div>
+                      <div className="col-2">pedro@gmail.com</div>
+                      <div className="col-1"><span className="badge bg-warning text-dark">Admin</span></div>
+                      <div className="col-1">N/A</div>
+                      <div className="col-1">N/A</div>
+                      <div className="col-1"><span className="badge bg-success">Activo</span></div>
                       <div className="col-2">👁 ✏ 🗑</div>
                     </div>
                   </div>
                   <ol>
-                    <li><strong>Cédula/RIF:</strong> Identificación única.</li>
+                    <li><strong>Cédula/RIF:</strong> Identificación única del usuario.</li>
                     <li><strong>Nombre completo:</strong> Nombre y apellido.</li>
                     <li><strong>Email:</strong> Correo de acceso.</li>
                     <li><strong>Rol:</strong> Indica permisos (Admin, Coordinador, etc.).</li>
+                    <li><strong>Departamento:</strong> Área de trabajo asignada.</li>
+                    <li><strong>Cargo:</strong> Puesto que ocupa.</li>
                     <li><strong>Estado:</strong> Activo (acceso), Inactivo (bloqueado).</li>
                     <li><strong>Acciones:</strong>
                       <ul>

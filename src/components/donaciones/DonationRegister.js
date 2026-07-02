@@ -173,28 +173,23 @@ const DonationRegister = () => {
                         <CIcon icon={cilGift} className="me-2" />
                         Registrar Nueva Donación
                         <HelpButton title="Manual de Usuario – Registrar Donación">
-                            <div>
-                                <p>Formulario para ingresar nuevas donaciones al inventario.</p>
-                                <h6>Registro de Donación</h6>
-                                <div className="card p-3 mb-3 bg-light">
-                                    <div className="row g-2 small">
-                                        <div className="col-md-6"><span className="fw-bold">(1) Donante *</span><br/>Seleccione (O use el botón +)</div>
-                                        <div className="col-md-6"><span className="fw-bold">(2) Tipo de Donación</span><br/>Medicamentos / Equipos</div>
-                                        <div className="col-md-6"><span className="fw-bold">(3) Documento Ref.</span><br/>Ej: ACT-001</div>
-                                        <div className="col-md-6"><span className="fw-bold">(4) Fecha de Ingreso</span><br/>10-10-2023</div>
-                                        <div className="col-12"><span className="fw-bold">(5) Almacén Destino</span><br/>Seleccione Almacén Central</div>
-                                        <div className="col-12 mt-2"><span className="fw-bold">(6) Lista de Medicamentos</span><br/><button className="btn btn-sm border">Añadir Artículo</button></div>
-                                    </div>
-                                </div>
-                                <ol>
-                                    <li><strong>Donante:</strong> Obligatorio. Si no está en lista, créelo con "+".</li>
-                                    <li><strong>Tipo:</strong> Indica qué se está recibiendo.</li>
-                                    <li><strong>Documento Ref.:</strong> Número de acta o factura asociada.</li>
-                                    <li><strong>Fecha:</strong> Cuándo ingresa físicamente al sistema.</li>
-                                    <li><strong>Almacén Destino:</strong> Dónde se almacenará físicamente.</li>
-                                    <li><strong>Lista de Medicamentos:</strong> Sección para detallar qué medicamentos específicos y qué cantidades vienen en la donación.</li>
-                                </ol>
-                                <p className="text-muted"><em>Al guardar, los artículos entrarán al proceso de verificación.</em></p>
+                            <div className="text-muted">
+                                <p><strong>Información del Donante</strong></p>
+                                <ul>
+                                    <li>Donante *: placeholder "Seleccione un donante"</li>
+                                    <li>Tipo de Donación *: placeholder "Seleccione tipo"</li>
+                                </ul>
+                                <p><strong>Información de la Donación</strong></p>
+                                <ul>
+                                    <li>Número de Documento: placeholder "Ej: FACT-2024-00123"</li>
+                                    <li>Fecha Recepción *: valor "02/07/2026"</li>
+                                    <li>Fecha Documentación: placeholder "dd/mm/aaaa"</li>
+                                    <li>Receptor: placeholder "Seleccione receptor"</li>
+                                    <li>Almacén Destino: placeholder "Ej: Almacén Principal"</li>
+                                    <li>Condiciones de Transporte: placeholder "Ej: Temperatura controlada 2-8°C"</li>
+                                    <li>Estado de la Donación: "Recibido"</li>
+                                    <li>Observaciones: placeholder "Observaciones adicionales sobre la donación..."</li>
+                                </ul>
                             </div>
                         </HelpButton>
                     </h5>
