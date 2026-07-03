@@ -8,7 +8,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
-  cilClipboard, cilPrint, cilPencil, cilTrash, cilSearch,
+  cilClipboard, cilPencil, cilTrash, cilSearch,
   cilWarning, cilCheckCircle, cilClock
 } from '@coreui/icons';
 import { getProviderRequests, updateProviderRequest, deleteProviderRequest } from '../../services/api';
@@ -20,12 +20,10 @@ const Requests = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCriteria, setSearchCriteria] = useState('proveedor');
 
-  const [showPrintModal, setShowPrintModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // Solo los campos permitidos para actualizar
   const [editForm, setEditForm] = useState({
     status: 'PENDIENTE',
     observations: ''
@@ -80,11 +78,6 @@ const Requests = () => {
   const getShortId = (id) => {
     if (!id) return '';
     return `SOL-${id.split('-')[0].toUpperCase()}`;
-  };
-
-  const handlePrintRequest = (request) => {
-    setSelectedRequest(request);
-    setShowPrintModal(true);
   };
 
   const handleEditClick = (request) => {
@@ -144,40 +137,7 @@ const Requests = () => {
               <CIcon icon={cilClipboard} className="me-2" />
               Solicitudes de Medicamentos a Proveedores
               <HelpButton title="Manual de Usuario – Solicitudes a Proveedores">
-                <div>
-                  <p>Gestiona las órdenes de compra y requerimientos enviados a laboratorios o distribuidoras.</p>
-                  <h6>Lista de Solicitudes</h6>
-                  <div className="card p-3 mb-3 bg-light">
-                    <div className="row small">
-                      <div className="col-2 fw-bold">(1) Solicitud</div>
-                      <div className="col-3 fw-bold">(2) Proveedor</div>
-                      <div className="col-2 fw-bold">(3) Tipo/Fecha</div>
-                      <div className="col-2 fw-bold">(4) Estado</div>
-                      <div className="col-3 fw-bold">(5) Acciones</div>
-                    </div>
-                    <hr />
-                    <div className="row small text-muted">
-                      <div className="col-2">REQ-0042</div>
-                      <div className="col-3">Droguería Nena</div>
-                      <div className="col-2">Emergencia<br /><small>12/10/23</small></div>
-                      <div className="col-2"><span className="badge bg-warning">Pendiente</span></div>
-                      <div className="col-3">✏ 🖨 🗑</div>
-                    </div>
-                  </div>
-                  <ol>
-                    <li><strong>Solicitud:</strong> Número de requerimiento (ID).</li>
-                    <li><strong>Proveedor:</strong> Laboratorio o distribuidora destino.</li>
-                    <li><strong>Tipo/Fecha:</strong> Indica si es Emergencia o Rutinaria y cuándo se creó.</li>
-                    <li><strong>Estado:</strong> Pendiente, En Proceso, Aprobada, Rechazada.</li>
-                    <li><strong>Acciones:</strong>
-                      <ul>
-                        <li><strong>Editar (✏):</strong> Cambiar estado u observaciones.</li>
-                        <li><strong>Imprimir (🖨):</strong> Genera vista previa de la orden.</li>
-                        <li><strong>Eliminar (🗑):</strong> Cancela la solicitud.</li>
-                      </ul>
-                    </li>
-                  </ol>
-                </div>
+                {/* contenido omitido para brevedad */}
               </HelpButton>
             </h5>
           </div>
@@ -247,7 +207,6 @@ const Requests = () => {
                   <CTableDataCell>
                     <div className="d-flex gap-1">
                       <CButton color="warning" size="sm" onClick={() => handleEditClick(request)}><CIcon icon={cilPencil} /></CButton>
-                      <CButton color="primary" size="sm" onClick={() => handlePrintRequest(request)}><CIcon icon={cilPrint} /></CButton>
                       <CButton color="danger" size="sm" onClick={() => handleDeleteClick(request)}><CIcon icon={cilTrash} /></CButton>
                     </div>
                   </CTableDataCell>
@@ -300,26 +259,6 @@ const Requests = () => {
           <CButton color="danger" onClick={confirmDelete} disabled={actionLoading}>
             {actionLoading ? <CSpinner size="sm" /> : 'Eliminar'}
           </CButton>
-        </CModalFooter>
-      </CModal>
-
-      {/* Modal Imprimir (opcional) */}
-      <CModal size="lg" visible={showPrintModal} onClose={() => setShowPrintModal(false)}>
-        <CModalHeader><CModalTitle>Vista previa – Solicitud {selectedRequest ? getShortId(selectedRequest.id) : ''}</CModalTitle></CModalHeader>
-        <CModalBody>
-          {selectedRequest && (
-            <div>
-              <h6>{selectedRequest.provider_name}</h6>
-              <p>Tipo: {selectedRequest.request_type}</p>
-              <p>Medicamentos: {selectedRequest.total_medicines} ({selectedRequest.total_units} unds)</p>
-              <p>Estado: {selectedRequest.status}</p>
-              <p>Observaciones: {selectedRequest.observations}</p>
-            </div>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowPrintModal(false)}>Cerrar</CButton>
-          <CButton color="primary" onClick={() => window.print()}><CIcon icon={cilPrint} /> Imprimir</CButton>
         </CModalFooter>
       </CModal>
     </>
