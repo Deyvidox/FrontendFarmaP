@@ -137,7 +137,39 @@ const Requests = () => {
               <CIcon icon={cilClipboard} className="me-2" />
               Solicitudes de Medicamentos a Proveedores
               <HelpButton title="Manual de Usuario – Solicitudes a Proveedores">
-                {/* contenido omitido para brevedad */}
+                <div>
+                  <p>Gestiona las órdenes de compra y requerimientos enviados a laboratorios o distribuidoras.</p>
+                  <h6>Lista de Solicitudes</h6>
+                  <div className="card p-3 mb-3 bg-light">
+                    <div className="row small">
+                      <div className="col-2 fw-bold">(1) Solicitud</div>
+                      <div className="col-3 fw-bold">(2) Proveedor</div>
+                      <div className="col-2 fw-bold">(3) Tipo/Fecha</div>
+                      <div className="col-2 fw-bold">(4) Estado</div>
+                      <div className="col-3 fw-bold">(5) Acciones</div>
+                    </div>
+                    <hr />
+                    <div className="row small text-muted">
+                      <div className="col-2">REQ-0042</div>
+                      <div className="col-3">Droguería Nena</div>
+                      <div className="col-2">Emergencia<br /><small>12/10/23</small></div>
+                      <div className="col-2"><span className="badge bg-warning">Pendiente</span></div>
+                      <div className="col-3">✏ 🗑</div>
+                    </div>
+                  </div>
+                  <ol>
+                    <li><strong>Solicitud:</strong> Número de requerimiento (ID).</li>
+                    <li><strong>Proveedor:</strong> Laboratorio o distribuidora destino.</li>
+                    <li><strong>Tipo/Fecha:</strong> Indica si es Emergencia o Rutinaria y cuándo se creó.</li>
+                    <li><strong>Estado:</strong> Pendiente, En Proceso, Aprobada, Rechazada.</li>
+                    <li><strong>Acciones:</strong>
+                      <ul>
+                        <li><strong>Editar (✏):</strong> Cambiar estado u observaciones.</li>
+                        <li><strong>Eliminar (🗑):</strong> Cancela la solicitud.</li>
+                      </ul>
+                    </li>
+                  </ol>
+                </div>
               </HelpButton>
             </h5>
           </div>

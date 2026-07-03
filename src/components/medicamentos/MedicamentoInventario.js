@@ -3,13 +3,12 @@ import {
   CCard, CCardHeader, CCardBody, CTable, CTableHead, CTableRow,
   CTableHeaderCell, CTableBody, CTableDataCell, CBadge, CInputGroup,
   CFormInput, CInputGroupText, CPagination, CPaginationItem, CButton,
-  CRow, CCol, CProgress, CDropdown, CDropdownToggle, CDropdownMenu,
-  CDropdownItem, CSpinner, CAlert, CModal, CModalHeader, CModalTitle,
-  CModalBody, CModalFooter, CForm, CFormLabel, CFormSelect
+  CRow, CCol, CDropdown, CDropdownToggle, CDropdownMenu,
+  CDropdownItem, CSpinner, CAlert
 } from '@coreui/react';
-import { cilStorage, cilSearch, cilFilter, cilChartPie, cilPlus, cilChartLine, cilPencil, cilWarning, cilCheckCircle, cilMinus, cilSwapHorizontal, cilChart } from '@coreui/icons';
+import { cilStorage, cilSearch, cilFilter, cilCheckCircle, cilWarning, cilMinus } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { getMedicineInventory, createInventoryMovement, getLotMovements } from 'src/services/api';
+import { getMedicineInventory } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 import HelpButton from '../common/HelpButton';
 
@@ -23,17 +22,6 @@ const MedicamentoInventario = () => {
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Modals state
-  const [movementModal, setMovementModal] = useState(false);
-  const [movementType, setMovementType] = useState('ENTRY'); // ENTRY or ADJUSTMENT
-  const [selectedLot, setSelectedLot] = useState(null);
-  const [movementForm, setMovementForm] = useState({ quantity: 1, reason: '', document_reference: '' });
-  const [actionLoading, setActionLoading] = useState(false);
-
-  const [historyModal, setHistoryModal] = useState(false);
-  const [movements, setMovements] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -62,7 +50,6 @@ const MedicamentoInventario = () => {
     return statusMap[status] || status;
   };
 
-  // Reemplazar "Almacén Central Caracas" por "San Cristóbal"
   const ubicaciones = ['TODAS', ...new Set(inventario.map(i => i.location).map(loc => loc === 'Almacén Central Caracas' ? 'San Cristóbal' : loc))];
   const estados = ['TODOS', ...new Set(inventario.map(i => mapStockStatus(i.stock_status)))];
 
@@ -117,59 +104,6 @@ const MedicamentoInventario = () => {
     };
     const { color, text } = config[estado] || { color: 'secondary', text: estado };
     return <CBadge color={color}>{text}</CBadge>;
-  };
-
-  const calcularPorcentajeStock = (disponible, minimo, maximo) => {
-    if (!maximo || !minimo || maximo <= minimo) return 0;
-    return Math.max(0, Math.min(100, ((disponible - minimo) / (maximo - minimo)) * 100));
-  };
-
-  const getProgressColor = (porcentaje) => {
-    if (porcentaje <= 20) return 'danger';
-    if (porcentaje <= 50) return 'warning';
-    if (porcentaje <= 80) return 'info';
-    return 'success';
-  };
-
-  const handleMovementClick = (item, type) => {
-    setSelectedLot(item);
-    setMovementType(type);
-    setMovementForm({ quantity: 1, reason: '', document_reference: '' });
-    setMovementModal(true);
-  };
-
-  const handleMovementSubmit = async (e) => {
-    e.preventDefault();
-    setActionLoading(true);
-    try {
-      await createInventoryMovement({
-        lot_id: selectedLot.id,
-        movement_type: movementType,
-        quantity: movementForm.quantity,
-        reason: movementForm.reason,
-        document_reference: movementForm.document_reference
-      });
-      setMovementModal(false);
-      fetchInventory();
-    } catch (err) {
-      alert(err.message || 'Error registrando movimiento');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleHistoryClick = async (item) => {
-    setSelectedLot(item);
-    setHistoryModal(true);
-    setHistoryLoading(true);
-    try {
-      const response = await getLotMovements(item.id);
-      setMovements(response?.message?.movements || []);
-    } catch (err) {
-      alert('Error cargando historial de movimientos');
-    } finally {
-      setHistoryLoading(false);
-    }
   };
 
   if (loading) {
@@ -242,7 +176,7 @@ const MedicamentoInventario = () => {
                       <div className="col-2 fw-bold">(2) Ubicación</div>
                       <div className="col-2 fw-bold">(3) Cantidades</div>
                       <div className="col-2 fw-bold">(4) Nivel</div>
-                      <div className="col-3 fw-bold">(5) Movimientos</div>
+                      <div className="col-3 fw-bold">(5) Estado Lote</div>
                     </div>
                     <hr />
                     <div className="row small text-muted">
@@ -250,7 +184,7 @@ const MedicamentoInventario = () => {
                       <div className="col-2">Estante A</div>
                       <div className="col-2">Disponible: 100</div>
                       <div className="col-2"><span className="badge bg-success">Óptimo</span></div>
-                      <div className="col-3">➕ ➖ 📋</div>
+                      <div className="col-3"><span className="badge bg-success">Disponible</span></div>
                     </div>
                   </div>
                   <ol>
@@ -258,13 +192,6 @@ const MedicamentoInventario = () => {
                     <li><strong>Ubicación:</strong> Dónde se almacena físicamente.</li>
                     <li><strong>Cantidades:</strong> Disponible (libre), Reservada (en donaciones pendientes).</li>
                     <li><strong>Nivel:</strong> Indicador visual (Óptimo, Bajo, Agotado).</li>
-                    <li><strong>Movimientos:</strong>
-                      <ul>
-                        <li><strong>➕ (Verde):</strong> Agregar stock directo.</li>
-                        <li><strong>➖ (Naranja):</strong> Ajustar/reducir por pérdida o daño.</li>
-                        <li><strong>📋 (Azul):</strong> Ver historial de movimientos.</li>
-                      </ul>
-                    </li>
                   </ol>
                 </div>
               </HelpButton>
@@ -336,16 +263,12 @@ const MedicamentoInventario = () => {
                   <CTableHeaderCell>Entregado</CTableHeaderCell>
                   <CTableHeaderCell>Estado Stock</CTableHeaderCell>
                   <CTableHeaderCell>Estado Lote</CTableHeaderCell>
-                  {/* Nivel Stock ELIMINADO */}
-                  <CTableHeaderCell className="text-center">Acciones</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
                 {currentInventario.length > 0 ? (
                   currentInventario.map((item) => {
                     const disponible = item.available_quantity || 0;
-                    const minimo = item.minimum_stock || 0;
-                    const maximo = item.maximum_stock || 1;
                     const ubicacionMostrada = item.location === 'Almacén Central Caracas' ? 'San Cristóbal' : item.location;
 
                     return (
@@ -358,7 +281,7 @@ const MedicamentoInventario = () => {
                         </CTableDataCell>
                         <CTableDataCell><strong>{item.total_quantity}</strong></CTableDataCell>
                         <CTableDataCell>
-                          <strong className={disponible <= minimo ? 'text-danger' : disponible <= minimo * 2 ? 'text-warning' : 'text-success'}>
+                          <strong className={disponible <= (item.minimum_stock || 10) ? 'text-danger' : disponible <= (item.minimum_stock || 10) * 2 ? 'text-warning' : 'text-success'}>
                             {disponible}
                           </strong>
                         </CTableDataCell>
@@ -366,19 +289,12 @@ const MedicamentoInventario = () => {
                         <CTableDataCell><span className="text-info">{item.delivered_quantity || 0}</span></CTableDataCell>
                         <CTableDataCell>{getEstadoStockBadge(item.stock_status)}</CTableDataCell>
                         <CTableDataCell>{getEstadoLoteBadge(item.lot_status)}</CTableDataCell>
-                        <CTableDataCell>
-                          <div className="d-flex gap-2 justify-content-center">
-                            <CButton color="info" variant="outline" size="sm" onClick={() => handleHistoryClick(item)} title="Ver movimientos históricos">
-                              <CIcon icon={cilStorage} />
-                            </CButton>
-                          </div>
-                        </CTableDataCell>
                       </CTableRow>
                     );
                   })
                 ) : (
                   <CTableRow>
-                    <CTableDataCell colSpan="11" className="text-center py-5">
+                    <CTableDataCell colSpan="10" className="text-center py-5">
                       <div className="medicamento-empty-state">
                         <CIcon icon={cilStorage} className="medicamento-empty-state-icon" />
                         <h5>No se encontraron registros</h5>
@@ -407,92 +323,6 @@ const MedicamentoInventario = () => {
           )}
         </CCardBody>
       </CCard>
-
-      {/* Modal de Historial Mejorado */}
-      <CModal visible={historyModal} onClose={() => setHistoryModal(false)} size="lg">
-        <CModalHeader closeButton>
-          <CModalTitle>Historial de Movimientos - Lote {selectedLot?.lot_number}</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          {historyLoading ? (
-            <div className="text-center py-4"><CSpinner color="primary" /></div>
-          ) : movements.length > 0 ? (
-            <>
-              {/* Resumen de entradas y salidas */}
-              {(() => {
-                const entradas = movements.filter(m => m.movement_type === 'ENTRY').reduce((acc, m) => acc + m.quantity, 0);
-                const salidas = movements.filter(m => m.movement_type === 'EXIT').reduce((acc, m) => acc + Math.abs(m.quantity), 0);
-                return (
-                  <CRow className="mb-3">
-                    <CCol md={6}>
-                      <div className="border rounded p-2 text-center">
-                        <h6 className="text-success">Entradas Totales</h6>
-                        <strong>{entradas} unidades</strong>
-                      </div>
-                    </CCol>
-                    <CCol md={6}>
-                      <div className="border rounded p-2 text-center">
-                        <h6 className="text-danger">Salidas Totales</h6>
-                        <strong>{salidas} unidades</strong>
-                      </div>
-                    </CCol>
-                  </CRow>
-                );
-              })()}
-              <CTable hover responsive>
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>Fecha</CTableHeaderCell>
-                    <CTableHeaderCell>Tipo</CTableHeaderCell>
-                    <CTableHeaderCell>Origen</CTableHeaderCell>
-                    <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                    <CTableHeaderCell>Documento / Motivo</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {movements.map(m => {
-                    const isEntry = m.movement_type === 'ENTRY';
-                    const isExit = m.movement_type === 'EXIT';
-                    const origen = isEntry
-                      ? (m.document_reference?.startsWith('DON') ? '📦 Donación' : m.document_reference?.startsWith('SOL') ? '🏭 Solicitud Proveedor' : '➕ Entrada Manual')
-                      : isExit
-                        ? '🚚 Entrega a Beneficiario'
-                        : '🔧 Ajuste Manual';
-                    return (
-                      <CTableRow key={m.id}>
-                        <CTableDataCell>{new Date(m.created_at).toLocaleString('es-ES')}</CTableDataCell>
-                        <CTableDataCell>
-                          <CBadge color={isEntry ? 'success' : isExit ? 'danger' : 'warning'}>
-                            {isEntry ? 'ENTRADA' : isExit ? 'SALIDA' : 'AJUSTE'}
-                          </CBadge>
-                        </CTableDataCell>
-                        <CTableDataCell><small>{origen}</small></CTableDataCell>
-                        <CTableDataCell>
-                          <strong className={m.quantity > 0 ? 'text-success' : 'text-danger'}>
-                            {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                          </strong>
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          {m.document_reference && <div><small className="text-muted">Ref: {m.document_reference}</small></div>}
-                          {m.reason}
-                        </CTableDataCell>
-                      </CTableRow>
-                    );
-                  })}
-                </CTableBody>
-              </CTable>
-            </>
-          ) : (
-            <CAlert color="info">
-              <h6>No se encontraron movimientos para este lote.</h6>
-              <p className="mb-0">Esto puede significar que el lote fue creado directamente en el inventario sin registro de movimiento, o que los registros de movimientos no están disponibles.</p>
-            </CAlert>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setHistoryModal(false)}>Cerrar</CButton>
-        </CModalFooter>
-      </CModal>
     </div>
   );
 };
