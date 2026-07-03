@@ -1,0 +1,9 @@
+/* Estilos para la bitácora de auditoría */
+.audit-logs-container {
+    padding: 1rem;
+}
+
+.audit-logs-container .table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}

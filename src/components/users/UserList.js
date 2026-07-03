@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard, CCardHeader, CCardBody, CTable, CTableHead, CTableRow,
   CTableHeaderCell, CTableBody, CTableDataCell, CBadge,
@@ -8,24 +8,40 @@ import {
 } from '@coreui/react';
 import { cilSearch, cilUser, cilPencil, cilTrash, cilInfo } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { getUserById, updateUser, deleteUser } from 'src/services/api';
+import { getUserById, updateUser, deleteUser, getRoles } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
 import '../../css/users/UserList.css';
+
+const translateRole = (roleName) => {
+  if (!roleName) return 'Sin Rol';
+  switch (roleName) {
+    case 'Administrator': return 'Administrador';
+    case 'Warehouse Manager':
+    case 'Pharmacist': return 'Farmacéutico';
+    case 'Social Worker':
+    case 'Assistant': return 'Asistente';
+    case 'Donor': return 'Donante';
+    case 'Coordinator': return 'Coordinador';
+    default: return roleName;
+  }
+};
 
 const UserList = ({ users, onRefresh }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCriteria, setSearchCriteria] = useState('nombre');
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterStatus, setFilterStatus] = useState('TODOS');
   const usersPerPage = 5;
 
   const CRITERIA_OPTIONS = [
-    { value: 'nombre',  label: 'Nombre' },
-    { value: 'cedula',  label: 'Cédula' },
-    { value: 'email',   label: 'Email' },
-    { value: 'rol',     label: 'Rol' },
+    { value: 'nombre', label: 'Nombre' },
+    { value: 'cedula', label: 'Cédula' },
+    { value: 'email', label: 'Email' },
+    { value: 'rol', label: 'Rol' },
   ];
 
-  // Modal states
+  const [roles, setRoles] = useState([]);
+
   const [viewModal, setViewModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -34,18 +50,29 @@ const UserList = ({ users, onRefresh }) => {
   const [actionLoading, setActionLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Filter
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const res = await getRoles();
+        setRoles(res?.message?.roles || []);
+      } catch (err) {
+        console.error('Error cargando roles:', err);
+      }
+    };
+    loadRoles();
+  }, []);
+
   const filteredUsers = users.filter(user => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return true;
-    switch (searchCriteria) {
-      case 'cedula': return (user.identification_number || user.cedula || '').toLowerCase().includes(q);
-      case 'email':  return (user.email || '').toLowerCase().includes(q);
-      case 'rol':    return (user.role_name || '').toLowerCase().includes(q);
-      case 'nombre':
-      default:
-        return `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(q);
-    }
+    const matchesSearch = !q || (
+      (searchCriteria === 'cedula' && (user.identification_number || '').toLowerCase().includes(q)) ||
+      (searchCriteria === 'email' && (user.email || '').toLowerCase().includes(q)) ||
+      (searchCriteria === 'rol' && (translateRole(user.role_name) || '').toLowerCase().includes(q)) ||
+      (searchCriteria === 'nombre' && `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(q))
+    );
+    const matchesStatus = filterStatus === 'TODOS' ||
+      (user.status || '').toUpperCase() === filterStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -65,17 +92,33 @@ const UserList = ({ users, onRefresh }) => {
     return <CBadge color={config.color}>{config.text}</CBadge>;
   };
 
-  const getRoleBadge = (rol) => {
-    if (!rol) return <CBadge color="secondary">Sin Rol</CBadge>;
-    const roleConfig = {
-      'ADMINISTRADOR': 'danger', 'ADMIN': 'danger',
-      'FARMACÉUTICO': 'warning', 'DONANTE': 'primary',
-      'ASISTENTE': 'info', 'COORDINADOR': 'success'
+  const getRoleBadge = (roleName) => {
+    const translated = translateRole(roleName);
+    const colorMap = {
+      'Administrador': 'danger',
+      'Farmacéutico': 'warning',
+      'Asistente': 'info',
+      'Donante': 'primary',
+      'Coordinador': 'success'
     };
-    return <CBadge color={roleConfig[rol.toUpperCase()] || 'secondary'}>{rol}</CBadge>;
+    return <CBadge color={colorMap[translated] || 'secondary'}>{translated}</CBadge>;
   };
 
-  // -- Ver --
+  const validateEditForm = () => {
+    const errors = [];
+    if (!editForm.first_name || editForm.first_name.trim().length < 2) errors.push('El nombre es obligatorio (mín. 2 caracteres)');
+    if (!editForm.last_name || editForm.last_name.trim().length < 2) errors.push('El apellido es obligatorio (mín. 2 caracteres)');
+    if (!editForm.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) errors.push('Email inválido');
+    if (!editForm.role_id) errors.push('Seleccione un rol');
+    if (editForm.identification_number && !/^[VEJ]-\d{6,8}$/.test(editForm.identification_number)) {
+      errors.push('Cédula/RIF inválida (formato: V-12345678)');
+    }
+    if (editForm.phone && !/^\+58\s?\d{3}\s?\d{7}$/.test(editForm.phone)) {
+      errors.push('Teléfono inválido (formato: +58 412 1234567)');
+    }
+    return errors;
+  };
+
   const handleViewClick = async (user) => {
     setModalLoading(true);
     setViewModal(true);
@@ -89,7 +132,6 @@ const UserList = ({ users, onRefresh }) => {
     }
   };
 
-  // -- Editar --
   const handleEditClick = async (user) => {
     setModalLoading(true);
     setEditModal(true);
@@ -98,21 +140,28 @@ const UserList = ({ users, onRefresh }) => {
       const u = res?.message?.user || user;
       setSelectedUser(u);
       setEditForm({
-        username: u.username || '',
+        first_name: u.first_name || '',
+        last_name: u.last_name || '',
+        identification_number: u.identification_number || '',
         email: u.email || '',
+        phone: u.phone || '',
         role_id: u.role_id || '',
-        status: u.status || 'ACTIVE',
+        status: u.status || 'Active',
         department: u.department || '',
         position: u.position || '',
-        phone: u.phone || ''
       });
     } catch (err) {
       setSelectedUser(user);
       setEditForm({
-        username: user.username || '', email: user.email || '',
-        role_id: user.role_id || '', status: user.status || 'ACTIVE',
-        department: user.department || '', position: user.position || '',
-        phone: user.phone || ''
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        identification_number: user.identification_number || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        role_id: user.role_id || '',
+        status: user.status || 'Active',
+        department: user.department || '',
+        position: user.position || '',
       });
     } finally {
       setModalLoading(false);
@@ -125,6 +174,11 @@ const UserList = ({ users, onRefresh }) => {
 
   const submitEdit = async (e) => {
     e.preventDefault();
+    const errors = validateEditForm();
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+      return;
+    }
     setActionLoading(true);
     try {
       await updateUser(selectedUser.id, editForm);
@@ -137,7 +191,6 @@ const UserList = ({ users, onRefresh }) => {
     }
   };
 
-  // -- Eliminar --
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
     setDeleteModal(true);
@@ -179,7 +232,7 @@ const UserList = ({ users, onRefresh }) => {
                       <div className="col-1 fw-bold">(7) Estado</div>
                       <div className="col-2 fw-bold">(8) Acciones</div>
                     </div>
-                    <hr/>
+                    <hr />
                     <div className="row small text-muted">
                       <div className="col-2">V-29129307</div>
                       <div className="col-2">Pedro Porro</div>
@@ -203,7 +256,7 @@ const UserList = ({ users, onRefresh }) => {
                       <ul>
                         <li><strong>Ver (info):</strong> Ficha completa.</li>
                         <li><strong>Editar (lápiz):</strong> Modificar datos.</li>
-                        <li><strong>Eliminar (basura):</strong> Cambia a Inactivo.</li>
+                        <li><strong>Eliminar (basura):</strong> Elimina permanentemente.</li>
                       </ul>
                     </li>
                   </ol>
@@ -215,7 +268,18 @@ const UserList = ({ users, onRefresh }) => {
         <CCardBody>
           <div className="user-search-container">
             <CRow>
-              <CCol md={3} xs={12} className="mb-2 mb-md-0">
+              <CCol md={2} xs={12} className="mb-2 mb-md-0">
+                <CFormSelect
+                  value={filterStatus}
+                  onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                >
+                  <option value="TODOS">Todos estados</option>
+                  <option value="ACTIVE">Activo</option>
+                  <option value="INACTIVE">Inactivo</option>
+                  <option value="SUSPENDED">Suspendido</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={2} xs={12} className="mb-2 mb-md-0">
                 <CFormSelect
                   value={searchCriteria}
                   onChange={(e) => { setSearchCriteria(e.target.value); setSearchTerm(''); setCurrentPage(1); }}
@@ -225,14 +289,14 @@ const UserList = ({ users, onRefresh }) => {
                   ))}
                 </CFormSelect>
               </CCol>
-              <CCol md={9} xs={12}>
+              <CCol md={8} xs={12}>
                 <CInputGroup>
                   <CInputGroupText className="user-search-icon">
                     <CIcon icon={cilSearch} />
                   </CInputGroupText>
                   <CFormInput
                     className="user-search-input"
-                    placeholder={`Buscar por ${CRITERIA_OPTIONS.find(o=>o.value===searchCriteria)?.label || 'nombre'}...`}
+                    placeholder={`Buscar por ${CRITERIA_OPTIONS.find(o => o.value === searchCriteria)?.label || 'nombre'}...`}
                     value={searchTerm}
                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                   />
@@ -261,7 +325,6 @@ const UserList = ({ users, onRefresh }) => {
                   <CTableHeaderCell>Departamento</CTableHeaderCell>
                   <CTableHeaderCell>Cargo</CTableHeaderCell>
                   <CTableHeaderCell>Estado</CTableHeaderCell>
-                  <CTableHeaderCell>Fecha de Creación</CTableHeaderCell>
                   <CTableHeaderCell className="text-center">Acciones</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
@@ -277,9 +340,6 @@ const UserList = ({ users, onRefresh }) => {
                       <CTableDataCell>{user.department || 'N/A'}</CTableDataCell>
                       <CTableDataCell>{user.position || 'N/A'}</CTableDataCell>
                       <CTableDataCell>{getStatusBadge(user.status)}</CTableDataCell>
-                      <CTableDataCell>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString('es-ES') : 'N/A'}
-                      </CTableDataCell>
                       <CTableDataCell>
                         <div className="user-actions-container">
                           <CButton color="info" size="sm" className="user-action-btn" title="Ver"
@@ -300,7 +360,7 @@ const UserList = ({ users, onRefresh }) => {
                   ))
                 ) : (
                   <CTableRow>
-                    <CTableDataCell colSpan="10" className="text-center py-4">
+                    <CTableDataCell colSpan="9" className="text-center py-4">
                       <div className="users-empty-state">
                         <CIcon icon={cilUser} className="users-empty-state-icon" />
                         <h5>No se encontraron usuarios</h5>
@@ -327,10 +387,6 @@ const UserList = ({ users, onRefresh }) => {
               </CPagination>
             </div>
           )}
-          <div className="user-pagination-info text-center mt-2">
-            Mostrando {currentUsers.length} de {filteredUsers.length} usuarios
-            {searchTerm && ` (filtrados de ${users.length} total)`}
-          </div>
         </CCardBody>
       </CCard>
 
@@ -379,29 +435,54 @@ const UserList = ({ users, onRefresh }) => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel>Username</CFormLabel>
-                    <CFormInput name="username" value={editForm.username || ''} onChange={handleEditChange} />
+                    <CFormLabel>Nombre *</CFormLabel>
+                    <CFormInput name="first_name" value={editForm.first_name || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel>Email</CFormLabel>
-                    <CFormInput type="email" name="email" value={editForm.email || ''} onChange={handleEditChange} />
+                    <CFormLabel>Apellido *</CFormLabel>
+                    <CFormInput name="last_name" value={editForm.last_name || ''} onChange={handleEditChange} required />
+                  </div>
+                </CCol>
+                <CCol md={6}>
+                  <div className="mb-3">
+                    <CFormLabel>Cédula/RIF</CFormLabel>
+                    <CFormInput name="identification_number" value={editForm.identification_number || ''} onChange={handleEditChange} placeholder="V-12345678" />
+                  </div>
+                </CCol>
+                <CCol md={6}>
+                  <div className="mb-3">
+                    <CFormLabel>Email *</CFormLabel>
+                    <CFormInput type="email" name="email" value={editForm.email || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
                     <CFormLabel>Teléfono</CFormLabel>
-                    <CFormInput name="phone" value={editForm.phone || ''} onChange={handleEditChange} />
+                    <CFormInput name="phone" value={editForm.phone || ''} onChange={handleEditChange} placeholder="+58 412 1234567" />
+                  </div>
+                </CCol>
+                <CCol md={6}>
+                  <div className="mb-3">
+                    <CFormLabel>Rol *</CFormLabel>
+                    <CFormSelect name="role_id" value={editForm.role_id || ''} onChange={handleEditChange} required>
+                      <option value="">Seleccione rol</option>
+                      {roles.map(role => (
+                        <option key={role.id} value={role.id}>
+                          {translateRole(role.name)}
+                        </option>
+                      ))}
+                    </CFormSelect>
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
                     <CFormLabel>Estado</CFormLabel>
-                    <CFormSelect name="status" value={editForm.status || 'ACTIVE'} onChange={handleEditChange}>
-                      <option value="ACTIVE">Activo</option>
-                      <option value="INACTIVE">Inactivo</option>
-                      <option value="SUSPENDED">Suspendido</option>
+                    <CFormSelect name="status" value={editForm.status || 'Active'} onChange={handleEditChange}>
+                      <option value="Active">Activo</option>
+                      <option value="Inactive">Inactivo</option>
+                      <option value="Suspended">Suspendido</option>
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -436,7 +517,7 @@ const UserList = ({ users, onRefresh }) => {
         </CModalHeader>
         <CModalBody>
           {selectedUser && (
-            <p>¿Estás seguro de que deseas eliminar al usuario <strong>{selectedUser.first_name} {selectedUser.last_name}</strong>? Esta acción cambiará su estado a <strong>Inactivo</strong>.</p>
+            <p>¿Estás seguro de que deseas eliminar permanentemente al usuario <strong>{selectedUser.first_name} {selectedUser.last_name}</strong>? Esta acción no se puede deshacer.</p>
           )}
         </CModalBody>
         <CModalFooter>

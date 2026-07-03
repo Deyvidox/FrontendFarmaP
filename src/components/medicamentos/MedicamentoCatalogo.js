@@ -218,7 +218,64 @@ const MedicamentoCatalogo = () => {
               <CIcon icon={cilMedicalCross} className="me-2" />
               Catálogo de Medicamentos
               <HelpButton title="Manual de Usuario – Catálogo de Medicamentos">
-                {/* Contenido del manual (sin cambios) */}
+                <div>
+                  <p><strong>¿Qué hace esta pantalla?</strong><br />
+                    Muestra todos los medicamentos registrados en el sistema. Permite buscar, filtrar por categoría y ordenar, además de ver detalles, editar o eliminar cada uno.</p>
+                  <h6>🧪 Ejemplo de cómo se ve la tabla</h6>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f8f9fa', color: '#212529', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#e9ecef' }}>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Código</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Nombre Comercial</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Principio Activo</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Concentración</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorio</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Categoría</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Estado</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>P-00789</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Amoxicilina 500mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Amoxicilina</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>500 mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorios Vargas S.A.</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#17a2b8', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Antibiótico</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Activo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>P-00123</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Losartán 50mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Losartán</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>50 mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorios Vargas S.A.</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#17a2b8', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Antihipertensivo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Activo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <h6>📋 Uso y funcionalidades</h6>
+                  <ol>
+                    <li><strong>Barra de búsqueda:</strong> Busca por nombre comercial, genérico, código nacional o principio activo. Mínimo 2 caracteres.</li>
+                    <li><strong>Filtro de categoría:</strong> Seleccione una categoría del desplegable para mostrar solo esos medicamentos.</li>
+                    <li><strong>Ordenar por:</strong> Elija entre Nombre, Categoría o Fecha de creación.</li>
+                    <li><strong>Acciones por fila:</strong>
+                      <ul>
+                        <li><strong>👁️ Ver:</strong> Abre una vista detallada con todos los campos del medicamento.</li>
+                        <li><strong>✏️ Editar:</strong> Permite modificar cualquier dato. Se abrirá un formulario con los valores actuales.</li>
+                        <li><strong>🗑️ Eliminar:</strong> Cambia el estado a Inactivo. No se borra físicamente. Requiere confirmación.</li>
+                      </ul>
+                    </li>
+                    <li><strong>Paginación:</strong> Muestra 8 medicamentos por página. Use los controles para navegar.</li>
+                  </ol>
+                  <p><strong>⚠️ Nota:</strong> No se puede eliminar un medicamento si tiene lotes activos. Primero debe retirar esos lotes del inventario.</p>
+                </div>
               </HelpButton>
             </h5>
           </div>
