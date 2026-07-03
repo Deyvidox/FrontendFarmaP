@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardBody,
@@ -36,7 +36,6 @@ import CIcon from '@coreui/icons-react';
 import { cilUser, cilMedicalCross, cilSearch, cilPencil, cilTrash, cilWarning, cilFilter, cilHeart, cilInfo } from '@coreui/icons';
 import { getBeneficiaryById, updateBeneficiary, deleteBeneficiary, getMedicines, saveBeneficiaryMedicalHistory, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
-
 import HelpButton from '../common/HelpButton';
 
 const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
@@ -63,7 +62,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
     }
   });
 
-  // Modal states
   const [viewModal, setViewModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -74,19 +72,18 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
   const [modalTab, setModalTab] = useState('enfermedades');
   const [detailModal, setDetailModal] = useState(false);
 
-  // States for editing medical data
   const [medicinesCatalog, setMedicinesCatalog] = useState([]);
   const [editEnfermedades, setEditEnfermedades] = useState([]);
   const [editMedicamentos, setEditMedicamentos] = useState([]);
-  
+
   const [nuevaEnfermedad, setNuevaEnfermedad] = useState('');
   const [estadoEnfermedad, setEstadoEnfermedad] = useState('ESTABLE');
   const [obsEnfermedad, setObsEnfermedad] = useState('');
-  
+
   const [selectedMedId, setSelectedMedId] = useState('');
   const [dosisInput, setDosisInput] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCatalogs = async () => {
       try {
         const medRes = await getMedicines();
@@ -108,7 +105,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
     }
   };
 
-  // -- Ver Datos Médicos (Planilla) --
   const handleViewClick = async (benef) => {
     setModalLoading(true);
     setViewModal(true);
@@ -123,7 +119,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
         medicinas_requeridas: fullData.medicinas_requeridas || benef.medicinas_requeridas || []
       });
     } catch (err) {
-      // fallback to list data if API fails
       setSelectedBenef({
         ...benef,
         enfermedades: benef.enfermedades || [],
@@ -135,13 +130,11 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
     }
   };
 
-  // -- Ver Detalles del Beneficiario (simple) --
   const handleDetailClick = (benef) => {
     setSelectedBenef(benef);
     setDetailModal(true);
   };
 
-  // -- Editar --
   const handleEditClick = async (benef) => {
     setModalLoading(true);
     setEditModal(true);
@@ -215,8 +208,7 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
     setActionLoading(true);
     try {
       await updateBeneficiary(selectedBenef.id, editForm);
-      
-      // Save Medical Data
+
       try {
         await saveBeneficiaryMedicalHistory(selectedBenef.id, {
           diseases: editEnfermedades.map(e => ({
@@ -285,7 +277,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
     setEditMedicamentos(editMedicamentos.filter(m => m.medicine_id !== medicineId));
   };
 
-  // -- Eliminar --
   const handleDeleteClick = (benef) => {
     setSelectedBenef(benef);
     setDeleteModal(true);
@@ -313,36 +304,36 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
             Lista de Beneficiarios
             <HelpButton title="Manual de Usuario – Lista de Beneficiarios">
               <div>
-                <p><strong>¿Qué hace esta pantalla?</strong><br/>
-                Muestra todos los beneficiarios registrados. Permite buscar, filtrar y realizar acciones como ver detalle, editar o eliminar.</p>
+                <p><strong>¿Qué hace esta pantalla?</strong><br />
+                  Muestra todos los beneficiarios registrados. Permite buscar, filtrar y realizar acciones como ver detalle, editar o eliminar.</p>
                 <h6>🧪 Ejemplo de cómo se ve la tabla</h6>
-                <div style={{overflowX:'auto'}}>
-                  <table style={{width:'100%', borderCollapse:'collapse', background:'#f8f9fa', color:'#212529', fontSize:'0.85rem'}}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f8f9fa', color: '#212529', fontSize: '0.85rem' }}>
                     <thead>
-                      <tr style={{background:'#e9ecef'}}>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Cédula</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Nombre Completo</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Comunidad</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Teléfono</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Prioridad</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Estado</th>
-                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Acciones</th>
+                      <tr style={{ background: '#e9ecef' }}>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Cédula</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Nombre Completo</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Comunidad</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Teléfono</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Prioridad</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Estado</th>
+                        <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>V-11111111</td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>Rosa Flores <br/><small style={{color:'#6c757d'}}>Edad: 76 años</small></td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>Barrio 23 de Enero, Libertador</td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>+584121111111</td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}><span style={{background:'#fd7e14', color:'#fff', padding:'2px 6px', borderRadius:'4px'}}>MEDIA</span></td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}><span style={{background:'#198754', color:'#fff', padding:'2px 6px', borderRadius:'4px'}}>Activo</span></td>
-                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>👁️ ✏️ 🗑️</td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>V-11111111</td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Rosa Flores <br /><small style={{ color: '#6c757d' }}>Edad: 76 años</small></td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Barrio 23 de Enero, Libertador</td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>+584121111111</td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#fd7e14', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>MEDIA</span></td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Activo</span></td>
+                        <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <p style={{fontSize:'0.85rem', marginTop:'5px'}}><em>La tabla incluye paginación y muestra 5 registros por página. Filtre con la barra de búsqueda superior.</em></p>
+                <p style={{ fontSize: '0.85rem', marginTop: '5px' }}><em>La tabla incluye paginación y muestra 5 registros por página. Filtre con la barra de búsqueda superior.</em></p>
                 <h6>📋 Uso y funcionalidades</h6>
                 <ol>
                   <li><strong>Barra de búsqueda:</strong> Escriba parte del nombre, cédula o comunidad. La tabla se filtra automáticamente tras 300ms. Mínimo 2 caracteres.</li>
@@ -456,10 +447,10 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                   </CTableDataCell>
                   <CTableDataCell data-label="Acciones">
                     <div className="d-flex gap-1">
-<CButton color="info" variant="outline" size="sm" className="beneficiary-action-btn-secondary"
-  title="Ver Detalles" onClick={() => handleDetailClick(beneficiary)}>
-  <CIcon icon={cilInfo} />
-</CButton>
+                      <CButton color="info" variant="outline" size="sm" className="beneficiary-action-btn-secondary"
+                        title="Ver Detalles" onClick={() => handleDetailClick(beneficiary)}>
+                        <CIcon icon={cilInfo} />
+                      </CButton>
                       <CButton color="warning" variant="outline" size="sm" className="beneficiary-action-btn-secondary"
                         title="Editar" onClick={() => handleEditClick(beneficiary)}>
                         <CIcon icon={cilPencil} />
@@ -565,70 +556,70 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
               </CTabContent>
             </CTabs>
           ) : null}
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" onClick={() => setViewModal(false)}>Cerrar</CButton>
-          </CModalFooter>
-        </CModal>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setViewModal(false)}>Cerrar</CButton>
+        </CModalFooter>
+      </CModal>
 
-        {/* Modal Detalle */}
-        <CModal size="lg" visible={detailModal} onClose={() => setDetailModal(false)}>
-          <CModalHeader>
-            <CModalTitle>
-              <CIcon icon={cilInfo} className="me-2" />Detalle – {selectedBenef?.first_name} {selectedBenef?.last_name}
-            </CModalTitle>
-          </CModalHeader>
-          <CModalBody>
-            {selectedBenef ? (
-              <CRow className="g-3">
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Cédula / Identificación:</strong> {selectedBenef.identification_number || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Nombre:</strong> {selectedBenef.first_name || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Apellido:</strong> {selectedBenef.last_name || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Fecha Nacimiento:</strong> {selectedBenef.birth_date || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Género:</strong> {selectedBenef.gender || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Prioridad:</strong> {selectedBenef.priority_level || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Teléfono:</strong> {selectedBenef.phone_personal || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Email:</strong> {selectedBenef.email || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Contacto de Emergencia:</strong> {selectedBenef.emergency_contact || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Teléfono Emergencia:</strong> {selectedBenef.emergency_phone || '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Dependientes:</strong> {selectedBenef.dependents ?? '—'}</div>
-                </CCol>
-                <CCol md={6}>
-                  <div className="mb-2"><strong>Profesión/Trabajo:</strong> {selectedBenef.occupation || '—'}</div>
-                </CCol>
-                <CCol md={12}>
-                  <div className="mb-2"><strong>Dirección Detallada:</strong> {selectedBenef.detailed_address || '—'}</div>
-                </CCol>
-              </CRow>
-            ) : (
-              <p className="text-muted">Cargando datos...</p>
-            )}
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" onClick={() => setDetailModal(false)}>Cerrar</CButton>
-          </CModalFooter>
-        </CModal>
+      {/* Modal Detalle */}
+      <CModal size="lg" visible={detailModal} onClose={() => setDetailModal(false)}>
+        <CModalHeader>
+          <CModalTitle>
+            <CIcon icon={cilInfo} className="me-2" />Detalle – {selectedBenef?.first_name} {selectedBenef?.last_name}
+          </CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {selectedBenef ? (
+            <CRow className="g-3">
+              <CCol md={6}>
+                <div className="mb-2"><strong>Cédula / Identificación:</strong> {selectedBenef.identification_number || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Nombre:</strong> {selectedBenef.first_name || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Apellido:</strong> {selectedBenef.last_name || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Fecha Nacimiento:</strong> {selectedBenef.birth_date || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Género:</strong> {selectedBenef.gender || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Prioridad:</strong> {selectedBenef.priority_level || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Teléfono:</strong> {selectedBenef.phone_personal || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Email:</strong> {selectedBenef.email || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Contacto de Emergencia:</strong> {selectedBenef.emergency_contact || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Teléfono Emergencia:</strong> {selectedBenef.emergency_phone || '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Dependientes:</strong> {selectedBenef.dependents ?? '—'}</div>
+              </CCol>
+              <CCol md={6}>
+                <div className="mb-2"><strong>Profesión/Trabajo:</strong> {selectedBenef.occupation || '—'}</div>
+              </CCol>
+              <CCol md={12}>
+                <div className="mb-2"><strong>Dirección Detallada:</strong> {selectedBenef.detailed_address || '—'}</div>
+              </CCol>
+            </CRow>
+          ) : (
+            <p className="text-muted">Cargando datos...</p>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setDetailModal(false)}>Cerrar</CButton>
+        </CModalFooter>
+      </CModal>
 
       {/* Modal Editar */}
       <CModal size="lg" visible={editModal} onClose={() => setEditModal(false)}>
@@ -644,7 +635,7 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                 <CCol md={6}>
                   <div className="mb-3">
                     <CFormLabel>Cédula / Identificación</CFormLabel>
-                    <CFormInput name="identification_number" value={editForm.identification_number || ''} onChange={handleEditChange} />
+                    <CFormInput name="identification_number" value={editForm.identification_number || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={3}>
@@ -661,25 +652,25 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                 </CCol>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel>Fecha Nacimiento</CFormLabel>
-                    <CFormInput type="date" name="birth_date" value={editForm.birth_date || ''} onChange={handleEditChange} />
+                    <CFormLabel>Fecha Nacimiento *</CFormLabel>
+                    <CFormInput type="date" name="birth_date" value={editForm.birth_date || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel>Género</CFormLabel>
-                    <CFormSelect name="gender" value={editForm.gender || ''} onChange={handleEditChange}>
+                    <CFormLabel>Género *</CFormLabel>
+                    <CFormSelect name="gender" value={editForm.gender || ''} onChange={handleEditChange} required>
                       <option value="">Seleccione</option>
-                      <option value="Male">Masculino</option>
-                      <option value="Female">Femenino</option>
-                      <option value="Other">Otro</option>
+                      <option value="M">Masculino</option>
+                      <option value="F">Femenino</option>
+                      <option value="O">Otro</option>
                     </CFormSelect>
                   </div>
                 </CCol>
                 <CCol md={4}>
                   <div className="mb-3">
-                    <CFormLabel>Prioridad</CFormLabel>
-                    <CFormSelect name="priority_level" value={editForm.priority_level || 'Low'} onChange={handleEditChange}>
+                    <CFormLabel>Prioridad *</CFormLabel>
+                    <CFormSelect name="priority_level" value={editForm.priority_level || 'Low'} onChange={handleEditChange} required>
                       <option value="Low">Baja</option>
                       <option value="Medium">Media</option>
                       <option value="High">Alta</option>
@@ -688,14 +679,14 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel>Teléfono</CFormLabel>
-                    <CFormInput name="phone_personal" value={editForm.phone_personal || ''} onChange={handleEditChange} />
+                    <CFormLabel>Teléfono *</CFormLabel>
+                    <CFormInput name="phone_personal" value={editForm.phone_personal || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel>Email</CFormLabel>
-                    <CFormInput type="email" name="email" value={editForm.email || ''} onChange={handleEditChange} />
+                    <CFormLabel>Email *</CFormLabel>
+                    <CFormInput type="email" name="email" value={editForm.email || ''} onChange={handleEditChange} required />
                   </div>
                 </CCol>
                 <CCol md={6}>
@@ -730,7 +721,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                 </CCol>
               </CRow>
 
-              {/* Enfermedades (Edición) */}
               <h6 className="mt-4 border-bottom pb-2">
                 <CIcon icon={cilMedicalCross} className="me-2" />
                 Enfermedades
@@ -795,7 +785,6 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                 </div>
               )}
 
-              {/* Medicamentos (Edición) */}
               <h6 className="mt-4 border-bottom pb-2">
                 <CIcon icon={cilMedicalCross} className="me-2" />
                 Medicamentos Requeridos

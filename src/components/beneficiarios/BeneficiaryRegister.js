@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardHeader,
@@ -16,15 +16,13 @@ import {
   CModalHeader,
   CModalTitle,
   CModalBody,
-  CModalFooter
+  CModalFooter,
+  CBadge
 } from '@coreui/react';
 import { cilUser, cilSave, cilReload, cilCalendar, cilHome, cilPhone, cilEnvelopeClosed, cilPlus, cilMedicalCross, cilTrash, cilPencil } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { createBeneficiary, getCommunities, createCommunity, updateCommunity, deleteCommunity, getMedicines, addBeneficiaryDisease, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
-import { useEffect } from 'react';
-import { CBadge } from '@coreui/react';
-
 import HelpButton from '../common/HelpButton';
 
 const BeneficiaryRegister = () => {
@@ -45,7 +43,7 @@ const BeneficiaryRegister = () => {
     telefono_emergencia: '',
     personas_dependientes: 0,
     profesion: '',
-    nivel_prioridad: 'MEDIA',
+    nivel_prioridad: 'Medium',
     observaciones: '',
   });
 
@@ -55,13 +53,11 @@ const BeneficiaryRegister = () => {
   const [communityForm, setCommunityForm] = useState({ name: '', municipality: '', parish: '', state_region: '' });
   const [savingCommunity, setSavingCommunity] = useState(false);
 
-  // Estados para Enfermedades (texto libre)
   const [enfermedades, setEnfermedades] = useState([]);
   const [nuevaEnfermedad, setNuevaEnfermedad] = useState('');
   const [estadoEnfermedad, setEstadoEnfermedad] = useState('ESTABLE');
   const [obsEnfermedad, setObsEnfermedad] = useState('');
 
-  // Estados para Medicamentos (catálogo)
   const [medicinesCatalog, setMedicinesCatalog] = useState([]);
   const [medicamentos, setMedicamentos] = useState([]);
   const [selectedMedId, setSelectedMedId] = useState('');
@@ -82,25 +78,25 @@ const BeneficiaryRegister = () => {
     try {
       if (communityModalView === 'create') {
         const response = await createCommunity({
-           name: communityForm.name,
-           municipality: communityForm.municipality,
-           parish: communityForm.parish,
-           state_region: communityForm.state_region
+          name: communityForm.name,
+          municipality: communityForm.municipality,
+          parish: communityForm.parish,
+          state_region: communityForm.state_region
         });
         if (response?.message?.id) {
-           setFormValues(prev => ({ ...prev, comunidad_id: response.message.id }));
+          setFormValues(prev => ({ ...prev, comunidad_id: response.message.id }));
         }
         setAlert({ show: true, message: 'Comunidad añadida exitosamente', type: 'success' });
       } else if (communityModalView === 'edit') {
         await updateCommunity(editingCommunityId, {
-           name: communityForm.name,
-           municipality: communityForm.municipality,
-           parish: communityForm.parish,
-           state_region: communityForm.state_region
+          name: communityForm.name,
+          municipality: communityForm.municipality,
+          parish: communityForm.parish,
+          state_region: communityForm.state_region
         });
         setAlert({ show: true, message: 'Comunidad actualizada exitosamente', type: 'success' });
       }
-      
+
       const commResponse = await getCommunities();
       setComunidades(commResponse?.message?.communities || []);
       setCommunityModalView('list');
@@ -113,18 +109,18 @@ const BeneficiaryRegister = () => {
   };
 
   const handleEditCommunity = (com) => {
-    setCommunityForm({ 
-      name: com.name || com.ComNombre || '', 
-      municipality: com.municipality || com.ComMunicipio || '', 
-      parish: com.parish || '', 
-      state_region: com.state_region || '' 
+    setCommunityForm({
+      name: com.name || com.ComNombre || '',
+      municipality: com.municipality || com.ComMunicipio || '',
+      parish: com.parish || '',
+      state_region: com.state_region || ''
     });
     setEditingCommunityId(com.id);
     setCommunityModalView('edit');
   };
 
   const handleDeleteCommunity = async (id) => {
-    if(!window.confirm("¿Estás seguro de eliminar esta comunidad?")) return;
+    if (!window.confirm("¿Estás seguro de eliminar esta comunidad?")) return;
     try {
       await deleteCommunity(id);
       const commResponse = await getCommunities();
@@ -139,7 +135,6 @@ const BeneficiaryRegister = () => {
     }
   };
 
-  // Cargar comunidades y medicamentos
   useEffect(() => {
     const fetchCatalogs = async () => {
       try {
@@ -164,9 +159,70 @@ const BeneficiaryRegister = () => {
     }));
   };
 
+  const validateForm = () => {
+    const errors = [];
+
+    // Cédula
+    if (!/^[VEJ]-\d{6,8}$/.test(formValues.cedula)) {
+      errors.push('La cédula debe comenzar con V-, E- o J- seguido de 6 a 8 dígitos (ej: V-12345678)');
+    }
+
+    // Nombres y apellidos (ya tienen required en el form, pero validamos longitud)
+    if (formValues.nombres.trim().length < 2) {
+      errors.push('El nombre debe tener al menos 2 caracteres');
+    }
+    if (formValues.apellidos.trim().length < 2) {
+      errors.push('El apellido debe tener al menos 2 caracteres');
+    }
+
+    // Fecha nacimiento
+    if (!formValues.fecha_nacimiento) {
+      errors.push('La fecha de nacimiento es obligatoria');
+    }
+
+    // Género
+    if (!formValues.genero) {
+      errors.push('El género es obligatorio');
+    }
+
+    // Comunidad
+    if (!formValues.comunidad_id) {
+      errors.push('La comunidad es obligatoria');
+    }
+
+    // Teléfono
+    if (!/^\+58\s?\d{3}\s?\d{7}$/.test(formValues.telefono_personal)) {
+      errors.push('El teléfono debe tener formato +58 412 1234567');
+    }
+
+    // Email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
+      errors.push('El email no es válido');
+    }
+
+    // Prioridad
+    if (!formValues.nivel_prioridad) {
+      errors.push('La prioridad es obligatoria');
+    }
+
+    // Teléfono de emergencia (opcional, pero si se ingresa debe ser válido)
+    if (formValues.telefono_emergencia && !/^\+58\s?\d{3}\s?\d{7}$/.test(formValues.telefono_emergencia)) {
+      errors.push('El teléfono de emergencia debe tener formato +58 412 1234567');
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAlert({ show: false, message: '', type: '' });
+
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setAlert({ show: true, message: errors.join('. '), type: 'danger' });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -184,14 +240,13 @@ const BeneficiaryRegister = () => {
         emergency_phone: formValues.telefono_emergencia || null,
         dependents: formValues.personas_dependientes ? parseInt(formValues.personas_dependientes) : 0,
         occupation: formValues.profesion || null,
-        priority_level: formValues.nivel_prioridad === 'ALTA' ? 'High' : (formValues.nivel_prioridad === 'BAJA' ? 'Low' : 'Medium'),
+        priority_level: formValues.nivel_prioridad,
       };
 
       const res = await createBeneficiary(requestData);
-      
+
       const newId = res?.message?.beneficiary?.id || res?.message?.id;
 
-      // Guardar enfermedades (texto libre)
       for (const enf of enfermedades) {
         try {
           await addBeneficiaryDisease(newId, {
@@ -204,7 +259,6 @@ const BeneficiaryRegister = () => {
         }
       }
 
-      // Guardar medicamentos
       if (medicamentos.length > 0) {
         try {
           await saveBeneficiaryMedicines(newId, {
@@ -223,8 +277,7 @@ const BeneficiaryRegister = () => {
         message: 'Beneficiario registrado exitosamente.',
         type: 'success',
       });
-      
-      // Limpiar todo
+
       setFormValues({
         cedula: '',
         nombres: '',
@@ -239,7 +292,7 @@ const BeneficiaryRegister = () => {
         telefono_emergencia: '',
         personas_dependientes: 0,
         profesion: '',
-        nivel_prioridad: 'MEDIA',
+        nivel_prioridad: 'Medium',
         observaciones: '',
       });
       setEnfermedades([]);
@@ -268,7 +321,7 @@ const BeneficiaryRegister = () => {
       telefono_emergencia: '',
       personas_dependientes: 0,
       profesion: '',
-      nivel_prioridad: 'MEDIA',
+      nivel_prioridad: 'Medium',
       observaciones: '',
     });
     setEnfermedades([]);
@@ -324,31 +377,31 @@ const BeneficiaryRegister = () => {
             Registrar Beneficiario
             <HelpButton title="Manual de Usuario – Registrar Beneficiario">
               <div>
-                <p><strong>¿Qué hace esta pantalla?</strong><br/>
-                Permite dar de alta un nuevo beneficiario en el sistema, registrando sus datos personales, ubicación, contacto de emergencia, información socioeconómica, enfermedades y medicamentos requeridos.</p>
+                <p><strong>¿Qué hace esta pantalla?</strong><br />
+                  Permite dar de alta un nuevo beneficiario en el sistema, registrando sus datos personales, ubicación, contacto de emergencia, información socioeconómica, enfermedades y medicamentos requeridos.</p>
                 <h6>🧪 Ejemplo de formulario completo</h6>
-                <div style={{background:'#f8f9fa', color:'#212529', padding:'1rem', borderRadius:'8px', marginBottom:'1rem'}}>
-                  <div style={{display:'flex', flexWrap:'wrap', gap:'1rem'}}>
-                    <div style={{flex:'1 1 45%'}}><strong>Cédula *</strong><br/>V-12345678</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Nombres *</strong><br/>María Elena</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Apellidos *</strong><br/>Gómez Rodríguez</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Fecha de Nacimiento</strong><br/>15/08/1965</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Género</strong><br/>Femenino</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Personas Dependientes</strong><br/>2</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Teléfono Personal</strong><br/>+58 412 1234567</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Email</strong><br/>maria.gomez@ejemplo.com</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Comunidad *</strong><br/>Barrio 23 de Enero (Libertador)</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Dirección Detallada</strong><br/>Calle 5, casa 23, cerca del ambulatorio</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Nombre Contacto Emergencia</strong><br/>Pedro Gómez</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Teléfono de Emergencia</strong><br/>+58 412 9876543</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Profesión/Trabajo</strong><br/>Docente jubilada</div>
-                    <div style={{flex:'1 1 45%'}}><strong>Nivel de Prioridad *</strong><br/><span style={{background:'#ffc107', color:'#000', padding:'2px 8px', borderRadius:'4px'}}>Media</span></div>
-                    <div style={{flex:'1 1 100%'}}><strong>Observaciones</strong><br/>Paciente con hipertensión controlada. Requiere supervisión mensual.</div>
+                <div style={{ background: '#f8f9fa', color: '#212529', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: '1 1 45%' }}><strong>Cédula *</strong><br />V-12345678</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Nombres *</strong><br />María Elena</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Apellidos *</strong><br />Gómez Rodríguez</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Fecha de Nacimiento *</strong><br />15/08/1965</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Género *</strong><br />Femenino</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Personas Dependientes</strong><br />2</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Teléfono Personal *</strong><br />+58 412 1234567</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Email *</strong><br />maria.gomez@ejemplo.com</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Comunidad *</strong><br />Barrio 23 de Enero (Libertador)</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Dirección Detallada</strong><br />Calle 5, casa 23, cerca del ambulatorio</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Nombre Contacto Emergencia</strong><br />Pedro Gómez</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Teléfono de Emergencia</strong><br />+58 412 9876543</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Profesión/Trabajo</strong><br />Docente jubilada</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Nivel de Prioridad *</strong><br /><span style={{ background: '#ffc107', color: '#000', padding: '2px 8px', borderRadius: '4px' }}>Media</span></div>
+                    <div style={{ flex: '1 1 100%' }}><strong>Observaciones</strong><br />Paciente con hipertensión controlada. Requiere supervisión mensual.</div>
                   </div>
-                  <hr/>
+                  <hr />
                   <p><strong>Enfermedades:</strong></p>
                   <ul>
-                    <li>Hipertensión Esencial – Estado: <span style={{color:'red'}}>CRÍTICO</span> – Obs: "Toma Losartán 50mg diario"</li>
+                    <li>Hipertensión Esencial – Estado: <span style={{ color: 'red' }}>CRÍTICO</span> – Obs: "Toma Losartán 50mg diario"</li>
                     <li>Diabetes tipo 2 – Estado: Estable</li>
                   </ul>
                   <p><strong>Medicamentos Requeridos:</strong></p>
@@ -359,22 +412,22 @@ const BeneficiaryRegister = () => {
                 </div>
                 <h6>📋 Validaciones y uso</h6>
                 <ol>
-                  <li><strong>Cédula * (obligatorio):</strong> Formato V-12345678 o J-123456789. Sin espacios. No se permiten caracteres especiales.</li>
+                  <li><strong>Cédula * (obligatorio):</strong> Formato V-12345678 o E-12345678 o J-12345678. Debe comenzar con V-, E- o J- seguido de 6 a 8 dígitos.</li>
                   <li><strong>Nombres / Apellidos * (obligatorio):</strong> Solo letras y acentos. Entre 2 y 40 caracteres cada uno.</li>
-                  <li><strong>Fecha de Nacimiento:</strong> Formato dd/mm/aaaa. Debe ser mayor de 18 años (se valida automáticamente).</li>
-                  <li><strong>Género:</strong> Seleccionar de la lista (Masculino, Femenino, Otro).</li>
-                  <li><strong>Personas Dependientes:</strong> Número entero (0-20). Indica cuántas personas dependen económicamente del beneficiario.</li>
-                  <li><strong>Teléfono Personal:</strong> Formato +58 412 1234567 o 0412-1234567. Solo dígitos, guiones y espacios.</li>
-                  <li><strong>Email:</strong> Debe ser un correo válido (ej: usuario@dominio.com). No es obligatorio pero si se ingresa, debe tener formato correcto.</li>
-                  <li><strong>Comunidad * (obligatorio):</strong> Seleccione de la lista desplegable. Si no existe, créela primero en el módulo de Catálogos/Comunidades.</li>
-                  <li><strong>Dirección Detallada:</strong> Texto libre. Incluya calle, número, referencia. Máximo 200 caracteres.</li>
-                  <li><strong>Contacto de Emergencia:</strong> Nombre completo de una persona a contactar en caso de emergencia. Obligatorio si el beneficiario es mayor de 65 años o tiene prioridad ALTA.</li>
-                  <li><strong>Teléfono de Emergencia:</strong> Mismo formato que teléfono personal. Obligatorio si se ingresó nombre de contacto.</li>
-                  <li><strong>Profesión/Trabajo:</strong> Texto libre. Ej: Docente, Comerciante, Jubilado...</li>
-                  <li><strong>Nivel de Prioridad * (obligatorio):</strong> Seleccione Alta, Media o Baja según criterio médico o social. Influye en alertas y programación de entregas.</li>
-                  <li><strong>Observaciones:</strong> Información relevante adicional. Máximo 500 caracteres.</li>
-                  <li><strong>Enfermedades (sección dinámica):</strong> Agregue una a una. Campo "Enfermedad" (texto libre, obligatorio), "Estado" (Estable, Crítico, Controlado), "Observaciones" (opcional). Puede añadir todas las necesarias.</li>
-                  <li><strong>Medicamentos Requeridos (sección dinámica):</strong> Seleccione medicamento del catálogo. Luego ingrese la dosificación exacta (ej: "1 tableta cada 8 horas"). Campo obligatorio.</li>
+                  <li><strong>Fecha de Nacimiento *:</strong> Debe ser mayor de 18 años (se valida automáticamente).</li>
+                  <li><strong>Género *:</strong> Seleccionar de la lista (Masculino, Femenino, Otro).</li>
+                  <li><strong>Personas Dependientes:</strong> Número entero (0-20).</li>
+                  <li><strong>Teléfono Personal *:</strong> Formato +58 412 1234567 o +584121234567.</li>
+                  <li><strong>Email *:</strong> Debe ser un correo válido (ej: usuario@dominio.com).</li>
+                  <li><strong>Comunidad * (obligatorio):</strong> Seleccione de la lista desplegable.</li>
+                  <li><strong>Dirección Detallada:</strong> Texto libre.</li>
+                  <li><strong>Contacto de Emergencia:</strong> Opcional, pero si se ingresa nombre, el teléfono de emergencia debe ser válido.</li>
+                  <li><strong>Teléfono de Emergencia:</strong> Mismo formato que teléfono personal.</li>
+                  <li><strong>Profesión/Trabajo:</strong> Texto libre.</li>
+                  <li><strong>Nivel de Prioridad * (obligatorio):</strong> Alta, Media o Baja.</li>
+                  <li><strong>Observaciones:</strong> Máximo 500 caracteres.</li>
+                  <li><strong>Enfermedades:</strong> Agregue una a una. La enfermedad se escribe como texto libre.</li>
+                  <li><strong>Medicamentos Requeridos:</strong> Seleccione medicamento del catálogo y escriba la dosificación.</li>
                 </ol>
                 <p><strong>⚠️ Al guardar:</strong> Todos los campos marcados con * deben estar llenos y cumplir las validaciones. Si hay errores, se mostrarán en rojo debajo del campo.</p>
               </div>
@@ -387,9 +440,8 @@ const BeneficiaryRegister = () => {
               {alert.message}
             </CAlert>
           )}
-          
+
           <CForm onSubmit={handleSubmit} onReset={handleReset}>
-            {/* Información Personal */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilUser} className="icon me-2" />
@@ -478,6 +530,7 @@ const BeneficiaryRegister = () => {
                       <option value="">Seleccione</option>
                       <option value="M">Masculino</option>
                       <option value="F">Femenino</option>
+                      <option value="O">Otro</option>
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -500,7 +553,6 @@ const BeneficiaryRegister = () => {
               </CRow>
             </div>
 
-            {/* Información de Contacto y Ubicación */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilPhone} className="icon me-2" />
@@ -509,7 +561,7 @@ const BeneficiaryRegister = () => {
               <CRow>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="BenTelefonoPersonal" className="register-form-label">
+                    <CFormLabel htmlFor="BenTelefonoPersonal" className="register-form-label required-field">
                       Teléfono Personal
                     </CFormLabel>
                     <CFormInput
@@ -526,7 +578,7 @@ const BeneficiaryRegister = () => {
                 </CCol>
                 <CCol md={6}>
                   <div className="mb-3">
-                    <CFormLabel htmlFor="BenEmail" className="register-form-label">
+                    <CFormLabel htmlFor="BenEmail" className="register-form-label required-field">
                       Email
                     </CFormLabel>
                     <CFormInput
@@ -583,7 +635,6 @@ const BeneficiaryRegister = () => {
               </CRow>
             </div>
 
-            {/* Información de Emergencia */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilPhone} className="icon me-2" />
@@ -625,7 +676,6 @@ const BeneficiaryRegister = () => {
               </CRow>
             </div>
 
-            {/* Información Socioeconómica */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilHome} className="icon me-2" />
@@ -655,9 +705,9 @@ const BeneficiaryRegister = () => {
                     </CFormLabel>
                     <CFormSelect id="BenNivelPrioridad" name="nivel_prioridad" className="register-form-select" value={formValues.nivel_prioridad} onChange={handleChange} required>
                       <option value="">Seleccione prioridad</option>
-                      <option value="ALTA">Alta</option>
-                      <option value="MEDIA">Media</option>
-                      <option value="BAJA">Baja</option>
+                      <option value="High">Alta</option>
+                      <option value="Medium">Media</option>
+                      <option value="Low">Baja</option>
                     </CFormSelect>
                   </div>
                 </CCol>
@@ -683,7 +733,6 @@ const BeneficiaryRegister = () => {
               </CRow>
             </div>
 
-            {/* Enfermedades */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilMedicalCross} className="icon me-2" />
@@ -754,7 +803,6 @@ const BeneficiaryRegister = () => {
               )}
             </div>
 
-            {/* Medicamentos */}
             <div className="form-section">
               <h6 className="section-title">
                 <CIcon icon={cilMedicalCross} className="icon me-2" />
@@ -812,16 +860,16 @@ const BeneficiaryRegister = () => {
             </div>
 
             <div className="d-flex gap-2 btn-group-responsive">
-              <CButton 
-                color="primary" 
+              <CButton
+                color="primary"
                 type="submit"
                 className="register-btn-primary"
+                disabled={submitting}
               >
-                <CIcon icon={cilSave} className="me-2" />
-                Registrar Beneficiario
+                {submitting ? 'Registrando...' : (<><CIcon icon={cilSave} className="me-2" /> Registrar Beneficiario</>)}
               </CButton>
-              <CButton 
-                color="secondary" 
+              <CButton
+                color="secondary"
                 type="reset"
                 className="register-btn-secondary"
               >
@@ -833,7 +881,6 @@ const BeneficiaryRegister = () => {
         </CCardBody>
       </CCard>
 
-      {/* Modal para Gestionar Comunidades */}
       <CModal visible={showCommunityModal} onClose={() => setShowCommunityModal(false)} size="lg">
         <CModalHeader>
           <CModalTitle>Gestionar Comunidades</CModalTitle>
@@ -889,39 +936,39 @@ const BeneficiaryRegister = () => {
             <div>
               <div className="mb-3">
                 <CFormLabel>Nombre de la Comunidad <span className="text-danger">*</span></CFormLabel>
-                <CFormInput 
-                  name="name" 
-                  value={communityForm.name} 
-                  onChange={handleCommunityChange} 
+                <CFormInput
+                  name="name"
+                  value={communityForm.name}
+                  onChange={handleCommunityChange}
                   placeholder="Ej. Los Pinos"
-                  required 
+                  required
                 />
               </div>
               <div className="mb-3">
                 <CFormLabel>Municipio</CFormLabel>
-                <CFormInput 
-                  name="municipality" 
-                  value={communityForm.municipality} 
-                  onChange={handleCommunityChange} 
-                  placeholder="Ej. Sucre" 
+                <CFormInput
+                  name="municipality"
+                  value={communityForm.municipality}
+                  onChange={handleCommunityChange}
+                  placeholder="Ej. Sucre"
                 />
               </div>
               <div className="mb-3">
                 <CFormLabel>Parroquia</CFormLabel>
-                <CFormInput 
-                  name="parish" 
-                  value={communityForm.parish} 
-                  onChange={handleCommunityChange} 
-                  placeholder="Ej. Petare" 
+                <CFormInput
+                  name="parish"
+                  value={communityForm.parish}
+                  onChange={handleCommunityChange}
+                  placeholder="Ej. Petare"
                 />
               </div>
               <div className="mb-3">
                 <CFormLabel>Estado / Región</CFormLabel>
-                <CFormInput 
-                  name="state_region" 
-                  value={communityForm.state_region} 
-                  onChange={handleCommunityChange} 
-                  placeholder="Ej. Táchira" 
+                <CFormInput
+                  name="state_region"
+                  value={communityForm.state_region}
+                  onChange={handleCommunityChange}
+                  placeholder="Ej. Táchira"
                 />
               </div>
             </div>
@@ -940,8 +987,6 @@ const BeneficiaryRegister = () => {
           )}
         </CModalFooter>
       </CModal>
-
-
     </div>
   );
 };
