@@ -114,26 +114,38 @@ const UserRegister = () => {
             <CIcon icon={cilUser} className="me-2" />
             Registrar Usuario
             <HelpButton title="Manual de Usuario – Registrar Usuario">
-              <div className="text-muted">
-                <p><strong>Información Personal</strong></p>
-                <ul>
-                  <li>Cédula/RIF: placeholder "V-12345678 o J-301234567"</li>
-                  <li>Nombres: placeholder "Ingrese los nombres"</li>
-                  <li>Apellidos: placeholder "Ingrese los apellidos"</li>
-                  <li>Email: placeholder "usuario@donaciones.com"</li>
-                  <li>Teléfono: placeholder "+58 412 1234567"</li>
-                  <li>Cargo: placeholder "Cargo del usuario"</li>
-                </ul>
-                <p><strong>Información Profesional</strong></p>
-                <ul>
-                  <li>Rol: placeholder "Seleccione un rol"</li>
-                  <li>Departamento: placeholder "Departamento"</li>
-                </ul>
-                <p><strong>Estado</strong>: placeholder "Activo"</p>
-                <p><strong>Seguridad</strong></p>
-                <ul>
-                  <li>Contraseña: placeholder "Ingrese contraseña"</li>
-                </ul>
+              <div>
+                <p><strong>¿Qué hace esta pantalla?</strong><br />
+                  Permite crear un nuevo usuario en el sistema, asignándole datos personales, profesionales y credenciales de acceso.</p>
+                <h6>🧪 Ejemplo de formulario completo</h6>
+                <div style={{ background: '#f8f9fa', color: '#212529', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: '1 1 45%' }}><strong>Cédula/RIF</strong><br />V-12345678</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Nombres *</strong><br />Carlos Alberto</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Apellidos</strong><br />Mendoza</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Email *</strong><br />admin@farmapatria.org.ve</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Teléfono</strong><br />+58 412 1234567</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Cargo</strong><br />Director de Sistemas</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Rol *</strong><br />Administrador</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Departamento</strong><br />TI</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Estado</strong><br />Activo</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Contraseña *</strong><br />••••••••</div>
+                  </div>
+                </div>
+                <h6>📋 Validaciones y uso</h6>
+                <ol>
+                  <li><strong>Cédula/RIF (opcional):</strong> Formato V-12345678 o J-301234567. Solo letras, números y guiones.</li>
+                  <li><strong>Nombres * (obligatorio):</strong> Entre 2 y 40 caracteres. Solo letras y espacios.</li>
+                  <li><strong>Apellidos:</strong> Texto libre, se recomienda ingresar ambos apellidos.</li>
+                  <li><strong>Email * (obligatorio):</strong> Debe ser un correo electrónico válido. Se usa como nombre de usuario automáticamente.</li>
+                  <li><strong>Teléfono:</strong> Formato internacional o local. Ej: +58 412 1234567 ó 0412-1234567.</li>
+                  <li><strong>Cargo:</strong> Puesto que ocupa el usuario en la organización.</li>
+                  <li><strong>Rol * (obligatorio):</strong> Seleccione de la lista desplegable. Define los permisos del usuario (Administrador, Farmacéutico, Coordinador, etc.).</li>
+                  <li><strong>Departamento:</strong> Área de trabajo asignada (opcional).</li>
+                  <li><strong>Estado:</strong> Activo (acceso permitido), Inactivo (bloqueado) o Suspendido (temporal).</li>
+                  <li><strong>Contraseña * (obligatorio):</strong> Mínimo 8 caracteres, combinando letras, números y símbolos para mayor seguridad.</li>
+                </ol>
+                <p><strong>⚠️ Al guardar:</strong> Si algún campo obligatorio no cumple las validaciones, se mostrará un mensaje de error debajo del campo. Corrija y reintente.</p>
               </div>
             </HelpButton>
           </h5>
@@ -144,7 +156,7 @@ const UserRegister = () => {
               {alert.message}
             </div>
           )}
-          
+
           <CForm onSubmit={handleSubmit} onReset={handleReset}>
             {/* Información Personal - Campos DB */}
             <div className="form-section">
@@ -291,7 +303,7 @@ const UserRegister = () => {
                           else if (role.name === 'Social Worker' || role.name === 'Assistant') displayName = 'Asistente';
                           else if (role.name === 'Donor') displayName = 'Donante';
                           else if (role.name === 'Coordinator') displayName = 'Coordinador';
-                          
+
                           return (
                             <option key={role.id} value={role.id}>
                               {displayName}
@@ -370,16 +382,16 @@ const UserRegister = () => {
             </div>
 
             <div className="d-flex gap-2 btn-group-responsive">
-              <CButton 
-                color="primary" 
+              <CButton
+                color="primary"
                 type="submit"
                 className="register-btn-primary"
               >
                 <CIcon icon={cilSave} className="me-2" />
                 Registrar Usuario
               </CButton>
-              <CButton 
-                color="secondary" 
+              <CButton
+                color="secondary"
                 type="reset"
                 className="register-btn-secondary"
               >

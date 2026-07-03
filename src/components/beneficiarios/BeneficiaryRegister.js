@@ -324,40 +324,59 @@ const BeneficiaryRegister = () => {
             Registrar Beneficiario
             <HelpButton title="Manual de Usuario – Registrar Beneficiario">
               <div>
-                <p>Agrega un nuevo beneficiario al sistema.</p>
-                <h6>Formulario de registro</h6>
-                <div className="card p-3 mb-3 bg-light">
-                  <div className="row g-2 small">
-                    <div className="col-md-6"><span className="fw-bold">(1) Cédula *</span><br/>V-12345678</div>
-                    <div className="col-md-6"><span className="fw-bold">(2) Nombres *</span><br/>María</div>
-                    <div className="col-md-6"><span className="fw-bold">(3) Apellidos *</span><br/>Gómez</div>
-                    <div className="col-md-6"><span className="fw-bold">(4) Fecha Nac.</span><br/>dd/mm/aaaa</div>
-                    <div className="col-md-6"><span className="fw-bold">(5) Género</span><br/>Seleccione</div>
-                    <div className="col-md-6"><span className="fw-bold">(6) Dependientes</span><br/>0</div>
-                    <div className="col-md-6"><span className="fw-bold">(7) Teléfono</span><br/>+58 412 1234567</div>
-                    <div className="col-md-6"><span className="fw-bold">(8) Email</span><br/>beneficiario@ejemplo.com</div>
-                    <div className="col-md-6"><span className="fw-bold">(9) Comunidad *</span><br/>Seleccione una comunidad</div>
-                    <div className="col-md-6"><span className="fw-bold">(10) Dirección</span><br/>Calle, casa, referencia...</div>
-                    <div className="col-md-6"><span className="fw-bold">(11) Contacto Emerg.</span><br/>Nombre completo</div>
-                    <div className="col-md-6"><span className="fw-bold">(12) Tel. Emergencia</span><br/>+58 412 9876543</div>
-                    <div className="col-md-6"><span className="fw-bold">(13) Profesión</span><br/>Ej: Docente, Jubilado...</div>
-                    <div className="col-md-6"><span className="fw-bold">(14) Prioridad *</span><br/>ALTA / MEDIA / BAJA</div>
+                <p><strong>¿Qué hace esta pantalla?</strong><br/>
+                Permite dar de alta un nuevo beneficiario en el sistema, registrando sus datos personales, ubicación, contacto de emergencia, información socioeconómica, enfermedades y medicamentos requeridos.</p>
+                <h6>🧪 Ejemplo de formulario completo</h6>
+                <div style={{background:'#f8f9fa', color:'#212529', padding:'1rem', borderRadius:'8px', marginBottom:'1rem'}}>
+                  <div style={{display:'flex', flexWrap:'wrap', gap:'1rem'}}>
+                    <div style={{flex:'1 1 45%'}}><strong>Cédula *</strong><br/>V-12345678</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Nombres *</strong><br/>María Elena</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Apellidos *</strong><br/>Gómez Rodríguez</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Fecha de Nacimiento</strong><br/>15/08/1965</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Género</strong><br/>Femenino</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Personas Dependientes</strong><br/>2</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Teléfono Personal</strong><br/>+58 412 1234567</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Email</strong><br/>maria.gomez@ejemplo.com</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Comunidad *</strong><br/>Barrio 23 de Enero (Libertador)</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Dirección Detallada</strong><br/>Calle 5, casa 23, cerca del ambulatorio</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Nombre Contacto Emergencia</strong><br/>Pedro Gómez</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Teléfono de Emergencia</strong><br/>+58 412 9876543</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Profesión/Trabajo</strong><br/>Docente jubilada</div>
+                    <div style={{flex:'1 1 45%'}}><strong>Nivel de Prioridad *</strong><br/><span style={{background:'#ffc107', color:'#000', padding:'2px 8px', borderRadius:'4px'}}>Media</span></div>
+                    <div style={{flex:'1 1 100%'}}><strong>Observaciones</strong><br/>Paciente con hipertensión controlada. Requiere supervisión mensual.</div>
                   </div>
+                  <hr/>
+                  <p><strong>Enfermedades:</strong></p>
+                  <ul>
+                    <li>Hipertensión Esencial – Estado: <span style={{color:'red'}}>CRÍTICO</span> – Obs: "Toma Losartán 50mg diario"</li>
+                    <li>Diabetes tipo 2 – Estado: Estable</li>
+                  </ul>
+                  <p><strong>Medicamentos Requeridos:</strong></p>
+                  <ul>
+                    <li>Losartán 50mg – 1 tableta cada 24 horas</li>
+                    <li>Metformina 850mg – 1 tableta cada 12 horas</li>
+                  </ul>
                 </div>
+                <h6>📋 Validaciones y uso</h6>
                 <ol>
-                  <li><strong>Cédula:</strong> Requerido. Ej: V-12345678.</li>
-                  <li><strong>Nombres / Apellidos:</strong> Nombres y apellidos completos.</li>
-                  <li><strong>Fecha Nac.:</strong> Fecha de nacimiento.</li>
-                  <li><strong>Género:</strong> Masculino o Femenino.</li>
-                  <li><strong>Dependientes:</strong> Personas que dependen del beneficiario.</li>
-                  <li><strong>Teléfono / Email:</strong> Datos de contacto.</li>
-                  <li><strong>Comunidad:</strong> Sector donde reside. Si no aparece, créala en catálogos.</li>
-                  <li><strong>Dirección:</strong> Dirección detallada de residencia.</li>
-                  <li><strong>Contacto de Emergencia:</strong> Nombre y teléfono de emergencia.</li>
-                  <li><strong>Profesión:</strong> Ocupación actual.</li>
-                  <li><strong>Prioridad:</strong> Nivel de urgencia o vulnerabilidad general.</li>
+                  <li><strong>Cédula * (obligatorio):</strong> Formato V-12345678 o J-123456789. Sin espacios. No se permiten caracteres especiales.</li>
+                  <li><strong>Nombres / Apellidos * (obligatorio):</strong> Solo letras y acentos. Entre 2 y 40 caracteres cada uno.</li>
+                  <li><strong>Fecha de Nacimiento:</strong> Formato dd/mm/aaaa. Debe ser mayor de 18 años (se valida automáticamente).</li>
+                  <li><strong>Género:</strong> Seleccionar de la lista (Masculino, Femenino, Otro).</li>
+                  <li><strong>Personas Dependientes:</strong> Número entero (0-20). Indica cuántas personas dependen económicamente del beneficiario.</li>
+                  <li><strong>Teléfono Personal:</strong> Formato +58 412 1234567 o 0412-1234567. Solo dígitos, guiones y espacios.</li>
+                  <li><strong>Email:</strong> Debe ser un correo válido (ej: usuario@dominio.com). No es obligatorio pero si se ingresa, debe tener formato correcto.</li>
+                  <li><strong>Comunidad * (obligatorio):</strong> Seleccione de la lista desplegable. Si no existe, créela primero en el módulo de Catálogos/Comunidades.</li>
+                  <li><strong>Dirección Detallada:</strong> Texto libre. Incluya calle, número, referencia. Máximo 200 caracteres.</li>
+                  <li><strong>Contacto de Emergencia:</strong> Nombre completo de una persona a contactar en caso de emergencia. Obligatorio si el beneficiario es mayor de 65 años o tiene prioridad ALTA.</li>
+                  <li><strong>Teléfono de Emergencia:</strong> Mismo formato que teléfono personal. Obligatorio si se ingresó nombre de contacto.</li>
+                  <li><strong>Profesión/Trabajo:</strong> Texto libre. Ej: Docente, Comerciante, Jubilado...</li>
+                  <li><strong>Nivel de Prioridad * (obligatorio):</strong> Seleccione Alta, Media o Baja según criterio médico o social. Influye en alertas y programación de entregas.</li>
+                  <li><strong>Observaciones:</strong> Información relevante adicional. Máximo 500 caracteres.</li>
+                  <li><strong>Enfermedades (sección dinámica):</strong> Agregue una a una. Campo "Enfermedad" (texto libre, obligatorio), "Estado" (Estable, Crítico, Controlado), "Observaciones" (opcional). Puede añadir todas las necesarias.</li>
+                  <li><strong>Medicamentos Requeridos (sección dinámica):</strong> Seleccione medicamento del catálogo. Luego ingrese la dosificación exacta (ej: "1 tableta cada 8 horas"). Campo obligatorio.</li>
                 </ol>
-                <p className="text-muted"><em>Nota: También puede agregar enfermedades y medicamentos requeridos en las secciones inferiores del formulario.</em></p>
+                <p><strong>⚠️ Al guardar:</strong> Todos los campos marcados con * deben estar llenos y cumplir las validaciones. Si hay errores, se mostrarán en rojo debajo del campo.</p>
               </div>
             </HelpButton>
           </h5>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   CCard,
   CCardHeader,
@@ -12,33 +12,43 @@ import {
   CButton,
   CFormTextarea,
   CAlert,
-  CSpinner
+  CSpinner,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
+  CBadge,
 } from '@coreui/react'
-import { cilSave, cilReload, cilTruck } from '@coreui/icons'
+import { cilSave, cilReload, cilTruck, cilPeople } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import { createDelivery, getRequests, getUsers, getMedicines } from '../../services/api'
+import { createDelivery, getUsers, getMedicines, getBeneficiariesByMedicine } from '../../services/api'
 import HelpButton from '../common/HelpButton'
 import '../../css/entregas/DeliveryRegister.css'
 
-// Mapeo tipos de entrega: label visible → valor que espera la API
 const DELIVERY_TYPES = [
-  { label: 'A Domicilio',          value: 'HomeDelivery' },
-  { label: 'Centro de Salud',      value: 'HealthCenter' },
-  { label: 'Jornada Comunitaria',  value: 'Community' },
-  { label: 'Retiro en Sede',       value: 'Pickup' },
+  { label: 'A Domicilio', value: 'HomeDelivery' },
+  { label: 'Centro de Salud', value: 'HealthCenter' },
+  { label: 'Jornada Comunitaria', value: 'Community' },
+  { label: 'Retiro en Sede', value: 'Pickup' },
 ]
 
-// Mapeo estados: label visible → valor que espera la API
 const DELIVERY_STATUSES = [
-  { label: 'Programada',  value: 'Scheduled' },
-  { label: 'En Camino',   value: 'OnTheWay' },
-  { label: 'Entregada',   value: 'Delivered' },
-  { label: 'Cancelada',   value: 'Cancelled' },
-  { label: 'Pendiente',   value: 'Pending' },
+  { label: 'Programada', value: 'Scheduled' },
+  { label: 'En Camino', value: 'OnTheWay' },
+  { label: 'Entregada', value: 'Delivered' },
+  { label: 'Cancelada', value: 'Cancelled' },
+  { label: 'Pendiente', value: 'Pending' },
 ]
 
 const INITIAL_FORM = {
-  supply_request_id: '',
+  medicine_id: '',
   delivery_user_id: '',
   delivery_date: '',
   delivery_type: 'HomeDelivery',
@@ -55,37 +65,31 @@ const DeliveryRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
   const [submitting, setSubmitting] = useState(false)
 
-  // Catálogos
-  const [requests, setRequests] = useState([])
   const [users, setUsers] = useState([])
   const [medicines, setMedicines] = useState([])
-  const [selectedMedicineId, setSelectedMedicineId] = useState('')
   const [loadingCatalogs, setLoadingCatalogs] = useState(true)
 
-  // Cargar solicitudes, usuarios y medicamentos
+  // Beneficiarios
+  const [beneficiariesCount, setBeneficiariesCount] = useState(0)
+  const [beneficiariesList, setBeneficiariesList] = useState([])
+  const [loadingBeneficiaries, setLoadingBeneficiaries] = useState(false)
+  const [showBeneficiariesModal, setShowBeneficiariesModal] = useState(false)
+
   useEffect(() => {
     const fetchCatalogs = async () => {
       setLoadingCatalogs(true)
       try {
-        const [reqRes, userRes, medRes] = await Promise.all([
-          getRequests(),
+        const [userRes, medRes] = await Promise.all([
           getUsers(),
           getMedicines(),
         ])
-        // Extraer arrays de la respuesta del backend
-        const reqList = reqRes?.message?.requests || []
         const userList = userRes?.message?.users || []
         const medList = medRes?.message?.medicines || []
-        setRequests(reqList)
         setUsers(userList.filter(u => u.status === 'Active'))
         setMedicines(medList)
       } catch (err) {
         console.error('Error cargando catálogos:', err)
-        setAlert({
-          show: true,
-          message: 'Error al cargar catálogos. Verifique la conexión al servidor.',
-          type: 'danger',
-        })
+        setAlert({ show: true, message: 'Error al cargar catálogos.', type: 'danger' })
       } finally {
         setLoadingCatalogs(false)
       }
@@ -93,36 +97,57 @@ const DeliveryRegister = () => {
     fetchCatalogs()
   }, [])
 
-  // Manejo de cambios en inputs
+  const fetchBeneficiariesForMedicine = useCallback(async (medicineId) => {
+    if (!medicineId) {
+      setBeneficiariesCount(0)
+      setBeneficiariesList([])
+      return
+    }
+    setLoadingBeneficiaries(true)
+    try {
+      const response = await getBeneficiariesByMedicine(medicineId)
+      const beneficiaries = response?.message?.beneficiaries || []
+      setBeneficiariesList(beneficiaries)
+      setBeneficiariesCount(beneficiaries.length)
+    } catch (err) {
+      console.error('Error obteniendo beneficiarios:', err)
+      setBeneficiariesCount(0)
+      setBeneficiariesList([])
+    } finally {
+      setLoadingBeneficiaries(false)
+    }
+  }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+
+    if (name === 'medicine_id') {
+      fetchBeneficiariesForMedicine(value)
+    }
   }
 
-  // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault()
     setAlert({ show: false, message: '', type: '' })
 
-    // Validaciones mínimas
-    if (!form.supply_request_id) {
-      setAlert({ show: true, message: 'Debe seleccionar una solicitud asociada.', type: 'danger' })
+    if (!form.medicine_id) {
+      setAlert({ show: true, message: 'Seleccione un medicamento a entregar.', type: 'danger' })
       return
     }
     if (!form.delivery_user_id) {
-      setAlert({ show: true, message: 'Debe seleccionar un responsable de entrega.', type: 'danger' })
+      setAlert({ show: true, message: 'Seleccione un responsable de entrega.', type: 'danger' })
       return
     }
     if (!form.delivery_date) {
-      setAlert({ show: true, message: 'Debe indicar la fecha de entrega.', type: 'danger' })
+      setAlert({ show: true, message: 'Indique la fecha de entrega.', type: 'danger' })
       return
     }
 
     try {
       setSubmitting(true)
-
       const payload = {
-        supply_request_id: form.supply_request_id,
+        medicine_id: form.medicine_id,
         delivery_user_id: form.delivery_user_id,
         delivery_date: form.delivery_date,
         delivery_type: form.delivery_type,
@@ -133,24 +158,14 @@ const DeliveryRegister = () => {
         observations: form.observations || null,
         status: form.status,
       }
-
       await createDelivery(payload)
-
-      setAlert({
-        show: true,
-        message: 'Entrega registrada exitosamente.',
-        type: 'success',
-      })
-
-      // Limpiar formulario
+      setAlert({ show: true, message: 'Entrega registrada exitosamente.', type: 'success' })
       setForm({ ...INITIAL_FORM })
+      setBeneficiariesCount(0)
+      setBeneficiariesList([])
     } catch (err) {
       console.error('Error registrando entrega:', err)
-      setAlert({
-        show: true,
-        message: err.message || 'Error al registrar la entrega.',
-        type: 'danger',
-      })
+      setAlert({ show: true, message: err.message || 'Error al registrar la entrega.', type: 'danger' })
     } finally {
       setSubmitting(false)
     }
@@ -159,6 +174,8 @@ const DeliveryRegister = () => {
   const handleReset = () => {
     setForm({ ...INITIAL_FORM })
     setAlert({ show: false, message: '', type: '' })
+    setBeneficiariesCount(0)
+    setBeneficiariesList([])
   }
 
   return (
@@ -170,39 +187,37 @@ const DeliveryRegister = () => {
             Registrar Nueva Entrega
             <HelpButton title="Manual de Usuario – Registrar Nueva Entrega">
               <div>
-                <p>Programa una nueva entrega logística de medicamentos.</p>
-                <h6>Formulario de Entrega</h6>
+                <p><strong>¿Qué hace esta pantalla?</strong><br />
+                  Programa la entrega de un medicamento. Al seleccionar un medicamento, se muestra cuántos beneficiarios lo necesitan.</p>
+                <h6>🧪 Ejemplo de formulario</h6>
                 <div className="card p-3 mb-3 bg-light">
                   <div className="row g-2 small">
-                    <div className="col-md-6"><span className="fw-bold">(1) Solicitud Asociada *</span><br/>Seleccione...</div>
-                    <div className="col-md-6"><span className="fw-bold">(2) Responsable *</span><br/>Repartidor asignado</div>
-                    <div className="col-md-6"><span className="fw-bold">(3) Fecha Estimada *</span><br/>15-10-2023</div>
-                    <div className="col-md-6"><span className="fw-bold">(4) Tipo de Entrega</span><br/>A Domicilio / Jornada</div>
-                    <div className="col-md-6"><span className="fw-bold">(5) Punto de Entrega</span><br/>Dirección específica</div>
-                    <div className="col-md-6"><span className="fw-bold">(6) Testigo</span><br/>Opcional (Ej: Familiar)</div>
+                    <div className="col-md-6"><span className="fw-bold">Medicamento *</span><br />Amoxicilina 500mg</div>
+                    <div className="col-md-6"><span className="fw-bold">Responsable *</span><br />Carlos Mendoza</div>
+                    <div className="col-12 mt-2">
+                      <span className="fw-bold">Beneficiarios que lo requieren</span><br />
+                      <span className="badge bg-info">10 beneficiarios seleccionados</span> <button className="btn btn-sm btn-outline-info">Ver listado</button>
+                    </div>
+                    <div className="col-md-6 mt-3"><span className="fw-bold">Fecha Entrega *</span><br />15/10/2025</div>
+                    <div className="col-md-6 mt-3"><span className="fw-bold">Tipo de Entrega</span><br />A Domicilio</div>
                   </div>
                 </div>
+                <h6>📋 Validaciones y uso</h6>
                 <ol>
-                  <li><strong>Solicitud Asociada:</strong> Elige la petición previa del beneficiario (Vincula los medicamentos).</li>
-                  <li><strong>Responsable:</strong> Personal que realizará el traslado.</li>
-                  <li><strong>Fecha Estimada:</strong> Cuándo se espera concretar.</li>
-                  <li><strong>Tipo de Entrega:</strong> Modalidad logística (A Domicilio, Retiro en Sede, Jornada comunitaria).</li>
-                  <li><strong>Punto de Entrega:</strong> Dirección exacta donde se entregará.</li>
-                  <li><strong>Testigo:</strong> Persona que recibe si el beneficiario no puede.</li>
+                  <li><strong>Medicamento *:</strong> Seleccione del catálogo.</li>
+                  <li><strong>Responsable *:</strong> Usuario activo que realizará la entrega.</li>
+                  <li><strong>Beneficiarios:</strong> Vea el listado de beneficiarios que necesitan este medicamento.</li>
+                  <li><strong>Fecha de Entrega *:</strong> Día programado.</li>
+                  <li><strong>Tipo de Entrega:</strong> Modalidad logística.</li>
+                  <li><strong>Estado:</strong> Programada por defecto. Al cambiar a Entregada, el inventario se actualizará.</li>
                 </ol>
-                <p className="text-muted"><em>Al guardar, la entrega cambiará al estado inicial seleccionado (ej: Programada).</em></p>
               </div>
             </HelpButton>
           </h5>
         </CCardHeader>
         <CCardBody>
           {alert.show && (
-            <CAlert
-              color={alert.type}
-              dismissible
-              onClose={() => setAlert({ show: false, message: '', type: '' })}
-              className="mb-4"
-            >
+            <CAlert color={alert.type} dismissible onClose={() => setAlert({ show: false, message: '', type: '' })} className="mb-4">
               {alert.message}
             </CAlert>
           )}
@@ -214,92 +229,62 @@ const DeliveryRegister = () => {
             </div>
           ) : (
             <CForm onSubmit={handleSubmit} onReset={handleReset}>
-              {/* Información de la Solicitud */}
+              {/* Información de la Entrega */}
               <div className="form-section">
                 <h6 className="section-title">
                   <CIcon icon={cilTruck} className="icon me-2" />
-                  Información de la Solicitud
+                  Información de la Entrega
                 </h6>
                 <CRow>
-                  <CCol md={4}>
+                  <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="medicine_id" className="register-form-label">
-                        Medicamento a Entregar *
-                      </CFormLabel>
-                      <CFormSelect
-                        id="medicine_id"
-                        value={selectedMedicineId}
-                        onChange={(e) => {
-                          setSelectedMedicineId(e.target.value);
-                          setForm(prev => ({ ...prev, supply_request_id: '' }));
-                        }}
-                        required
-                      >
+                      <CFormLabel htmlFor="medicine_id" className="register-form-label">Medicamento a Entregar *</CFormLabel>
+                      <CFormSelect id="medicine_id" name="medicine_id" value={form.medicine_id} onChange={handleChange} required>
                         <option value="">Seleccione un medicamento</option>
-                        {medicines.map((med) => (
-                          <option key={med.id} value={med.id}>
-                            {med.commercial_name} ({med.generic_name})
-                          </option>
+                        {medicines.map(med => (
+                          <option key={med.id} value={med.id}>{med.commercial_name} ({med.generic_name})</option>
                         ))}
                       </CFormSelect>
                     </div>
                   </CCol>
-                  <CCol md={4}>
+                  <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="supply_request_id" className="register-form-label">
-                        Beneficiario que lo requiere *
-                      </CFormLabel>
-                      <CFormSelect
-                        id="supply_request_id"
-                        name="supply_request_id"
-                        className="register-form-select"
-                        value={form.supply_request_id}
-                        onChange={handleChange}
-                        required
-                        disabled={!selectedMedicineId}
-                      >
-                        <option value="">
-                          {!selectedMedicineId 
-                            ? 'Seleccione primero un medicamento' 
-                            : requests.filter(r => r.medicine_id === selectedMedicineId).length === 0 
-                            ? 'Nadie requiere este medicamento' 
-                            : 'Seleccione beneficiario'}
-                        </option>
-                        {requests
-                          .filter(r => r.medicine_id === selectedMedicineId)
-                          .map((req) => (
-                            <option key={req.id} value={req.id}>
-                              {req.beneficiary_name} — (Ref: {req.id.substring(0, 8).toUpperCase()})
-                            </option>
-                          ))
-                        }
-                      </CFormSelect>
-                    </div>
-                  </CCol>
-                  <CCol md={4}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_user_id" className="register-form-label">
-                        Responsable de Entrega *
-                      </CFormLabel>
-                      <CFormSelect
-                        id="delivery_user_id"
-                        name="delivery_user_id"
-                        className="register-form-select"
-                        value={form.delivery_user_id}
-                        onChange={handleChange}
-                        required
-                      >
+                      <CFormLabel htmlFor="delivery_user_id" className="register-form-label">Responsable de Entrega *</CFormLabel>
+                      <CFormSelect id="delivery_user_id" name="delivery_user_id" value={form.delivery_user_id} onChange={handleChange} required>
                         <option value="">Seleccione responsable</option>
-                        {users.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.first_name} {user.last_name}
-                            {user.position ? ` — ${user.position}` : ''}
-                          </option>
+                        {users.map(user => (
+                          <option key={user.id} value={user.id}>{user.first_name} {user.last_name} {user.position ? ` — ${user.position}` : ''}</option>
                         ))}
                       </CFormSelect>
                     </div>
                   </CCol>
                 </CRow>
+
+                {/* Sección de Beneficiarios que requieren el medicamento */}
+                {form.medicine_id && (
+                  <div className="mb-4 p-3 border rounded">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        {loadingBeneficiaries ? (
+                          <>
+                            <CSpinner size="sm" color="primary" className="me-2" />
+                            <span>Cargando beneficiarios...</span>
+                          </>
+                        ) : (
+                          <span>
+                            <CIcon icon={cilPeople} className="me-2" />
+                            <strong>{beneficiariesCount} beneficiario(s) seleccionado(s)</strong> requieren este medicamento
+                          </span>
+                        )}
+                      </div>
+                      {!loadingBeneficiaries && beneficiariesCount > 0 && (
+                        <CButton color="outline-info" size="sm" onClick={() => setShowBeneficiariesModal(true)}>
+                          Ver listado
+                        </CButton>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Detalles de la Entrega */}
@@ -311,195 +296,122 @@ const DeliveryRegister = () => {
                 <CRow>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_date" className="register-form-label">
-                        Fecha Entrega *
-                      </CFormLabel>
-                      <CFormInput
-                        type="date"
-                        id="delivery_date"
-                        name="delivery_date"
-                        className="register-form-input"
-                        value={form.delivery_date}
-                        onChange={handleChange}
-                        required
-                      />
+                      <CFormLabel htmlFor="delivery_date" className="register-form-label">Fecha Entrega *</CFormLabel>
+                      <CFormInput type="date" id="delivery_date" name="delivery_date" value={form.delivery_date} onChange={handleChange} required />
                     </div>
                   </CCol>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_type" className="register-form-label">
-                        Tipo de Entrega
-                      </CFormLabel>
-                      <CFormSelect
-                        id="delivery_type"
-                        name="delivery_type"
-                        className="register-form-select"
-                        value={form.delivery_type}
-                        onChange={handleChange}
-                      >
-                        {DELIVERY_TYPES.map((dt) => (
-                          <option key={dt.value} value={dt.value}>
-                            {dt.label}
-                          </option>
-                        ))}
+                      <CFormLabel htmlFor="delivery_type" className="register-form-label">Tipo de Entrega</CFormLabel>
+                      <CFormSelect id="delivery_type" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
+                        {DELIVERY_TYPES.map(dt => (<option key={dt.value} value={dt.value}>{dt.label}</option>))}
                       </CFormSelect>
                     </div>
                   </CCol>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="status" className="register-form-label">
-                        Estado
-                      </CFormLabel>
-                      <CFormSelect
-                        id="status"
-                        name="status"
-                        className="register-form-select"
-                        value={form.status}
-                        onChange={handleChange}
-                      >
-                        {DELIVERY_STATUSES.map((ds) => (
-                          <option key={ds.value} value={ds.value}>
-                            {ds.label}
-                          </option>
-                        ))}
+                      <CFormLabel htmlFor="status" className="register-form-label">Estado</CFormLabel>
+                      <CFormSelect id="status" name="status" value={form.status} onChange={handleChange}>
+                        {DELIVERY_STATUSES.map(ds => (<option key={ds.value} value={ds.value}>{ds.label}</option>))}
                       </CFormSelect>
                     </div>
                   </CCol>
                 </CRow>
-
                 <CRow>
                   <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_point" className="register-form-label">
-                        Punto de Entrega
-                      </CFormLabel>
-                      <CFormInput
-                        type="text"
-                        id="delivery_point"
-                        name="delivery_point"
-                        className="register-form-input"
-                        placeholder="Dirección o lugar específico"
-                        value={form.delivery_point}
-                        onChange={handleChange}
-                      />
+                      <CFormLabel htmlFor="delivery_point" className="register-form-label">Punto de Entrega</CFormLabel>
+                      <CFormInput type="text" id="delivery_point" name="delivery_point" placeholder="Dirección o lugar específico" value={form.delivery_point} onChange={handleChange} />
                     </div>
                   </CCol>
                   <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="witness_receptor" className="register-form-label">
-                        Testigo/Receptor
-                      </CFormLabel>
-                      <CFormInput
-                        type="text"
-                        id="witness_receptor"
-                        name="witness_receptor"
-                        className="register-form-input"
-                        placeholder="Nombre del testigo o receptor"
-                        value={form.witness_receptor}
-                        onChange={handleChange}
-                      />
+                      <CFormLabel htmlFor="witness_receptor" className="register-form-label">Testigo/Receptor</CFormLabel>
+                      <CFormInput type="text" id="witness_receptor" name="witness_receptor" placeholder="Nombre del testigo o receptor" value={form.witness_receptor} onChange={handleChange} />
                     </div>
                   </CCol>
                 </CRow>
-
                 <CRow>
                   <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="next_estimated_delivery" className="register-form-label">
-                        Próxima Entrega Estimada
-                      </CFormLabel>
-                      <CFormInput
-                        type="date"
-                        id="next_estimated_delivery"
-                        name="next_estimated_delivery"
-                        className="register-form-input"
-                        value={form.next_estimated_delivery}
-                        onChange={handleChange}
-                      />
+                      <CFormLabel htmlFor="next_estimated_delivery" className="register-form-label">Próxima Entrega Estimada</CFormLabel>
+                      <CFormInput type="date" id="next_estimated_delivery" name="next_estimated_delivery" value={form.next_estimated_delivery} onChange={handleChange} />
                     </div>
                   </CCol>
                   <CCol md={6}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="digital_signature" className="register-form-label">
-                        Firma Digital/Comprobante
-                      </CFormLabel>
-                      <CFormInput
-                        type="text"
-                        id="digital_signature"
-                        name="digital_signature"
-                        className="register-form-input"
-                        placeholder="Código o referencia de firma"
-                        value={form.digital_signature}
-                        onChange={handleChange}
-                      />
+                      <CFormLabel htmlFor="digital_signature" className="register-form-label">Firma Digital/Comprobante</CFormLabel>
+                      <CFormInput type="text" id="digital_signature" name="digital_signature" placeholder="Código o referencia de firma" value={form.digital_signature} onChange={handleChange} />
                     </div>
                   </CCol>
                 </CRow>
-
                 <CRow>
                   <CCol md={12}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="observations" className="register-form-label">
-                        Observaciones
-                      </CFormLabel>
-                      <CFormTextarea
-                        id="observations"
-                        name="observations"
-                        className="register-form-input"
-                        rows="3"
-                        placeholder="Observaciones de la entrega..."
-                        value={form.observations}
-                        onChange={handleChange}
-                      />
+                      <CFormLabel htmlFor="observations" className="register-form-label">Observaciones</CFormLabel>
+                      <CFormTextarea id="observations" name="observations" rows="3" placeholder="Observaciones de la entrega..." value={form.observations} onChange={handleChange} />
                     </div>
                   </CCol>
                 </CRow>
               </div>
 
-              {/* Sección informativa de Medicamentos */}
-              <div className="form-section">
-                <h6 className="section-title">
-                  <CIcon icon={cilTruck} className="icon me-2" />
-                  Medicamentos a Entregar
-                </h6>
-                <div className="alert alert-info mb-3">
-                  <small>Los medicamentos se seleccionarán en el siguiente paso después de registrar la entrega básica.</small>
-                </div>
-              </div>
-
-              <div className="d-flex gap-2 btn-group-responsive">
-                <CButton
-                  color="primary"
-                  type="submit"
-                  className="register-btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <CSpinner size="sm" className="me-2" />
-                      Registrando...
-                    </>
-                  ) : (
-                    <>
-                      <CIcon icon={cilSave} className="me-2" />
-                      Registrar Entrega
-                    </>
-                  )}
+              <div className="d-flex gap-2 btn-group-responsive mt-4">
+                <CButton color="primary" type="submit" className="register-btn-primary" disabled={submitting}>
+                  {submitting ? <><CSpinner size="sm" className="me-2" /> Registrando...</> : <><CIcon icon={cilSave} className="me-2" /> Registrar Entrega</>}
                 </CButton>
-                <CButton
-                  color="secondary"
-                  type="reset"
-                  className="register-btn-secondary"
-                  disabled={submitting}
-                >
-                  <CIcon icon={cilReload} className="me-2" />
-                  Limpiar Formulario
+                <CButton color="secondary" type="reset" className="register-btn-secondary" disabled={submitting}>
+                  <CIcon icon={cilReload} className="me-2" /> Limpiar Formulario
                 </CButton>
               </div>
             </CForm>
           )}
         </CCardBody>
       </CCard>
+
+      {/* Modal de listado de beneficiarios */}
+      <CModal visible={showBeneficiariesModal} onClose={() => setShowBeneficiariesModal(false)} size="lg">
+        <CModalHeader closeButton>
+          <CModalTitle>
+            <CIcon icon={cilPeople} className="me-2" />
+            Beneficiarios que requieren este medicamento
+          </CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {beneficiariesList.length === 0 ? (
+            <p className="text-muted">No hay beneficiarios registrados para este medicamento.</p>
+          ) : (
+            <CTable hover responsive>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>Cédula</CTableHeaderCell>
+                  <CTableHeaderCell>Nombre Completo</CTableHeaderCell>
+                  <CTableHeaderCell>Comunidad</CTableHeaderCell>
+                  <CTableHeaderCell>Prioridad</CTableHeaderCell>
+                  <CTableHeaderCell>Teléfono</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {beneficiariesList.map(benef => (
+                  <CTableRow key={benef.id}>
+                    <CTableDataCell>{benef.identification_number || '—'}</CTableDataCell>
+                    <CTableDataCell>{benef.first_name} {benef.last_name}</CTableDataCell>
+                    <CTableDataCell>{benef.community_name || '—'}</CTableDataCell>
+                    <CTableDataCell>
+                      <CBadge color={benef.priority_level === 'High' ? 'danger' : benef.priority_level === 'Medium' ? 'warning' : 'success'}>
+                        {benef.priority_level === 'High' ? 'ALTA' : benef.priority_level === 'Medium' ? 'MEDIA' : 'BAJA'}
+                      </CBadge>
+                    </CTableDataCell>
+                    <CTableDataCell>{benef.phone_personal || '—'}</CTableDataCell>
+                  </CTableRow>
+                ))}
+              </CTableBody>
+            </CTable>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowBeneficiariesModal(false)}>Cerrar</CButton>
+        </CModalFooter>
+      </CModal>
     </div>
   )
 }

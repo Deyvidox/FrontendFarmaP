@@ -313,38 +313,60 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
             Lista de Beneficiarios
             <HelpButton title="Manual de Usuario – Lista de Beneficiarios">
               <div>
-                <p>Muestra todos los beneficiarios registrados en el sistema.</p>
-                <h6>Lista de beneficiarios</h6>
-                <div className="card p-3 mb-3 bg-light">
-                  <div className="row small">
-                    <div className="col-3 fw-bold">(1) Nombres y Apellidos</div>
-                    <div className="col-2 fw-bold">(2) Cédula</div>
-                    <div className="col-3 fw-bold">(3) Comunidad</div>
-                    <div className="col-2 fw-bold">(4) Prioridad</div>
-                    <div className="col-2 fw-bold">(5) Acciones</div>
-                  </div>
-                  <hr />
-                  <div className="row small text-muted">
-                    <div className="col-3">María Gómez</div>
-                    <div className="col-2">V-9876543</div>
-                    <div className="col-3">Los Mangos</div>
-                    <div className="col-2"><span className="badge bg-danger">ALTA</span></div>
-                    <div className="col-2">👁 ✏ 🗑</div>
-                  </div>
+                <p><strong>¿Qué hace esta pantalla?</strong><br/>
+                Muestra todos los beneficiarios registrados. Permite buscar, filtrar y realizar acciones como ver detalle, editar o eliminar.</p>
+                <h6>🧪 Ejemplo de cómo se ve la tabla</h6>
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%', borderCollapse:'collapse', background:'#f8f9fa', color:'#212529', fontSize:'0.85rem'}}>
+                    <thead>
+                      <tr style={{background:'#e9ecef'}}>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Cédula</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Nombre Completo</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Comunidad</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Teléfono</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Prioridad</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Estado</th>
+                        <th style={{padding:'8px', border:'1px solid #dee2e6'}}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>V-11111111</td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>Rosa Flores <br/><small style={{color:'#6c757d'}}>Edad: 76 años</small></td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>Barrio 23 de Enero, Libertador</td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>+584121111111</td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}><span style={{background:'#fd7e14', color:'#fff', padding:'2px 6px', borderRadius:'4px'}}>MEDIA</span></td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}><span style={{background:'#198754', color:'#fff', padding:'2px 6px', borderRadius:'4px'}}>Activo</span></td>
+                        <td style={{padding:'8px', border:'1px solid #dee2e6'}}>👁️ ✏️ 🗑️</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+                <p style={{fontSize:'0.85rem', marginTop:'5px'}}><em>La tabla incluye paginación y muestra 5 registros por página. Filtre con la barra de búsqueda superior.</em></p>
+                <h6>📋 Uso y funcionalidades</h6>
                 <ol>
-                  <li><strong>Nombres y Apellidos:</strong> Nombre completo del beneficiario.</li>
-                  <li><strong>Cédula:</strong> Documento de identidad.</li>
-                  <li><strong>Comunidad:</strong> Ubicación asignada.</li>
-                  <li><strong>Prioridad:</strong> Nivel de urgencia médica (Alta, Media, Baja).</li>
-                  <li><strong>Acciones:</strong>
+                  <li><strong>Barra de búsqueda:</strong> Escriba parte del nombre, cédula o comunidad. La tabla se filtra automáticamente tras 300ms. Mínimo 2 caracteres.</li>
+                  <li><strong>Columnas:</strong>
                     <ul>
-                      <li><strong>Ver (info):</strong> Abre un modal con los datos médicos.</li>
-                      <li><strong>Editar (lápiz):</strong> Modificar datos personales.</li>
-                      <li><strong>Eliminar (basura):</strong> Desactiva al beneficiario.</li>
+                      <li><strong>Cédula:</strong> Documento de identidad único. No editable desde aquí.</li>
+                      <li><strong>Nombre Completo + Edad:</strong> Calculada automáticamente desde la fecha de nacimiento.</li>
+                      <li><strong>Comunidad:</strong> Sector y municipio asignados.</li>
+                      <li><strong>Teléfono:</strong> Principal de contacto.</li>
+                      <li><strong>Prioridad:</strong> ALTA (rojo), MEDIA (naranja), BAJA (verde). Indica urgencia de atención.</li>
+                      <li><strong>Estado:</strong> Activo (verde) o Inactivo (gris). Solo los activos reciben entregas.</li>
                     </ul>
                   </li>
+                  <li><strong>Acciones por fila:</strong>
+                    <ul>
+                      <li><strong>👁️ Ver:</strong> Abre un modal con todos los datos del beneficiario, incluyendo enfermedades y medicamentos asignados. Solo lectura.</li>
+                      <li><strong>✏️ Editar:</strong> Permite modificar cualquier campo del beneficiario. Sigue las mismas validaciones del formulario de registro.</li>
+                      <li><strong>🗑️ Eliminar:</strong> Cambia el estado a "Inactivo". No se borra físicamente. Se requiere confirmación. Los beneficiarios inactivos no aparecen en nuevas entregas.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Ordenamiento:</strong> Haga clic en los encabezados de columna (Cédula, Nombre, Prioridad) para ordenar ascendente/descendente.</li>
+                  <li><strong>Paginación:</strong> Navegue entre páginas con los botones "Anterior" y "Siguiente". La etiqueta "Mostrando X de Y beneficiarios" indica el total.</li>
                 </ol>
+                <p><strong>⚠️ Nota:</strong> No se puede eliminar un beneficiario que tenga entregas pendientes. Debe cancelar esas entregas primero.</p>
               </div>
             </HelpButton>
           </h5>

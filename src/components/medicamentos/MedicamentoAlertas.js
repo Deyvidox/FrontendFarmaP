@@ -5,7 +5,7 @@ import {
   CProgress, CRow, CCol, CButton, CSpinner, CModal, CModalHeader,
   CModalTitle, CModalBody, CModalFooter
 } from '@coreui/react';
-import { 
+import {
   cilWarning, cilCalendar, cilMedicalCross, cilBell,
   cilCheckCircle, cilUser, cilInfo
 } from '@coreui/icons';
@@ -49,12 +49,12 @@ const MedicamentoAlertas = () => {
   const alertasVencidas = alertas.filter(a => a.alert_status === 'VENCIDA').length;
   const alertasSeguras = alertas.filter(a => a.alert_status === 'SEGURA').length;
 
-  const filteredAlertas = filterStatus === 'TODAS' 
-    ? alertas 
+  const filteredAlertas = filterStatus === 'TODAS'
+    ? alertas
     : alertas.filter(a => a.alert_status === filterStatus);
 
   const getAlertaColor = (estado) => {
-    switch(estado) {
+    switch (estado) {
       case 'CRITICA': return 'danger';
       case 'PROXIMA': return 'warning';
       case 'VENCIDA': return 'dark';
@@ -64,7 +64,7 @@ const MedicamentoAlertas = () => {
   };
 
   const getAlertaIcon = (estado) => {
-    switch(estado) {
+    switch (estado) {
       case 'CRITICA': return cilUser;
       case 'PROXIMA': return cilWarning;
       case 'VENCIDA': return cilCalendar;
@@ -140,7 +140,7 @@ const MedicamentoAlertas = () => {
     <div className="medicamento-alertas-container">
       <CRow className="mb-4">
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-danger h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-danger h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-danger mb-1 fw-bold">{alertasCriticas}</div>
               <small className="text-muted">Alertas Críticas</small>
@@ -148,7 +148,7 @@ const MedicamentoAlertas = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-warning h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-warning h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-warning mb-1 fw-bold">{alertasProximas}</div>
               <small className="text-muted">Próximas a Vencer</small>
@@ -156,7 +156,7 @@ const MedicamentoAlertas = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-dark h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-dark h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-dark mb-1 fw-bold">{alertasVencidas}</div>
               <small className="text-muted">Ya Vencidas</small>
@@ -164,7 +164,7 @@ const MedicamentoAlertas = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-success h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-success h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-success mb-1 fw-bold">{alertasSeguras}</div>
               <small className="text-muted">Seguras / Sin Alerta</small>
@@ -177,7 +177,7 @@ const MedicamentoAlertas = () => {
         <CAlert color="danger" className="d-flex align-items-center">
           <CIcon icon={cilUser} className="flex-shrink-0 me-2" height={24} />
           <div>
-            <strong>Atención:</strong> Hay {alertasCriticas} lote(s) que vencen en menos de 30 días. 
+            <strong>Atención:</strong> Hay {alertasCriticas} lote(s) que vencen en menos de 30 días.
             Se recomienda revisar y tomar acciones inmediatas.
           </div>
         </CAlert>
@@ -187,7 +187,7 @@ const MedicamentoAlertas = () => {
         <CAlert color="dark" className="d-flex align-items-center mt-3">
           <CIcon icon={cilCalendar} className="flex-shrink-0 me-2" height={24} />
           <div>
-            <strong>Urgente:</strong> Hay {alertasVencidas} lote(s) que ya han vencido. 
+            <strong>Urgente:</strong> Hay {alertasVencidas} lote(s) que ya han vencido.
             Deben ser retirados inmediatamente del inventario.
           </div>
         </CAlert>
@@ -199,28 +199,65 @@ const MedicamentoAlertas = () => {
             <h5 className="mb-0">
               <CIcon icon={cilBell} className="me-2" />
               Alertas de Vencimiento
-              <HelpButton title="Manual de Usuario - Alertas de Vencimiento">
-                <div className="text-muted">
-                  <p><strong>Indicadores superiores</strong></p>
-                  <ul>
-                    <li>"3 Lotes Totales", "1,710 Unidades Disponibles", "3 Lotes Óptimos", "0 Lotes Críticos/Bajos"</li>
-                  </ul>
-                  <p><strong>Tarjetas de resumen</strong></p>
-                  <ul>
-                    <li>"Alertas Críticas: 1", "Próximas a Vencer: 0", "Ya Vencidas: 2", "Seguras / Sin Alerta: ..."</li>
-                  </ul>
-                  <p><strong>Tabla de lotes (columnas)</strong></p>
-                  <p>Lote | Medicamento | Laboratorio | Fecha Vencimiento | Días Restantes | Estado | Cantidad | Ubicación | Progreso | Acciones</p>
-                  <p><strong>Datos de ejemplo:</strong></p>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-bordered">
+              <HelpButton title="Manual de Usuario – Alertas de Vencimiento">
+                <div>
+                  <p><strong>¿Qué hace esta pantalla?</strong><br />
+                    Monitorea las fechas de vencimiento de los lotes de medicamentos en inventario. Clasifica los lotes según su proximidad al vencimiento y permite tomar acciones como retirar lotes vencidos o próximos a vencer.</p>
+                  <h6>🧪 Ejemplo de alertas</h6>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f8f9fa', color: '#212529', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#e9ecef' }}>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Lote</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Medicamento</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorio</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Vencimiento</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Días Rest.</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Estado</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Cantidad</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Ubicación</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Progreso</th>
+                        </tr>
+                      </thead>
                       <tbody>
-                        <tr><td>LOTE-202512 | Amoxicilina 500mg | Laboratorios Vargas S.A. | 1/9/2026 | 61 días | PROXIMA (Vence en 3 meses) | 300 unidades | Almacén General | 40%</td></tr>
-                        <tr><td>LOTE-202505 | Losartán 50mg | Laboratorios Vargas S.A. | 15/1/2027 | 197 días | SEGURA (Vence en más de 3 meses) | 500 unidades | Estante A-3 | 10%</td></tr>
-                        <tr><td>LOTE-202510 | Metformina 850mg | Pharma Internacional C.A. | 20/2/2027 | 233 días | SEGURA (Vence en más de 3 meses) | 1000 unidades | Estante B-1 | 10%</td></tr>
+                        <tr>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>LOTE-202512</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Amoxicilina 500mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorios Vargas S.A.</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>1/9/2026</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><strong>61 días</strong></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#ffc107', color: '#000', padding: '2px 6px', borderRadius: '4px' }}>PRÓXIMA</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>300 unds</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Almacén General</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+                            <div style={{ width: '100%', background: '#e9ecef', borderRadius: '4px' }}><div style={{ width: '40%', height: '8px', background: '#ffc107', borderRadius: '4px' }}></div></div>
+                            <small>40%</small>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
+                  <h6>📋 Interpretación y uso</h6>
+                  <ol>
+                    <li><strong>Tarjetas de resumen:</strong> Muestran cuántos lotes hay en cada categoría (Críticas, Próximas, Vencidas, Seguras).</li>
+                    <li><strong>Estados de alerta:</strong>
+                      <ul>
+                        <li><span style={{ color: 'red' }}>CRÍTICA</span>: Vence en ≤30 días.</li>
+                        <li><span style={{ color: 'orange' }}>PRÓXIMA</span>: Vence en 31-90 días.</li>
+                        <li><span style={{ color: 'black' }}>VENCIDA</span>: Ya pasó la fecha de vencimiento.</li>
+                        <li><span style={{ color: 'green' }}>SEGURA</span>: Más de 90 días para vencer.</li>
+                      </ul>
+                    </li>
+                    <li><strong>Barra de progreso:</strong> Indica qué tan cerca está la fecha de vencimiento. Rojo = crítico, Amarillo = próximo, Verde = seguro.</li>
+                    <li><strong>Acciones:</strong>
+                      <ul>
+                        <li><strong>Ver detalles (i):</strong> Abre un modal con toda la información del lote.</li>
+                        <li><strong>Retirar:</strong> Solo disponible en lotes Vencidos o Críticos. Cambia el estado del lote a "Depleted" (agotado/retirado). Requiere confirmación.</li>
+                      </ul>
+                    </li>
+                    <li><strong>Filtros rápidos:</strong> Use los botones superiores para ver solo un tipo de alerta.</li>
+                  </ol>
+                  <p><strong>⚠️ Importante:</strong> Retire los lotes vencidos lo antes posible para evitar confusiones en el inventario. Los lotes retirados no se pueden recuperar.</p>
                 </div>
               </HelpButton>
             </h5>
@@ -352,7 +389,7 @@ const MedicamentoAlertas = () => {
         <CModalFooter>
           <CButton color="secondary" onClick={() => setRetireModal(false)}>Cancelar</CButton>
           <CButton color="danger" onClick={confirmRetire} disabled={actionLoading}>
-            {actionLoading ? <CSpinner size="sm"/> : 'Retirar'}
+            {actionLoading ? <CSpinner size="sm" /> : 'Retirar'}
           </CButton>
         </CModalFooter>
       </CModal>

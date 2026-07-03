@@ -148,6 +148,11 @@ export const addBeneficiaryVulnerability = async (id, data) => {
   })
 }
 
+// NUEVA FUNCIÓN: obtener beneficiarios por medicamento
+export const getBeneficiariesByMedicine = async (medicineId) => {
+  return request(`/beneficiaries/medicine/${medicineId}`)
+}
+
 // ============================================================
 // MEDICAMENTOS
 // ============================================================

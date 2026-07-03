@@ -1,0 +1,56 @@
+/* HelpButton modal dark/light contrast overrides */
+.help-modal {
+  background: var(--fp-surface) !important;
+  color: var(--fp-text) !important;
+  border: 1px solid var(--fp-border) !important;
+  border-radius: var(--fp-radius) !important;
+}
+
+.help-modal-header {
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark)) !important;
+  color: white !important;
+  border-bottom: none !important;
+}
+
+.help-modal-body {
+  background: var(--fp-surface) !important;
+  color: var(--fp-text) !important;
+}
+
+.help-modal-body .text-muted,
+.help-modal-body p,
+.help-modal-body li,
+.help-modal-body div {
+  color: var(--fp-text) !important;
+}
+
+.help-modal-body strong {
+  color: var(--fp-text) !important;
+}
+
+.help-modal-body .text-muted {
+  color: var(--fp-text-muted) !important;
+}
+
+.help-modal-body table {
+  border-color: var(--fp-border) !important;
+}
+
+.help-modal-body th,
+.help-modal-body td {
+  border-color: var(--fp-border) !important;
+  color: var(--fp-text) !important;
+}
+
+.help-modal-footer {
+  background: var(--fp-surface) !important;
+  border-top: 1px solid var(--fp-border-light) !important;
+}
+
+/* Ensure code blocks / pre (if any) are readable */
+.help-modal-body pre,
+.help-modal-body code {
+  background: var(--fp-bg) !important;
+  color: var(--fp-text) !important;
+}
+

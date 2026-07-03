@@ -6,12 +6,12 @@ import {
   CDropdownToggle, CDropdownMenu, CDropdownItem, CModal, CModalHeader,
   CModalTitle, CModalBody, CModalFooter, CForm, CFormLabel, CFormSelect, CSpinner
 } from '@coreui/react';
-import { 
-  cilMedicalCross, cilSearch, cilPencil, cilTrash, cilFilter, 
+import {
+  cilMedicalCross, cilSearch, cilPencil, cilTrash, cilFilter,
   cilSortAscending, cilUser
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { 
+import {
   getMedicines, getMedicineCategories, getMedicineById, updateMedicine, deleteMedicine,
   getLaboratories, getPharmaceuticalForms
 } from 'src/services/api';
@@ -23,13 +23,13 @@ const MedicamentoCatalogo = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterCategory, setFilterCategory] = useState('TODAS');
   const [sortBy, setSortBy] = useState('nombre');
-  
+
   const [medicamentos, setMedicamentos] = useState([]);
   const [categorias, setCategorias] = useState(['TODAS']);
   const [laboratories, setLaboratories] = useState([]);
   const [pharmaceuticalForms, setPharmaceuticalForms] = useState([]);
   const [categories, setCategories] = useState([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -52,9 +52,9 @@ const MedicamentoCatalogo = () => {
         getLaboratories(),
         getPharmaceuticalForms()
       ]);
-      
+
       setMedicamentos(medsRes?.message?.medicines || []);
-      
+
       const catList = ['TODAS'];
       const rawCategories = Array.isArray(catsRes.message) ? catsRes.message : (catsRes.message?.categories || []);
       rawCategories.forEach(c => {
@@ -62,10 +62,10 @@ const MedicamentoCatalogo = () => {
       });
       setCategories(rawCategories);
       setCategorias(catList);
-      
+
       setLaboratories(Array.isArray(labRes.message) ? labRes.message : (labRes.message?.laboratories || []));
       setPharmaceuticalForms(Array.isArray(formRes.message) ? formRes.message : (formRes.message?.pharmaceuticalForms || []));
-      
+
     } catch (err) {
       console.error('Error cargando catálogo:', err);
       setError(err.message || 'Error al cargar catálogo de medicamentos');
@@ -79,19 +79,19 @@ const MedicamentoCatalogo = () => {
   }, []);
 
   let filteredMedicamentos = medicamentos.filter(med => {
-    const matchesSearch = 
+    const matchesSearch =
       (med.commercial_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (med.generic_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (med.national_code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (med.active_principle || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesCategory = filterCategory === 'TODAS' || med.category === filterCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
   filteredMedicamentos.sort((a, b) => {
-    switch(sortBy) {
+    switch (sortBy) {
       case 'nombre': return (a.commercial_name || '').localeCompare(b.commercial_name || '');
       case 'categoria': return (a.category || '').localeCompare(b.category || '');
       case 'fecha': return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -209,24 +209,64 @@ const MedicamentoCatalogo = () => {
             <h5 className="mb-0">
               <CIcon icon={cilMedicalCross} className="me-2" />
               Catálogo de Medicamentos
-              <HelpButton title="Manual de Usuario - Catálogo de Medicamentos">
-                <div className="text-muted">
-                  <p><strong>Búsqueda</strong></p>
-                  <ul>
-                    <li>Búsqueda: placeholder "Buscar por nombre, código o principio activo..."</li>
-                  </ul>
-                  <p><strong>Columnas:</strong></p>
-                  <p>Código | Nombre Comercial | Principio Activo | Concentración | Laboratorio | Categoría | Estado | Acciones</p>
-                  <p><strong>Datos de ejemplo:</strong></p>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-bordered">
+              <HelpButton title="Manual de Usuario – Catálogo de Medicamentos">
+                <div>
+                  <p><strong>¿Qué hace esta pantalla?</strong><br />
+                    Muestra todos los medicamentos registrados en el sistema. Permite buscar, filtrar por categoría y ordenar, además de ver detalles, editar o eliminar cada uno.</p>
+                  <h6>🧪 Ejemplo de cómo se ve la tabla</h6>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f8f9fa', color: '#212529', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#e9ecef' }}>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Código</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Nombre Comercial</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Principio Activo</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Concentración</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorio</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Categoría</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Estado</th>
+                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Acciones</th>
+                        </tr>
+                      </thead>
                       <tbody>
-                        <tr><td>P-00789 | Amoxicilina 500mg | Amoxicilina | 500 mg | Laboratorios Vargas S.A. | Antibiótico | Activo</td></tr>
-                        <tr><td>P-00123 | Losartán 50mg | Losartán | 50 mg | Laboratorios Vargas S.A. | Antihipertensivo | Activo</td></tr>
-                        <tr><td>P-00456 | Metformina 850mg | Metformina | 850 mg | Pharma Internacional C.A. | Antidiabético | Activo</td></tr>
+                        <tr>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>P-00789</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Amoxicilina 500mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Amoxicilina</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>500 mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorios Vargas S.A.</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#17a2b8', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Antibiótico</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Activo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>P-00123</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Losartán 50mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Losartán</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>50 mg</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Laboratorios Vargas S.A.</td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#17a2b8', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Antihipertensivo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Activo</span></td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
+                  <h6>📋 Uso y funcionalidades</h6>
+                  <ol>
+                    <li><strong>Barra de búsqueda:</strong> Busca por nombre comercial, genérico, código nacional o principio activo. Mínimo 2 caracteres.</li>
+                    <li><strong>Filtro de categoría:</strong> Seleccione una categoría del desplegable para mostrar solo esos medicamentos.</li>
+                    <li><strong>Ordenar por:</strong> Elija entre Nombre, Categoría o Fecha de creación.</li>
+                    <li><strong>Acciones por fila:</strong>
+                      <ul>
+                        <li><strong>👁️ Ver:</strong> Abre una vista detallada con todos los campos del medicamento.</li>
+                        <li><strong>✏️ Editar:</strong> Permite modificar cualquier dato. Se abrirá un formulario con los valores actuales.</li>
+                        <li><strong>🗑️ Eliminar:</strong> Cambia el estado a Inactivo. No se borra físicamente. Requiere confirmación.</li>
+                      </ul>
+                    </li>
+                    <li><strong>Paginación:</strong> Muestra 8 medicamentos por página. Use los controles para navegar.</li>
+                  </ol>
+                  <p><strong>⚠️ Nota:</strong> No se puede eliminar un medicamento si tiene lotes activos. Primero debe retirar esos lotes del inventario.</p>
                 </div>
               </HelpButton>
             </h5>
@@ -418,17 +458,19 @@ const MedicamentoCatalogo = () => {
           <CModalTitle className="d-flex align-items-center gap-3">
             <div>Editar Medicamento</div>
             <HelpButton title="Manual de Usuario - Editar Medicamento">
-              <div className="text-muted">
+              <div>
+                <p><strong>Ejemplo de datos para edición:</strong></p>
                 <ul>
-                  <li>Nombre Comercial: "Metformina 850mg"</li>
-                  <li>Nombre Genérico: "Metformina clorhidrato"</li>
-                  <li>Principio Activo: "Metformina"</li>
-                  <li>Concentración: "850 mg"</li>
-                  <li>Categoría: "Antidiabético"</li>
-                  <li>Laboratorio: "Pharma Internacional C.A."</li>
-                  <li>Forma Farmacéutica: "Seleccione..."</li>
-                  <li>Código Nacional: "P-00456"</li>
+                  <li>Nombre Comercial: Metformina 850mg</li>
+                  <li>Nombre Genérico: Metformina clorhidrato</li>
+                  <li>Principio Activo: Metformina</li>
+                  <li>Concentración: 850 mg</li>
+                  <li>Categoría: Antidiabético</li>
+                  <li>Laboratorio: Pharma Internacional C.A.</li>
+                  <li>Forma Farmacéutica: Tableta</li>
+                  <li>Código Nacional: P-00456</li>
                 </ul>
+                <p><strong>Importante:</strong> Modifique solo los campos necesarios. Al guardar se validará que los campos obligatorios no estén vacíos.</p>
               </div>
             </HelpButton>
           </CModalTitle>
@@ -482,7 +524,7 @@ const MedicamentoCatalogo = () => {
           <CModalFooter>
             <CButton color="secondary" onClick={() => setEditModal(false)}>Cancelar</CButton>
             <CButton color="primary" type="submit" disabled={actionLoading}>
-              {actionLoading ? <CSpinner size="sm"/> : 'Guardar Cambios'}
+              {actionLoading ? <CSpinner size="sm" /> : 'Guardar Cambios'}
             </CButton>
           </CModalFooter>
         </CForm>
@@ -499,7 +541,7 @@ const MedicamentoCatalogo = () => {
         <CModalFooter>
           <CButton color="secondary" onClick={() => setDeleteModal(false)}>Cancelar</CButton>
           <CButton color="danger" onClick={confirmDelete} disabled={actionLoading}>
-            {actionLoading ? <CSpinner size="sm"/> : 'Eliminar'}
+            {actionLoading ? <CSpinner size="sm" /> : 'Eliminar'}
           </CButton>
         </CModalFooter>
       </CModal>

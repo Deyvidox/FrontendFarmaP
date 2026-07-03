@@ -62,7 +62,8 @@ const MedicamentoInventario = () => {
     return statusMap[status] || status;
   };
 
-  const ubicaciones = ['TODAS', ...new Set(inventario.map(i => i.location))];
+  // Reemplazar "Almacén Central Caracas" por "San Cristóbal"
+  const ubicaciones = ['TODAS', ...new Set(inventario.map(i => i.location).map(loc => loc === 'Almacén Central Caracas' ? 'San Cristóbal' : loc))];
   const estados = ['TODOS', ...new Set(inventario.map(i => mapStockStatus(i.stock_status)))];
 
   const totalItems = inventario.length;
@@ -73,11 +74,12 @@ const MedicamentoInventario = () => {
 
   let filteredInventario = inventario.filter(item => {
     const stockStatusSpanish = mapStockStatus(item.stock_status);
+    const ubicacionMostrada = item.location === 'Almacén Central Caracas' ? 'San Cristóbal' : item.location;
     const matchesSearch =
       (item.medicine || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.lot_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.location || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesUbicacion = filterUbicacion === 'TODAS' || item.location === filterUbicacion;
+      (ubicacionMostrada || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesUbicacion = filterUbicacion === 'TODAS' || ubicacionMostrada === filterUbicacion;
     const matchesEstado = filterEstado === 'TODOS' || stockStatusSpanish === filterEstado;
     return matchesSearch && matchesUbicacion && matchesEstado;
   });
@@ -191,7 +193,7 @@ const MedicamentoInventario = () => {
     <div className="medicamento-inventario-container">
       <CRow className="mb-4">
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-primary h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-primary h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-primary mb-1 fw-bold">{totalItems}</div>
               <small className="text-muted">Lotes Totales</small>
@@ -199,7 +201,7 @@ const MedicamentoInventario = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-success h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-success h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-success mb-1 fw-bold">{unidadesDisponibles.toLocaleString()}</div>
               <small className="text-muted">Unidades Disponibles</small>
@@ -207,7 +209,7 @@ const MedicamentoInventario = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-warning h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-warning h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-warning mb-1 fw-bold">{itemsOptimos}</div>
               <small className="text-muted">Lotes Óptimos</small>
@@ -215,7 +217,7 @@ const MedicamentoInventario = () => {
           </div>
         </CCol>
         <CCol xs={12} sm={6} lg={3} className="mb-3">
-          <div className="card text-center border-danger h-100" style={{minHeight:'90px'}}>
+          <div className="card text-center border-danger h-100" style={{ minHeight: '90px' }}>
             <div className="card-body d-flex flex-column justify-content-center">
               <div className="h4 text-danger mb-1 fw-bold">{itemsCriticos}</div>
               <small className="text-muted">Lotes Críticos/Bajos</small>
@@ -242,9 +244,9 @@ const MedicamentoInventario = () => {
                       <div className="col-2 fw-bold">(4) Nivel</div>
                       <div className="col-3 fw-bold">(5) Movimientos</div>
                     </div>
-                    <hr/>
+                    <hr />
                     <div className="row small text-muted">
-                      <div className="col-3">Aspirina<br/><small>Lote: AS-09</small></div>
+                      <div className="col-3">Aspirina<br /><small>Lote: AS-09</small></div>
                       <div className="col-2">Estante A</div>
                       <div className="col-2">Disponible: 100</div>
                       <div className="col-2"><span className="badge bg-success">Óptimo</span></div>
@@ -334,7 +336,7 @@ const MedicamentoInventario = () => {
                   <CTableHeaderCell>Entregado</CTableHeaderCell>
                   <CTableHeaderCell>Estado Stock</CTableHeaderCell>
                   <CTableHeaderCell>Estado Lote</CTableHeaderCell>
-                  <CTableHeaderCell>Nivel Stock</CTableHeaderCell>
+                  {/* Nivel Stock ELIMINADO */}
                   <CTableHeaderCell className="text-center">Acciones</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
@@ -344,13 +346,13 @@ const MedicamentoInventario = () => {
                     const disponible = item.available_quantity || 0;
                     const minimo = item.minimum_stock || 0;
                     const maximo = item.maximum_stock || 1;
-                    const porcentajeStock = calcularPorcentajeStock(disponible, minimo, maximo);
+                    const ubicacionMostrada = item.location === 'Almacén Central Caracas' ? 'San Cristóbal' : item.location;
 
                     return (
                       <CTableRow key={item.id}>
                         <CTableDataCell><strong>{item.lot_number}</strong></CTableDataCell>
                         <CTableDataCell>{item.medicine}</CTableDataCell>
-                        <CTableDataCell>{item.location}</CTableDataCell>
+                        <CTableDataCell>{ubicacionMostrada}</CTableDataCell>
                         <CTableDataCell>
                           {item.expiration_date ? new Date(item.expiration_date).toLocaleDateString('es-ES') : 'N/A'}
                         </CTableDataCell>
@@ -365,13 +367,6 @@ const MedicamentoInventario = () => {
                         <CTableDataCell>{getEstadoStockBadge(item.stock_status)}</CTableDataCell>
                         <CTableDataCell>{getEstadoLoteBadge(item.lot_status)}</CTableDataCell>
                         <CTableDataCell>
-                          <div className="d-flex align-items-center">
-                            <CProgress className="flex-grow-1 me-2" value={porcentajeStock} color={getProgressColor(porcentajeStock)} style={{ height: '8px' }} />
-                            <small className="text-muted">{Math.round(porcentajeStock)}%</small>
-                          </div>
-                          <div className="small text-muted">Mín: {minimo} | Máx: {maximo}</div>
-                        </CTableDataCell>
-                        <CTableDataCell>
                           <div className="d-flex gap-2 justify-content-center">
                             <CButton color="info" variant="outline" size="sm" onClick={() => handleHistoryClick(item)} title="Ver movimientos históricos">
                               <CIcon icon={cilStorage} />
@@ -383,7 +378,7 @@ const MedicamentoInventario = () => {
                   })
                 ) : (
                   <CTableRow>
-                    <CTableDataCell colSpan="12" className="text-center py-5">
+                    <CTableDataCell colSpan="11" className="text-center py-5">
                       <div className="medicamento-empty-state">
                         <CIcon icon={cilStorage} className="medicamento-empty-state-icon" />
                         <h5>No se encontraron registros</h5>
@@ -413,103 +408,85 @@ const MedicamentoInventario = () => {
         </CCardBody>
       </CCard>
 
-      {/* Modal de Movimiento */}
-      <CModal visible={movementModal} onClose={() => setMovementModal(false)}>
-        <CModalHeader closeButton>
-          <CModalTitle>{movementType === 'ENTRY' ? 'Agregar Stock' : 'Ajustar Stock'} - {selectedLot?.lot_number}</CModalTitle>
-        </CModalHeader>
-        <CForm onSubmit={handleMovementSubmit}>
-          <CModalBody>
-            <CAlert color="info">Medicamento: {selectedLot?.medicine}</CAlert>
-            <div className="mb-3">
-              <CFormLabel>Cantidad (positiva para agregar, negativa para reducir en ajuste)</CFormLabel>
-              <CFormInput 
-                type="number" 
-                value={movementForm.quantity} 
-                onChange={(e) => setMovementForm({...movementForm, quantity: parseInt(e.target.value) || 0})}
-                required 
-              />
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Motivo / Observación</CFormLabel>
-              <CFormInput 
-                type="text" 
-                value={movementForm.reason} 
-                onChange={(e) => setMovementForm({...movementForm, reason: e.target.value})}
-                required 
-              />
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Referencia de Documento (opcional)</CFormLabel>
-              <CFormInput 
-                type="text" 
-                value={movementForm.document_reference} 
-                onChange={(e) => setMovementForm({...movementForm, document_reference: e.target.value})}
-              />
-            </div>
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" onClick={() => setMovementModal(false)}>Cancelar</CButton>
-            <CButton color="primary" type="submit" disabled={actionLoading}>
-              {actionLoading ? <CSpinner size="sm"/> : 'Confirmar'}
-            </CButton>
-          </CModalFooter>
-        </CForm>
-      </CModal>
-
-      {/* Modal de Historial */}
+      {/* Modal de Historial Mejorado */}
       <CModal visible={historyModal} onClose={() => setHistoryModal(false)} size="lg">
         <CModalHeader closeButton>
-          <CModalTitle>Movimientos - Lote {selectedLot?.lot_number}</CModalTitle>
+          <CModalTitle>Historial de Movimientos - Lote {selectedLot?.lot_number}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           {historyLoading ? (
-            <div className="text-center py-4"><CSpinner color="primary"/></div>
+            <div className="text-center py-4"><CSpinner color="primary" /></div>
           ) : movements.length > 0 ? (
-            <CTable hover responsive>
-              <CTableHead>
-                <CTableRow>
-                  <CTableHeaderCell>Fecha</CTableHeaderCell>
-                  <CTableHeaderCell>Tipo</CTableHeaderCell>
-                  <CTableHeaderCell>Origen</CTableHeaderCell>
-                  <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                  <CTableHeaderCell>Documento / Motivo</CTableHeaderCell>
-                </CTableRow>
-              </CTableHead>
-              <CTableBody>
-                {movements.map(m => {
-                  const isEntry = m.movement_type === 'ENTRY';
-                  const isExit = m.movement_type === 'EXIT';
-                  const origen = isEntry
-                    ? (m.document_reference?.startsWith('DON') ? '📦 Donación' : m.document_reference?.startsWith('SOL') ? '🏭 Solicitud Proveedor' : '➕ Entrada Manual')
-                    : isExit
-                    ? '🚚 Entrega a Beneficiario'
-                    : '🔧 Ajuste Manual';
-                  return (
-                    <CTableRow key={m.id}>
-                      <CTableDataCell>{new Date(m.created_at).toLocaleString('es-ES')}</CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color={isEntry ? 'success' : isExit ? 'danger' : 'warning'}>
-                          {isEntry ? 'ENTRADA' : isExit ? 'SALIDA' : 'AJUSTE'}
-                        </CBadge>
-                      </CTableDataCell>
-                      <CTableDataCell><small>{origen}</small></CTableDataCell>
-                      <CTableDataCell>
-                        <strong className={m.quantity > 0 ? 'text-success' : 'text-danger'}>
-                          {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                        </strong>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        {m.document_reference && <div><small className="text-muted">Ref: {m.document_reference}</small></div>}
-                        {m.reason}
-                      </CTableDataCell>
-                    </CTableRow>
-                  );
-                })}
-              </CTableBody>
-            </CTable>
+            <>
+              {/* Resumen de entradas y salidas */}
+              {(() => {
+                const entradas = movements.filter(m => m.movement_type === 'ENTRY').reduce((acc, m) => acc + m.quantity, 0);
+                const salidas = movements.filter(m => m.movement_type === 'EXIT').reduce((acc, m) => acc + Math.abs(m.quantity), 0);
+                return (
+                  <CRow className="mb-3">
+                    <CCol md={6}>
+                      <div className="border rounded p-2 text-center">
+                        <h6 className="text-success">Entradas Totales</h6>
+                        <strong>{entradas} unidades</strong>
+                      </div>
+                    </CCol>
+                    <CCol md={6}>
+                      <div className="border rounded p-2 text-center">
+                        <h6 className="text-danger">Salidas Totales</h6>
+                        <strong>{salidas} unidades</strong>
+                      </div>
+                    </CCol>
+                  </CRow>
+                );
+              })()}
+              <CTable hover responsive>
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>Fecha</CTableHeaderCell>
+                    <CTableHeaderCell>Tipo</CTableHeaderCell>
+                    <CTableHeaderCell>Origen</CTableHeaderCell>
+                    <CTableHeaderCell>Cantidad</CTableHeaderCell>
+                    <CTableHeaderCell>Documento / Motivo</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {movements.map(m => {
+                    const isEntry = m.movement_type === 'ENTRY';
+                    const isExit = m.movement_type === 'EXIT';
+                    const origen = isEntry
+                      ? (m.document_reference?.startsWith('DON') ? '📦 Donación' : m.document_reference?.startsWith('SOL') ? '🏭 Solicitud Proveedor' : '➕ Entrada Manual')
+                      : isExit
+                        ? '🚚 Entrega a Beneficiario'
+                        : '🔧 Ajuste Manual';
+                    return (
+                      <CTableRow key={m.id}>
+                        <CTableDataCell>{new Date(m.created_at).toLocaleString('es-ES')}</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color={isEntry ? 'success' : isExit ? 'danger' : 'warning'}>
+                            {isEntry ? 'ENTRADA' : isExit ? 'SALIDA' : 'AJUSTE'}
+                          </CBadge>
+                        </CTableDataCell>
+                        <CTableDataCell><small>{origen}</small></CTableDataCell>
+                        <CTableDataCell>
+                          <strong className={m.quantity > 0 ? 'text-success' : 'text-danger'}>
+                            {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                          </strong>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          {m.document_reference && <div><small className="text-muted">Ref: {m.document_reference}</small></div>}
+                          {m.reason}
+                        </CTableDataCell>
+                      </CTableRow>
+                    );
+                  })}
+                </CTableBody>
+              </CTable>
+            </>
           ) : (
-            <CAlert color="info">No hay movimientos registrados para este lote.</CAlert>
+            <CAlert color="info">
+              <h6>No se encontraron movimientos para este lote.</h6>
+              <p className="mb-0">Esto puede significar que el lote fue creado directamente en el inventario sin registro de movimiento, o que los registros de movimientos no están disponibles.</p>
+            </CAlert>
           )}
         </CModalBody>
         <CModalFooter>
