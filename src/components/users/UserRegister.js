@@ -13,17 +13,19 @@ import {
 } from '@coreui/react'
 import { cilUser, cilLockLocked, cilContact, cilBuilding, cilPhone, cilBadge, cilSave, cilReload } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
-import { registerUser, getRoles } from 'src/services/api';
+import { registerUser, getRoles, getUsers } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
 import '../../css/users/UserRegister.css'
 
 const UserRegister = () => {
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
   const [roles, setRoles] = useState([])
+  const [existingUsers, setExistingUsers] = useState([])
   const [loadingRoles, setLoadingRoles] = useState(true)
   const [formValues, setFormValues] = useState({
     usu_nombre: '',
     usu_correo: '',
+    usu_username: '',
     password: '',
     rol_id: '',
     usu_cedula: '',
@@ -35,19 +37,20 @@ const UserRegister = () => {
   })
 
   useEffect(() => {
-    const loadRoles = async () => {
+    const loadData = async () => {
       try {
-        const response = await getRoles()
-        setRoles(response?.message?.roles || [])
+        const [rolesRes, usersRes] = await Promise.all([getRoles(), getUsers()])
+        setRoles(rolesRes?.message?.roles || [])
+        setExistingUsers(usersRes?.message?.users || [])
       } catch (err) {
-        console.error('Error cargando roles:', err)
-        setAlert({ show: true, message: err.message || 'No se pudieron cargar los roles', type: 'danger' })
+        console.error('Error cargando datos iniciales:', err)
+        setAlert({ show: true, message: err.message || 'No se pudieron cargar los roles o usuarios', type: 'danger' })
       } finally {
         setLoadingRoles(false)
       }
     }
 
-    loadRoles()
+    loadData()
   }, [])
 
   const handleChange = (e) => {
@@ -59,11 +62,19 @@ const UserRegister = () => {
     e.preventDefault()
     setAlert({ show: false, message: '', type: '' })
 
+    const usernameExists = existingUsers.some(
+      (u) => (u.username || '').toLowerCase() === formValues.usu_username.trim().toLowerCase()
+    )
+    if (usernameExists) {
+      setAlert({ show: true, message: 'El nombre de usuario ya está registrado', type: 'danger' })
+      return
+    }
+
     try {
       await registerUser({
         first_name: formValues.usu_nombre,
         last_name: formValues.usu_apellidos || null,
-        username: formValues.usu_correo.split('@')[0],
+        username: formValues.usu_username.trim(),
         email: formValues.usu_correo,
         password: formValues.password,
         role_id: formValues.rol_id,
@@ -75,6 +86,7 @@ const UserRegister = () => {
       setFormValues({
         usu_nombre: '',
         usu_correo: '',
+        usu_username: '',
         password: '',
         rol_id: '',
         usu_cedula: '',
@@ -84,6 +96,9 @@ const UserRegister = () => {
         usu_departamento: '',
         usu_estado: 'ACTIVO',
       })
+      // Volver a cargar usuarios para tener la lista de unicidad actualizada
+      const usersRes = await getUsers()
+      setExistingUsers(usersRes?.message?.users || [])
     } catch (err) {
       console.error('Error registrando usuario:', err)
       setAlert({ show: true, message: err.message || 'Error al registrar usuario', type: 'danger' })
@@ -95,6 +110,7 @@ const UserRegister = () => {
     setFormValues({
       usu_nombre: '',
       usu_correo: '',
+      usu_username: '',
       password: '',
       rol_id: '',
       usu_cedula: '',
@@ -128,7 +144,7 @@ const UserRegister = () => {
                     <div style={{ flex: '1 1 45%' }}><strong>Cargo</strong><br />Director de Sistemas</div>
                     <div style={{ flex: '1 1 45%' }}><strong>Rol *</strong><br />Administrador</div>
                     <div style={{ flex: '1 1 45%' }}><strong>Departamento</strong><br />TI</div>
-                    <div style={{ flex: '1 1 45%' }}><strong>Estado</strong><br />Activo</div>
+                    <div style={{ flex: '1 1 45%' }}><strong>Nombre de Usuario *</strong><br />carlos.mendoza</div>
                     <div style={{ flex: '1 1 45%' }}><strong>Contraseña *</strong><br />••••••••</div>
                   </div>
                 </div>
@@ -137,12 +153,13 @@ const UserRegister = () => {
                   <li><strong>Cédula/RIF (opcional):</strong> Formato V-12345678 o J-301234567. Solo letras, números y guiones.</li>
                   <li><strong>Nombres * (obligatorio):</strong> Entre 2 y 40 caracteres. Solo letras y espacios.</li>
                   <li><strong>Apellidos:</strong> Texto libre, se recomienda ingresar ambos apellidos.</li>
-                  <li><strong>Email * (obligatorio):</strong> Debe ser un correo electrónico válido. Se usa como nombre de usuario automáticamente.</li>
+                  <li><strong>Email * (obligatorio):</strong> Debe ser un correo electrónico válido.</li>
                   <li><strong>Teléfono:</strong> Formato internacional o local. Ej: +58 412 1234567 ó 0412-1234567.</li>
                   <li><strong>Cargo:</strong> Puesto que ocupa el usuario en la organización.</li>
-                  <li><strong>Rol * (obligatorio):</strong> Seleccione de la lista desplegable. Define los permisos del usuario (Administrador, Farmacéutico, Coordinador, etc.).</li>
+                  <li><strong>Rol * (obligatorio):</strong> Seleccione de la lista desplegable. Define los permisos del usuario.</li>
                   <li><strong>Departamento:</strong> Área de trabajo asignada (opcional).</li>
                   <li><strong>Estado:</strong> Activo (acceso permitido), Inactivo (bloqueado) o Suspendido (temporal).</li>
+                  <li><strong>Nombre de Usuario * (obligatorio):</strong> Identificador único para el inicio de sesión. No debe estar repetido en el sistema.</li>
                   <li><strong>Contraseña * (obligatorio):</strong> Mínimo 8 caracteres, combinando letras, números y símbolos para mayor seguridad.</li>
                 </ol>
                 <p><strong>⚠️ Al guardar:</strong> Si algún campo obligatorio no cumple las validaciones, se mostrará un mensaje de error debajo del campo. Corrija y reintente.</p>
@@ -361,10 +378,27 @@ const UserRegister = () => {
                 Seguridad
               </h6>
               <CRow>
-                <CCol md={12}>
+                <CCol md={6}>
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="usu_username" className="register-form-label">
+                      Nombre de Usuario *
+                    </CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="usu_username"
+                      name="usu_username"
+                      className="register-form-input"
+                      value={formValues.usu_username}
+                      onChange={handleChange}
+                      placeholder="Ingrese nombre de usuario"
+                      required
+                    />
+                  </div>
+                </CCol>
+                <CCol md={6}>
                   <div className="mb-3">
                     <CFormLabel htmlFor="password" className="register-form-label">
-                      Contraseña
+                      Contraseña *
                     </CFormLabel>
                     <CFormInput
                       type="password"
