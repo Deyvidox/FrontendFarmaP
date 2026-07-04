@@ -91,6 +91,17 @@ export const getUserStats = async () => {
   return request('/users/stats')
 }
 
+export const getUserProfile = async () => {
+  return request('/users/profile')
+}
+
+export const updateUserProfile = async (data) => {
+  return request('/users/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
 // ============================================================
 // BENEFICIARIOS
 // ============================================================
