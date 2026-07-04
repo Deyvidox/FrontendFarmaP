@@ -37,7 +37,6 @@ import {
   cilSearch,
   cilTrash,
   cilMap,               // ← icono correcto para ubicación
-  cilEye,
 } from '@coreui/icons';
 import {
   getDeliveries,
@@ -441,7 +440,7 @@ const Deliveries = () => {
                           <CTableDataCell>
                             <div className="d-flex gap-1">
                               <CButton color="info" size="sm" title="Ver detalles" onClick={() => handleViewDetails(delivery)}>
-                                <CIcon icon={cilEye} />
+                                <CIcon icon={cilInfo} />
                               </CButton>
                               <CButton color="warning" size="sm" title="Editar" onClick={() => handleEditClick(delivery)}>
                                 <CIcon icon={cilPencil} />

@@ -7,7 +7,7 @@ import {
 } from '@coreui/react';
 import {
   cilWarning, cilCalendar, cilMedicalCross, cilBell,
-  cilCheckCircle, cilUser, cilEye
+  cilCheckCircle, cilUser, cilInfo
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { getMedicineAlerts, getLotById, retireLot } from 'src/services/api';
@@ -325,7 +325,7 @@ const MedicamentoAlertas = () => {
                       <CTableDataCell>
                         <div className="d-flex gap-2 justify-content-center">
                           <CButton color="info" variant="outline" size="sm" onClick={() => handleVerDetallesClick(alerta)} title="Ver detalles">
-                            <CIcon icon={cilEye} />
+                            <CIcon icon={cilInfo} />
                           </CButton>
                           {(alerta.alert_status === 'VENCIDA' || alerta.alert_status === 'CRITICA') && (
                             <CButton color="danger" variant="outline" size="sm" onClick={() => handleRetirarClick(alerta)} title="Retirar del inventario">

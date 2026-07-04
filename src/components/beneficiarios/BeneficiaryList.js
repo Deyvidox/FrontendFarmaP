@@ -33,7 +33,7 @@ import {
   CTabPane
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilUser, cilMedicalCross, cilSearch, cilPencil, cilTrash, cilWarning, cilFilter, cilHeart, cilEye } from '@coreui/icons';
+import { cilUser, cilMedicalCross, cilSearch, cilPencil, cilTrash, cilWarning, cilFilter, cilHeart, cilInfo } from '@coreui/icons';
 import { getBeneficiaryById, updateBeneficiary, deleteBeneficiary, getMedicines, saveBeneficiaryMedicalHistory, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 import HelpButton from '../common/HelpButton';
@@ -449,7 +449,7 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
                     <div className="d-flex gap-1">
                       <CButton color="info" variant="outline" size="sm" className="beneficiary-action-btn-secondary"
                         title="Ver Detalles" onClick={() => handleDetailClick(beneficiary)}>
-                        <CIcon icon={cilEye} />
+                        <CIcon icon={cilInfo} />
                       </CButton>
                       <CButton color="warning" variant="outline" size="sm" className="beneficiary-action-btn-secondary"
                         title="Editar" onClick={() => handleEditClick(beneficiary)}>

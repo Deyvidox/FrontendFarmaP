@@ -8,7 +8,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
-  cilPencil, cilTrash, cilDrop, cilSearch, cilEye
+  cilPencil, cilTrash, cilDrop, cilSearch, cilInfo
 } from '@coreui/icons';
 import { getDonations, getDonationById, updateDonation, deleteDonation } from '../../services/api';
 import HelpButton from '../common/HelpButton';
@@ -292,7 +292,7 @@ const Donations = () => {
                           <CTableDataCell><CBadge color={estado.color}>{estado.label}</CBadge></CTableDataCell>
                           <CTableDataCell>
                             <div className="d-flex gap-1">
-                              <CButton color="info" size="sm" title="Ver detalles" onClick={() => handleViewDetails(donation)}><CIcon icon={cilEye} /></CButton>
+                              <CButton color="info" size="sm" title="Ver detalles" onClick={() => handleViewDetails(donation)}><CIcon icon={cilInfo} /></CButton>
                               <CButton color="warning" size="sm" onClick={() => handleEditClick(donation)}><CIcon icon={cilPencil} /></CButton>
                               <CButton color="danger" size="sm" onClick={() => handleDeleteClick(donation)}><CIcon icon={cilTrash} /></CButton>
                             </div>
