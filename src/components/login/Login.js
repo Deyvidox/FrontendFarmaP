@@ -15,19 +15,40 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validaciones locales
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
+      setError('Por favor, ingresa tu correo electrónico o nombre de usuario');
+      return;
+    }
+
+    if (!trimmedPassword) {
+      setError('Por favor, ingresa tu contraseña');
+      return;
+    }
+
+    if (trimmedPassword.length < 4) {
+      setError('La contraseña debe tener al menos 4 caracteres');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await login({ email, password });
+      const response = await login({ email: trimmedEmail, password: trimmedPassword });
       const token = response?.message?.token;
       if (!token) {
-        throw new Error('No se recibió token de autenticación');
+        throw new Error('No se recibió respuesta del servidor. Intenta nuevamente.');
       }
       setToken(token);
-      localStorage.setItem('FarmaPatriaUser', JSON.stringify({ email }));
+      localStorage.setItem('FarmaPatriaUser', JSON.stringify({ email: trimmedEmail }));
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Usuario o contraseña incorrectos');
+      // El mensaje ya viene traducido desde api.js
+      setError(err.message || 'Ocurrió un error al iniciar sesión. Intenta nuevamente.');
     } finally {
       setLoading(false);
     }

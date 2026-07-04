@@ -14,23 +14,78 @@ const buildHeaders = (customHeaders = {}) => {
   return headers
 }
 
+// Traducciones de mensajes comunes del backend a español
+const ERROR_TRANSLATIONS = {
+  'invalid credentials': 'Usuario o contraseña incorrectos',
+  'invalid login or password': 'Usuario o contraseña incorrectos',
+  'wrong password': 'La contraseña ingresada es incorrecta',
+  'user not found': 'No se encontró una cuenta con ese usuario o correo',
+  'email not found': 'No se encontró una cuenta con ese correo electrónico',
+  'account is disabled': 'Tu cuenta ha sido deshabilitada. Contacta al administrador',
+  'account is suspended': 'Tu cuenta está suspendida temporalmente. Contacta al administrador',
+  'account is inactive': 'Tu cuenta está inactiva. Contacta al administrador',
+  'user is inactive': 'Tu cuenta está inactiva. Contacta al administrador',
+  'user is suspended': 'Tu cuenta está suspendida temporalmente',
+  'unauthorized': 'No tienes autorización. Inicia sesión nuevamente',
+  'token expired': 'Tu sesión ha expirado. Inicia sesión nuevamente',
+  'invalid token': 'Sesión inválida. Inicia sesión nuevamente',
+  'forbidden': 'No tienes permisos para realizar esta acción',
+  'not found': 'El recurso solicitado no fue encontrado',
+  'internal server error': 'Error interno del servidor. Intenta más tarde',
+  'bad request': 'Solicitud incorrecta. Verifica los datos ingresados',
+  'conflict': 'Ya existe un registro con esos datos',
+  'email already exists': 'Ya existe una cuenta con ese correo electrónico',
+  'username already exists': 'El nombre de usuario ya está en uso',
+  'validation error': 'Error de validación. Verifica los campos del formulario',
+  'too many requests': 'Demasiados intentos. Espera un momento antes de reintentar',
+  'service unavailable': 'El servicio no está disponible en este momento. Intenta más tarde',
+}
+
+const translateApiError = (message) => {
+  if (!message || typeof message !== 'string') return 'Ocurrió un error inesperado'
+  const lower = message.toLowerCase().trim()
+  // Buscar coincidencia exacta primero
+  if (ERROR_TRANSLATIONS[lower]) return ERROR_TRANSLATIONS[lower]
+  // Buscar coincidencia parcial
+  for (const [key, translation] of Object.entries(ERROR_TRANSLATIONS)) {
+    if (lower.includes(key)) return translation
+  }
+  // Si viene en inglés genérico del HTTP status, traducir
+  if (lower === 'ok') return message
+  // Devolver el mensaje original si no se encontró traducción
+  return message
+}
+
 const parseResponse = async (response) => {
   const contentType = response.headers.get('content-type') || ''
   const body = contentType.includes('application/json') ? await response.json() : null
   if (!response.ok) {
-    const errorMessage = body?.message || body?.error || response.statusText || 'Error en la petición'
-    throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage))
+    const rawMessage = body?.message || body?.error || response.statusText || 'Error en la petición'
+    const errorStr = typeof rawMessage === 'string' ? rawMessage : JSON.stringify(rawMessage)
+    throw new Error(translateApiError(errorStr))
   }
   return body
 }
 
 const request = async (path, options = {}) => {
   const url = `${API_BASE}${path}`
-  const response = await fetch(url, {
-    ...options,
-    headers: buildHeaders(options.headers),
-  })
-  return parseResponse(response)
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: buildHeaders(options.headers),
+    })
+    return parseResponse(response)
+  } catch (err) {
+    // Errores de red (sin internet, servidor caído, timeout, CORS, etc.)
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      throw new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta más tarde.')
+    }
+    if (err.name === 'AbortError') {
+      throw new Error('La solicitud tardó demasiado y fue cancelada. Intenta nuevamente.')
+    }
+    // Re-lanzar errores ya traducidos del parseResponse
+    throw err
+  }
 }
 
 // ============================================================
