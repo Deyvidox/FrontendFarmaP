@@ -6,7 +6,7 @@ import {
   CButton, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CForm, CFormLabel, CFormSelect, CRow, CCol, CSpinner
 } from '@coreui/react';
-import { cilSearch, cilUser, cilPencil, cilTrash, cilInfo } from '@coreui/icons';
+import { cilSearch, cilUser, cilPencil, cilTrash, cilEye } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { getUserById, updateUser, deleteUser, getRoles } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
@@ -344,7 +344,7 @@ const UserList = ({ users, onRefresh }) => {
                         <div className="user-actions-container">
                           <CButton color="info" size="sm" className="user-action-btn" title="Ver"
                             onClick={() => handleViewClick(user)}>
-                            <CIcon icon={cilInfo} />
+                            <CIcon icon={cilEye} />
                           </CButton>
                           <CButton color="primary" size="sm" className="user-action-btn user-action-btn-edit" title="Editar"
                             onClick={() => handleEditClick(user)}>

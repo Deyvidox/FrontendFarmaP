@@ -30,10 +30,10 @@ const routes = [
   { path: '/login', name: 'Login', element: Login },
 
   // PRIVADAS
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
-  { path: '/users/register', name: 'Register User', element: UserRegister },
-  { path: '/users/list', name: 'Users', element: Users },
-  { path: '/users/panel', name: 'Users Stats', element: UserStats },
+  { path: '/dashboard', name: 'Panel de control', element: Dashboard },
+  { path: '/users/register', name: 'Registrar Usuario', element: UserRegister },
+  { path: '/users/list', name: 'Usuarios', element: Users },
+  { path: '/users/panel', name: 'Estadísticas de Usuarios', element: UserStats },
 
    // MEDICAMENTOS
   { path: '/medicamentos/registrar', name: 'Registrar Medicamento', element: MedicamentoRegistrar },

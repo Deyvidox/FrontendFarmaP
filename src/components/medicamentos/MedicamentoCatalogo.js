@@ -8,7 +8,7 @@ import {
 } from '@coreui/react';
 import {
   cilMedicalCross, cilSearch, cilPencil, cilTrash, cilFilter,
-  cilSortAscending, cilUser
+  cilSortAscending, cilEye
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import {
@@ -376,7 +376,7 @@ const MedicamentoCatalogo = () => {
                       <CTableDataCell>
                         <div className="d-flex gap-2 justify-content-center">
                           <CButton color="info" variant="outline" size="sm" onClick={() => handleViewClick(med)} title="Ver detalles">
-                            <CIcon icon={cilUser} />
+                            <CIcon icon={cilEye} />
                           </CButton>
                           <CButton color="warning" variant="outline" size="sm" onClick={() => handleEditClick(med)} title="Editar">
                             <CIcon icon={cilPencil} />
