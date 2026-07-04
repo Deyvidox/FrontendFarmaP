@@ -61,7 +61,17 @@ const parseResponse = async (response) => {
   const body = contentType.includes('application/json') ? await response.json() : null
   if (!response.ok) {
     const rawMessage = body?.message || body?.error || response.statusText || 'Error en la petición'
-    const errorStr = typeof rawMessage === 'string' ? rawMessage : JSON.stringify(rawMessage)
+    
+    let errorStr = 'Error en la petición'
+    if (typeof rawMessage === 'string') {
+      errorStr = rawMessage
+    } else if (Array.isArray(rawMessage) && rawMessage.length > 0 && rawMessage[0].message) {
+      // Manejar array de errores de Joi
+      errorStr = rawMessage.map(err => err.message).join('. ')
+    } else {
+      errorStr = JSON.stringify(rawMessage)
+    }
+    
     throw new Error(translateApiError(errorStr))
   }
   return body

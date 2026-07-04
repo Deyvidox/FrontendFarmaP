@@ -120,8 +120,9 @@ const UserList = ({ users, onRefresh }) => {
     if (editForm.identification_number && !/^[VEJ]-\d{6,8}$/.test(editForm.identification_number)) {
       errors.push('Cédula/RIF inválida (formato: V-12345678)');
     }
-    if (editForm.phone && !/^\+58\s?\d{3}\s?\d{7}$/.test(editForm.phone)) {
-      errors.push('Teléfono inválido (formato: +58 412 1234567)');
+    if (editForm.phone && !/^(?:\+58|0)\s?\d{3}\s?\d{7}$/.test(editForm.phone)) {
+      showToast('El teléfono debe tener formato +58 412 1234567 o 0412 1234567', 'danger');
+      return;
     }
     return errors;
   };

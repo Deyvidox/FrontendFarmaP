@@ -197,8 +197,8 @@ const BeneficiaryRegister = () => {
     }
 
     // Teléfono
-    if (!/^\+58\s?\d{3}\s?\d{7}$/.test(formValues.telefono_personal)) {
-      errors.push('El teléfono debe tener formato +58 412 1234567');
+    if (!/^(?:\+58|0)\s?\d{3}\s?\d{7}$/.test(formValues.telefono_personal)) {
+      errors.push('El teléfono debe tener formato +58 412 1234567 o 0412 1234567');
     }
 
     // Email
@@ -212,8 +212,8 @@ const BeneficiaryRegister = () => {
     }
 
     // Teléfono de emergencia (opcional, pero si se ingresa debe ser válido)
-    if (formValues.telefono_emergencia && !/^\+58\s?\d{3}\s?\d{7}$/.test(formValues.telefono_emergencia)) {
-      errors.push('El teléfono de emergencia debe tener formato +58 412 1234567');
+    if (formValues.telefono_emergencia && !/^(?:\+58|0)\s?\d{3}\s?\d{7}$/.test(formValues.telefono_emergencia)) {
+      errors.push('El teléfono de emergencia debe tener formato +58 412 1234567 o 0412 1234567');
     }
 
     return errors;
@@ -278,11 +278,7 @@ const BeneficiaryRegister = () => {
         }
       }
 
-      setAlert({
-        show: true,
-        message: 'Beneficiario registrado exitosamente.',
-        type: 'success',
-      });
+      showToast('Beneficiario registrado exitosamente.', 'success');
 
       setFormValues({
         cedula: '',
@@ -423,7 +419,7 @@ const BeneficiaryRegister = () => {
                   <li><strong>Fecha de Nacimiento *:</strong> Debe ser mayor de 18 años (se valida automáticamente).</li>
                   <li><strong>Género *:</strong> Seleccionar de la lista (Masculino, Femenino, Otro).</li>
                   <li><strong>Personas Dependientes:</strong> Número entero (0-20).</li>
-                  <li><strong>Teléfono Personal *:</strong> Formato +58 412 1234567 o +584121234567.</li>
+                  <li><strong>Teléfono Personal *:</strong> Formato +58 412 1234567 o 0412-1234567.</li>
                   <li><strong>Email *:</strong> Debe ser un correo válido (ej: usuario@dominio.com).</li>
                   <li><strong>Comunidad * (obligatorio):</strong> Seleccione de la lista desplegable.</li>
                   <li><strong>Dirección Detallada:</strong> Texto libre.</li>
