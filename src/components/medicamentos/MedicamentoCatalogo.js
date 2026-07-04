@@ -17,6 +17,7 @@ import {
 } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const MedicamentoCatalogo = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +34,12 @@ const MedicamentoCatalogo = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
 
   // Modals state
   const [viewModal, setViewModal] = useState(false);
@@ -137,7 +144,7 @@ const MedicamentoCatalogo = () => {
       setSelectedMed(res.message.medicine);
       setViewModal(true);
     } catch (err) {
-      alert('Error cargando detalles del medicamento');
+      showToast('Error cargando detalles del medicamento', 'danger');
     }
   };
 
@@ -165,7 +172,7 @@ const MedicamentoCatalogo = () => {
       });
       setEditModal(true);
     } catch (err) {
-      alert('Error cargando datos para editar');
+      showToast('Error cargando datos para editar', 'danger');
     }
   };
 
@@ -189,8 +196,9 @@ const MedicamentoCatalogo = () => {
       await updateMedicine(selectedMed.id, editForm);
       setEditModal(false);
       loadData();
+      showToast('Medicamento actualizado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando medicamento');
+      showToast(err.message || 'Error actualizando medicamento', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -202,8 +210,9 @@ const MedicamentoCatalogo = () => {
       await deleteMedicine(selectedMed.id);
       setDeleteModal(false);
       loadData();
+      showToast('Medicamento eliminado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error eliminando medicamento');
+      showToast(err.message || 'Error eliminando medicamento', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -211,6 +220,12 @@ const MedicamentoCatalogo = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="medicamento-card">
         <CCardHeader className="medicamento-card-header">
           <div className="d-flex justify-content-between align-items-center">

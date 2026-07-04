@@ -23,9 +23,15 @@ import CIcon from '@coreui/icons-react'
 import '../../css/donaciones/RequestRegister.css'
 import { getProviders, getMedicines, createProviderRequest } from '../../services/api'
 import HelpButton from '../common/HelpButton'
+import ToastNotification from '../common/ToastNotification'
 
 const RequestRegister = () => {
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type });
+    setTimeout(() => setToast({ show: true, message, type }), 20);
+  };
   
   // Opciones desde API
   const [proveedores, setProveedores] = useState([])
@@ -67,11 +73,7 @@ const RequestRegister = () => {
         }
       } catch (error) {
         console.error('Error cargando catálogos:', error)
-        setAlert({
-          show: true,
-          message: 'Error al cargar los catálogos. Verifique su conexión.',
-          type: 'danger'
-        })
+        showToast('Error al cargar los catálogos. Verifique su conexión.', 'danger')
       }
     }
     fetchData()
@@ -89,11 +91,7 @@ const RequestRegister = () => {
     e.preventDefault()
 
     if (medicamentos.length === 0) {
-      setAlert({
-        show: true,
-        message: 'Debe agregar al menos un medicamento a la solicitud',
-        type: 'danger'
-      })
+      showToast('Debe agregar al menos un medicamento a la solicitud', 'danger')
       return
     }
 
@@ -110,18 +108,10 @@ const RequestRegister = () => {
 
       await createProviderRequest(payload)
       
-      setAlert({
-        show: true,
-        message: 'Solicitud registrada exitosamente',
-        type: 'success'
-      })
+      showToast('Solicitud registrada exitosamente', 'success')
       handleReset()
     } catch (error) {
-      setAlert({
-        show: true,
-        message: error.message || 'Error al registrar la solicitud',
-        type: 'danger'
-      })
+      showToast(error.message || 'Error al registrar la solicitud', 'danger')
     }
   }
 
@@ -149,11 +139,7 @@ const RequestRegister = () => {
 
   const agregarMedicamento = () => {
     if (!nuevoMedicamento.medicamentoId || !nuevoMedicamento.cantidad) {
-      setAlert({
-        show: true,
-        message: 'Seleccione un medicamento y especifique la cantidad',
-        type: 'warning'
-      })
+      showToast('Seleccione un medicamento y especifique la cantidad', 'warning')
       return
     }
 
@@ -225,12 +211,12 @@ const RequestRegister = () => {
           </h5>
         </CCardHeader>
         <CCardBody>
-          {alert.show && (
-            <div className={`alert alert-${alert.type} mb-4 alert-dismissible fade show`} role="alert">
-              {alert.message}
-              <button type="button" className="btn-close" onClick={() => setAlert({ show: false, message: '', type: '' })}></button>
-            </div>
-          )}
+          <ToastNotification
+            show={toast.show}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
 
           <CForm onSubmit={handleSubmit}>
             {/* Información del Proveedor */}

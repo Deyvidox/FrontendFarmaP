@@ -37,6 +37,7 @@ import { cilUser, cilMedicalCross, cilSearch, cilPencil, cilTrash, cilWarning, c
 import { getBeneficiaryById, updateBeneficiary, deleteBeneficiary, getMedicines, saveBeneficiaryMedicalHistory, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,6 +70,12 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
   const [editForm, setEditForm] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
   const [modalTab, setModalTab] = useState('enfermedades');
   const [detailModal, setDetailModal] = useState(false);
 
@@ -236,8 +243,9 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
 
       setEditModal(false);
       if (onRefresh) onRefresh();
+      showToast('Beneficiario actualizado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando beneficiario');
+      showToast(err.message || 'Error actualizando beneficiario', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -288,8 +296,9 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
       await deleteBeneficiary(selectedBenef.id);
       setDeleteModal(false);
       if (onRefresh) onRefresh();
+      showToast('Beneficiario eliminado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error eliminando beneficiario');
+      showToast(err.message || 'Error eliminando beneficiario', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -297,6 +306,12 @@ const BeneficiaryList = ({ beneficiaries, onRefresh }) => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="beneficiary-card">
         <CCardHeader className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">

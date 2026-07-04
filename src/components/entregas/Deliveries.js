@@ -46,6 +46,7 @@ import {
   notifyDelivery,
 } from '../../services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 import '../../css/entregas/Deliveries.css';
 
 const STATUS_MAP = {
@@ -73,6 +74,12 @@ const getStatusBadge = (status) => {
 const Deliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCriteria, setSearchCriteria] = useState('beneficiario');
@@ -174,8 +181,9 @@ const Deliveries = () => {
       await updateDelivery(selectedDelivery.id, editForm);
       setEditModal(false);
       fetchDeliveries();
+      showToast('Entrega actualizada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando la entrega');
+      showToast(err.message || 'Error actualizando la entrega', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -192,8 +200,9 @@ const Deliveries = () => {
       await deleteDelivery(selectedDelivery.id);
       setDeleteModal(false);
       fetchDeliveries();
+      showToast('Entrega cancelada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error al cancelar la entrega');
+      showToast(err.message || 'Error al cancelar la entrega', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -209,9 +218,9 @@ const Deliveries = () => {
     try {
       await notifyDelivery(selectedDelivery.id);
       setNotifyModal(false);
-      alert('Notificación enviada exitosamente');
+      showToast('Notificación enviada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error al enviar la notificación');
+      showToast(err.message || 'Error al enviar la notificación', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -219,6 +228,12 @@ const Deliveries = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="mb-4 deliveries-card">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">

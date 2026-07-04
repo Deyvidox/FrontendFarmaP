@@ -10,6 +10,7 @@ import { cilSearch, cilUser, cilPencil, cilTrash, cilInfo } from '@coreui/icons'
 import CIcon from '@coreui/icons-react';
 import { getUserById, updateUser, deleteUser, getRoles } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 import '../../css/users/UserList.css';
 
 const translateRole = (roleName) => {
@@ -49,6 +50,12 @@ const UserList = ({ users, onRefresh }) => {
   const [editForm, setEditForm] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
 
   useEffect(() => {
     const loadRoles = async () => {
@@ -176,7 +183,7 @@ const UserList = ({ users, onRefresh }) => {
     e.preventDefault();
     const errors = validateEditForm();
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      showToast(errors[0], 'danger');
       return;
     }
     setActionLoading(true);
@@ -184,8 +191,9 @@ const UserList = ({ users, onRefresh }) => {
       await updateUser(selectedUser.id, editForm);
       setEditModal(false);
       if (onRefresh) onRefresh();
+      showToast('Usuario actualizado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando usuario');
+      showToast(err.message || 'Error actualizando usuario', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -202,8 +210,9 @@ const UserList = ({ users, onRefresh }) => {
       await deleteUser(selectedUser.id);
       setDeleteModal(false);
       if (onRefresh) onRefresh();
+      showToast('Usuario eliminado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error eliminando usuario');
+      showToast(err.message || 'Error eliminando usuario', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -211,6 +220,12 @@ const UserList = ({ users, onRefresh }) => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="users-card user-list-container">
         <CCardHeader className="users-card-header">
           <div className="d-flex justify-content-between align-items-center">

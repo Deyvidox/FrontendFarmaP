@@ -8,6 +8,7 @@ import { cilPlus, cilPencil, cilTrash, cilIndustry, cilSearch } from '@coreui/ic
 import CIcon from '@coreui/icons-react'
 import { getProviders, createProvider, updateProvider, deleteProvider } from '../../services/api'
 import HelpButton from '../common/HelpButton'
+import ToastNotification from '../common/ToastNotification'
 
 const Providers = () => {
   const [providers, setProviders] = useState([])
@@ -22,7 +23,12 @@ const Providers = () => {
   const [editingId, setEditingId] = useState(null)
   const [selectedProvider, setSelectedProvider] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  }
 
   const [form, setForm] = useState({
     name: '',
@@ -58,7 +64,6 @@ const Providers = () => {
   const handleOpenCreate = () => {
     setEditingId(null)
     setForm({ name: '', rif_cedula: '', main_contact: '', contact_phone: '', contact_email: '', address: '', status: 'Active' })
-    setAlert({ show: false, message: '', type: '' })
     setModalVisible(true)
   }
 
@@ -73,7 +78,6 @@ const Providers = () => {
       address: provider.address || '',
       status: provider.status || 'Active'
     })
-    setAlert({ show: false, message: '', type: '' })
     setModalVisible(true)
   }
 
@@ -88,15 +92,15 @@ const Providers = () => {
     try {
       if (editingId) {
         await updateProvider(editingId, form)
-        setAlert({ show: true, message: 'Proveedor actualizado exitosamente', type: 'success' })
+        showToast('Proveedor actualizado exitosamente', 'success')
       } else {
         await createProvider(form)
-        setAlert({ show: true, message: 'Proveedor registrado exitosamente', type: 'success' })
+        showToast('Proveedor registrado exitosamente', 'success')
       }
       fetchProviders()
       setTimeout(() => setModalVisible(false), 1500)
     } catch (err) {
-      setAlert({ show: true, message: err.message || 'Error al guardar', type: 'danger' })
+      showToast(err.message || 'Error al guardar', 'danger')
     } finally {
       setSaving(false)
     }
@@ -108,8 +112,9 @@ const Providers = () => {
       await deleteProvider(selectedProvider.id)
       setDeleteModal(false)
       fetchProviders()
+      showToast('Proveedor eliminado exitosamente', 'success')
     } catch (err) {
-      window.alert(err.message || 'Error al eliminar proveedor')
+      showToast(err.message || 'Error al eliminar proveedor', 'danger')
     } finally {
       setSaving(false)
     }
@@ -120,6 +125,12 @@ const Providers = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="mb-4">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">
@@ -274,7 +285,6 @@ const Providers = () => {
         <CForm onSubmit={handleSubmit}>
           <CModalHeader><CModalTitle>{editingId ? 'Editar' : 'Registrar'} Proveedor</CModalTitle></CModalHeader>
           <CModalBody>
-            {alert.show && <CAlert color={alert.type}>{alert.message}</CAlert>}
             <CRow>
               <CCol md={12}>
                 <div className="mb-3">

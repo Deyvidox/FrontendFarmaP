@@ -31,11 +31,17 @@ import {
     getMedicines
 } from '../../services/api'
 import HelpButton from '../common/HelpButton'
+import ToastNotification from '../common/ToastNotification'
 
 const DonationRegister = () => {
-    const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+    const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+
+    const showToast = (message, type = 'info') => {
+        setToast({ show: false, message: '', type });
+        setTimeout(() => setToast({ show: true, message, type }), 20);
+    };
 
     // Listas para selects
     const [donors, setDonors] = useState([])
@@ -92,7 +98,7 @@ const DonationRegister = () => {
                 if (medicinesRes?.message?.medicines) setMedicinesCatalog(medicinesRes.message.medicines)
             } catch (error) {
                 console.error('Error cargando datos:', error)
-                setAlert({ show: true, message: 'Error al cargar catálogos.', type: 'danger' })
+                showToast('Error al cargar catálogos.', 'danger')
             } finally {
                 setLoading(false)
             }
@@ -112,7 +118,7 @@ const DonationRegister = () => {
 
     const addMedicine = () => {
         if (!newMedicine.medicine_id || !newMedicine.quantity || !newMedicine.lot_number || !newMedicine.expiration_date) {
-            setAlert({ show: true, message: 'Complete todos los campos del medicamento (medicamento, cantidad, lote y fecha de vencimiento)', type: 'warning' })
+            showToast('Complete todos los campos del medicamento (medicamento, cantidad, lote y fecha de vencimiento)', 'warning')
             return
         }
 
@@ -121,7 +127,7 @@ const DonationRegister = () => {
 
         // Evitar duplicados de lote
         if (medicines.some(m => m.lot_number === newMedicine.lot_number)) {
-            setAlert({ show: true, message: 'Ya existe un medicamento con ese número de lote en esta donación', type: 'warning' })
+            showToast('Ya existe un medicamento con ese número de lote en esta donación', 'warning')
             return
         }
 
@@ -136,7 +142,7 @@ const DonationRegister = () => {
         }])
 
         setNewMedicine({ medicine_id: '', quantity: '', lot_number: '', expiration_date: '' })
-        setAlert({ show: false, message: '', type: '' })
+        setToast({ show: false, message: '', type: 'info' })
     }
 
     const removeMedicine = (id) => {
@@ -147,15 +153,15 @@ const DonationRegister = () => {
         e.preventDefault()
 
         if (!form.donor_id) {
-            setAlert({ show: true, message: 'Seleccione un donante', type: 'warning' })
+            showToast('Seleccione un donante', 'warning')
             return
         }
         if (!form.donation_type_id) {
-            setAlert({ show: true, message: 'Seleccione el tipo de donación', type: 'warning' })
+            showToast('Seleccione el tipo de donación', 'warning')
             return
         }
         if (medicines.length === 0) {
-            setAlert({ show: true, message: 'Debe agregar al menos un medicamento a la donación', type: 'warning' })
+            showToast('Debe agregar al menos un medicamento a la donación', 'warning')
             return
         }
 
@@ -179,10 +185,10 @@ const DonationRegister = () => {
             }
 
             await createDonation(payload)
-            setAlert({ show: true, message: 'Donación registrada exitosamente', type: 'success' })
+            showToast('Donación registrada exitosamente', 'success')
             handleReset()
         } catch (error) {
-            setAlert({ show: true, message: error.message || 'Error al registrar la donación', type: 'danger' })
+            showToast(error.message || 'Error al registrar la donación', 'danger')
         } finally {
             setSubmitting(false)
         }
@@ -204,7 +210,7 @@ const DonationRegister = () => {
         })
         setMedicines([])
         setNewMedicine({ medicine_id: '', quantity: '', lot_number: '', expiration_date: '' })
-        setAlert({ show: false, message: '', type: '' })
+        setToast({ show: false, message: '', type: 'info' })
     }
 
     if (loading) {
@@ -257,12 +263,12 @@ const DonationRegister = () => {
                     </h5>
                 </CCardHeader>
                 <CCardBody>
-                    {alert.show && (
-                        <div className={`alert alert-${alert.type} mb-4 alert-dismissible fade show`} role="alert">
-                            {alert.message}
-                            <button type="button" className="btn-close" onClick={() => setAlert({ show: false, message: '', type: '' })}></button>
-                        </div>
-                    )}
+                    <ToastNotification
+                        show={toast.show}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                    />
 
                     <CForm onSubmit={handleSubmit}>
                         {/* Información del Donante */}

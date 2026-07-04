@@ -12,6 +12,7 @@ import {
 } from '@coreui/icons';
 import { getDonations, getDonationById, updateDonation, deleteDonation } from '../../services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const Donations = () => {
   const [donations, setDonations] = useState([]);
@@ -27,6 +28,12 @@ const Donations = () => {
 
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
 
   // Campos del formulario de edición
   const [editForm, setEditForm] = useState({
@@ -128,8 +135,9 @@ const Donations = () => {
       });
       setEditModal(false);
       fetchDonations();
+      showToast('Donación actualizada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando donación');
+      showToast(err.message || 'Error actualizando donación', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -141,8 +149,9 @@ const Donations = () => {
       await deleteDonation(selectedDonation.id);
       setDeleteModal(false);
       fetchDonations();
+      showToast('Donación eliminada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error eliminando donación');
+      showToast(err.message || 'Error eliminando donación', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -150,6 +159,12 @@ const Donations = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="mb-4">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">

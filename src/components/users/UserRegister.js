@@ -15,10 +15,16 @@ import { cilUser, cilLockLocked, cilContact, cilBuilding, cilPhone, cilBadge, ci
 import CIcon from '@coreui/icons-react';
 import { registerUser, getRoles, getUsers } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 import '../../css/users/UserRegister.css'
 
 const UserRegister = () => {
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  }
   const [roles, setRoles] = useState([])
   const [existingUsers, setExistingUsers] = useState([])
   const [loadingRoles, setLoadingRoles] = useState(true)
@@ -44,7 +50,7 @@ const UserRegister = () => {
         setExistingUsers(usersRes?.message?.users || [])
       } catch (err) {
         console.error('Error cargando datos iniciales:', err)
-        setAlert({ show: true, message: err.message || 'No se pudieron cargar los roles o usuarios', type: 'danger' })
+        showToast(err.message || 'No se pudieron cargar los roles o usuarios', 'danger')
       } finally {
         setLoadingRoles(false)
       }
@@ -60,13 +66,23 @@ const UserRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setAlert({ show: false, message: '', type: '' })
+
+    // Validación de contraseña en frontend
+    const pwd = formValues.password
+    if (pwd.length < 8) {
+      showToast('La contraseña debe tener al menos 8 caracteres', 'danger')
+      return
+    }
+    if (!/(?=.*[A-Za-z])(?=.*\d)/.test(pwd)) {
+      showToast('La contraseña debe contener al menos una letra y un número', 'danger')
+      return
+    }
 
     const usernameExists = existingUsers.some(
       (u) => (u.username || '').toLowerCase() === formValues.usu_username.trim().toLowerCase()
     )
     if (usernameExists) {
-      setAlert({ show: true, message: 'El nombre de usuario ya está registrado', type: 'danger' })
+      showToast('El nombre de usuario ya está registrado', 'danger')
       return
     }
 
@@ -82,7 +98,7 @@ const UserRegister = () => {
         phone: formValues.usu_telefono || null,
         status: formValues.usu_estado === 'ACTIVO' ? 'Active' : (formValues.usu_estado === 'INACTIVO' ? 'Inactive' : 'Suspended'),
       })
-      setAlert({ show: true, message: 'Usuario registrado exitosamente', type: 'success' })
+      showToast('Usuario registrado exitosamente', 'success')
       setFormValues({
         usu_nombre: '',
         usu_correo: '',
@@ -101,12 +117,12 @@ const UserRegister = () => {
       setExistingUsers(usersRes?.message?.users || [])
     } catch (err) {
       console.error('Error registrando usuario:', err)
-      setAlert({ show: true, message: err.message || 'Error al registrar usuario', type: 'danger' })
+      showToast(err.message || 'Error al registrar usuario', 'danger')
     }
   }
 
   const handleReset = () => {
-    setAlert({ show: false, message: '', type: '' })
+    setToast({ show: false, message: '', type: 'info' })
     setFormValues({
       usu_nombre: '',
       usu_correo: '',
@@ -168,11 +184,12 @@ const UserRegister = () => {
           </h5>
         </CCardHeader>
         <CCardBody>
-          {alert.show && (
-            <div className={`alert alert-${alert.type} mb-4`}>
-              {alert.message}
-            </div>
-          )}
+          <ToastNotification
+            show={toast.show}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
 
           <CForm onSubmit={handleSubmit} onReset={handleReset}>
             {/* Información Personal - Campos DB */}

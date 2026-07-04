@@ -13,6 +13,7 @@ import {
 } from '@coreui/icons';
 import { getProviderRequests, updateProviderRequest, deleteProviderRequest } from '../../services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const Requests = () => {
   const [requests, setRequests] = useState([]);
@@ -29,6 +30,12 @@ const Requests = () => {
     observations: ''
   });
   const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type });
+    setTimeout(() => setToast({ show: true, message, type }), 20);
+  };
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -108,8 +115,9 @@ const Requests = () => {
       });
       setEditModal(false);
       fetchRequests();
+      showToast('Solicitud actualizada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error actualizando solicitud');
+      showToast(err.message || 'Error actualizando solicitud', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -121,8 +129,9 @@ const Requests = () => {
       await deleteProviderRequest(selectedRequest.id);
       setDeleteModal(false);
       fetchRequests();
+      showToast('Solicitud eliminada exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error eliminando solicitud');
+      showToast(err.message || 'Error eliminando solicitud', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -130,6 +139,12 @@ const Requests = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="mb-4">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">

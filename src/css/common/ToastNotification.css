@@ -1,0 +1,223 @@
+/* ===============================================
+   FarmaPatria – ToastNotification Premium
+   Notificación que baja desde la parte superior
+   =============================================== */
+
+/* Contenedor fijo en la parte superior */
+.fp-toast {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  min-width: 340px;
+  max-width: 520px;
+  padding: 14px 18px 14px 16px;
+
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+/* Barra de progreso inferior */
+.fp-toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  border-radius: 0 0 14px 14px;
+  animation: fp-toast-progress linear forwards;
+  transform-origin: left;
+}
+
+/* ─── Animaciones ─── */
+@keyframes fp-toast-slide-in {
+  0% {
+    transform: translateX(-50%) translateY(-120%);
+    opacity: 0;
+  }
+  65% {
+    transform: translateX(-50%) translateY(6px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fp-toast-slide-out {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-120%);
+    opacity: 0;
+  }
+}
+
+@keyframes fp-toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+.fp-toast--enter {
+  animation: fp-toast-slide-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.fp-toast--exit {
+  animation: fp-toast-slide-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ─── Ícono ─── */
+.fp-toast__icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fp-toast__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ─── Cuerpo ─── */
+.fp-toast__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fp-toast__label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.fp-toast__message {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+/* ─── Botón cerrar ─── */
+.fp-toast__close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  opacity: 0.45;
+  color: #475569;
+  transition: opacity 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fp-toast__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.fp-toast__close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ─── Variantes de color ─── */
+
+/* SUCCESS */
+.fp-toast--success {
+  border-left: 4px solid #10b981;
+}
+.fp-toast--success .fp-toast__icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+.fp-toast--success .fp-toast__label {
+  color: #059669;
+}
+.fp-toast--success .fp-toast__progress {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+/* DANGER / ERROR */
+.fp-toast--danger {
+  border-left: 4px solid #ef4444;
+}
+.fp-toast--danger .fp-toast__icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+.fp-toast--danger .fp-toast__label {
+  color: #dc2626;
+}
+.fp-toast--danger .fp-toast__progress {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+/* WARNING */
+.fp-toast--warning {
+  border-left: 4px solid #f59e0b;
+}
+.fp-toast--warning .fp-toast__icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+.fp-toast--warning .fp-toast__label {
+  color: #d97706;
+}
+.fp-toast--warning .fp-toast__progress {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* INFO */
+.fp-toast--info {
+  border-left: 4px solid #3b82f6;
+}
+.fp-toast--info .fp-toast__icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+.fp-toast--info .fp-toast__label {
+  color: #2563eb;
+}
+.fp-toast--info .fp-toast__progress {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 480px) {
+  .fp-toast {
+    min-width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+    top: 12px;
+  }
+}

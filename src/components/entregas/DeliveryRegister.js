@@ -30,6 +30,7 @@ import { cilSave, cilReload, cilTruck, cilPeople } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { createDelivery, getUsers, getMedicines, getBeneficiariesByMedicine } from '../../services/api'
 import HelpButton from '../common/HelpButton'
+import ToastNotification from '../common/ToastNotification'
 import '../../css/entregas/DeliveryRegister.css'
 
 const DELIVERY_TYPES = [
@@ -62,8 +63,13 @@ const INITIAL_FORM = {
 
 const DeliveryRegister = () => {
   const [form, setForm] = useState({ ...INITIAL_FORM })
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
   const [submitting, setSubmitting] = useState(false)
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type });
+    setTimeout(() => setToast({ show: true, message, type }), 20);
+  };
 
   const [users, setUsers] = useState([])
   const [medicines, setMedicines] = useState([])
@@ -89,7 +95,7 @@ const DeliveryRegister = () => {
         setMedicines(medList)
       } catch (err) {
         console.error('Error cargando catálogos:', err)
-        setAlert({ show: true, message: 'Error al cargar catálogos.', type: 'danger' })
+        showToast('Error al cargar catálogos.', 'danger')
       } finally {
         setLoadingCatalogs(false)
       }
@@ -129,18 +135,18 @@ const DeliveryRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setAlert({ show: false, message: '', type: '' })
+    setToast({ show: false, message: '', type: 'info' })
 
     if (!form.medicine_id) {
-      setAlert({ show: true, message: 'Seleccione un medicamento a entregar.', type: 'danger' })
+      showToast('Seleccione un medicamento a entregar.', 'danger')
       return
     }
     if (!form.delivery_user_id) {
-      setAlert({ show: true, message: 'Seleccione un responsable de entrega.', type: 'danger' })
+      showToast('Seleccione un responsable de entrega.', 'danger')
       return
     }
     if (!form.delivery_date) {
-      setAlert({ show: true, message: 'Indique la fecha de entrega.', type: 'danger' })
+      showToast('Indique la fecha de entrega.', 'danger')
       return
     }
 
@@ -159,13 +165,13 @@ const DeliveryRegister = () => {
         status: form.status,
       }
       await createDelivery(payload)
-      setAlert({ show: true, message: 'Entrega registrada exitosamente.', type: 'success' })
+      showToast('Entrega registrada exitosamente.', 'success')
       setForm({ ...INITIAL_FORM })
       setBeneficiariesCount(0)
       setBeneficiariesList([])
     } catch (err) {
       console.error('Error registrando entrega:', err)
-      setAlert({ show: true, message: err.message || 'Error al registrar la entrega.', type: 'danger' })
+      showToast(err.message || 'Error al registrar la entrega.', 'danger')
     } finally {
       setSubmitting(false)
     }
@@ -173,7 +179,7 @@ const DeliveryRegister = () => {
 
   const handleReset = () => {
     setForm({ ...INITIAL_FORM })
-    setAlert({ show: false, message: '', type: '' })
+    setToast({ show: false, message: '', type: 'info' })
     setBeneficiariesCount(0)
     setBeneficiariesList([])
   }
@@ -216,11 +222,12 @@ const DeliveryRegister = () => {
           </h5>
         </CCardHeader>
         <CCardBody>
-          {alert.show && (
-            <CAlert color={alert.type} dismissible onClose={() => setAlert({ show: false, message: '', type: '' })} className="mb-4">
-              {alert.message}
-            </CAlert>
-          )}
+          <ToastNotification
+            show={toast.show}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
 
           {loadingCatalogs ? (
             <div className="text-center py-5">

@@ -8,6 +8,7 @@ import { cilPlus, cilPencil, cilUser, cilTrash, cilSearch } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { getDonors, createDonor, getDonorTypes, updateDonor, deleteDonor } from '../../services/api'
 import HelpButton from '../common/HelpButton'
+import ToastNotification from '../common/ToastNotification'
 
 const Donors = () => {
   const [donors, setDonors] = useState([])
@@ -23,7 +24,12 @@ const Donors = () => {
   const [selectedDonor, setSelectedDonor] = useState(null)
   
   const [saving, setSaving] = useState(false)
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  }
 
   const [form, setForm] = useState({
     name: '', rif_cedula: '', main_contact: '', contact_phone: '', contact_email: '', address: '', donor_type_id: ''
@@ -62,7 +68,6 @@ const Donors = () => {
 
   const handleOpenCreate = () => {
     setForm({ name: '', rif_cedula: '', main_contact: '', contact_phone: '', contact_email: '', address: '', donor_type_id: '' })
-    setAlert({ show: false, message: '', type: '' })
     setModalVisible(true)
   }
 
@@ -78,7 +83,6 @@ const Donors = () => {
       donor_type_id: donor.donor_type_id || '',
       status: donor.status || 'Active'
     })
-    setAlert({ show: false, message: '', type: '' })
     setEditModal(true)
   }
 
@@ -90,17 +94,17 @@ const Donors = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.donor_type_id) {
-        setAlert({ show: true, message: 'El tipo de donante es requerido', type: 'danger' })
+        showToast('El tipo de donante es requerido', 'danger')
         return
     }
     setSaving(true)
     try {
       await createDonor(form)
-      setAlert({ show: true, message: 'Donante registrado exitosamente', type: 'success' })
+      showToast('Donante registrado exitosamente', 'success')
       loadData()
       setTimeout(() => setModalVisible(false), 1500)
     } catch (err) {
-      setAlert({ show: true, message: err.message || 'Error al guardar', type: 'danger' })
+      showToast(err.message || 'Error al guardar', 'danger')
     } finally {
       setSaving(false)
     }
@@ -109,17 +113,17 @@ const Donors = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault()
     if (!editForm.donor_type_id) {
-        setAlert({ show: true, message: 'El tipo de donante es requerido', type: 'danger' })
+        showToast('El tipo de donante es requerido', 'danger')
         return
     }
     setSaving(true)
     try {
       await updateDonor(selectedDonor.id, editForm)
-      setAlert({ show: true, message: 'Donante actualizado exitosamente', type: 'success' })
+      showToast('Donante actualizado exitosamente', 'success')
       loadData()
       setTimeout(() => setEditModal(false), 1500)
     } catch (err) {
-      setAlert({ show: true, message: err.message || 'Error al actualizar', type: 'danger' })
+      showToast(err.message || 'Error al actualizar', 'danger')
     } finally {
       setSaving(false)
     }
@@ -131,8 +135,9 @@ const Donors = () => {
       await deleteDonor(selectedDonor.id)
       setDeleteModal(false)
       loadData()
+      showToast('Donante eliminado exitosamente', 'success')
     } catch (err) {
-      window.alert(err.message || 'Error al eliminar donante')
+      showToast(err.message || 'Error al eliminar donante', 'danger')
     } finally {
       setSaving(false)
     }
@@ -143,6 +148,12 @@ const Donors = () => {
 
   return (
     <>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CCard className="mb-4">
         <CCardHeader>
           <div className="d-flex justify-content-between align-items-center">
@@ -294,7 +305,6 @@ const Donors = () => {
         <CForm onSubmit={handleSubmit}>
           <CModalHeader><CModalTitle>Registrar Donante</CModalTitle></CModalHeader>
           <CModalBody>
-            {alert.show && <CAlert color={alert.type}>{alert.message}</CAlert>}
             <CRow>
               <CCol md={12}>
                 <div className="mb-3">
@@ -357,7 +367,6 @@ const Donors = () => {
         <CForm onSubmit={handleEditSubmit}>
           <CModalHeader><CModalTitle>Editar Donante</CModalTitle></CModalHeader>
           <CModalBody>
-            {alert.show && <CAlert color={alert.type}>{alert.message}</CAlert>}
             <CRow>
               <CCol md={12}>
                 <div className="mb-3">

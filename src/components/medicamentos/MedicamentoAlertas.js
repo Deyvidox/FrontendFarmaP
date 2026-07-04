@@ -13,6 +13,7 @@ import CIcon from '@coreui/icons-react';
 import { getMedicineAlerts, getLotById, retireLot } from 'src/services/api';
 import '../../css/medicamentos/Medicamentos.css';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const MedicamentoAlertas = () => {
   const [filterStatus, setFilterStatus] = useState('TODAS');
@@ -25,6 +26,12 @@ const MedicamentoAlertas = () => {
   const [selectedLot, setSelectedLot] = useState(null);
   const [lotDetails, setLotDetails] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  };
 
   const fetchAlerts = async () => {
     setLoading(true);
@@ -103,7 +110,7 @@ const MedicamentoAlertas = () => {
       setLotDetails(res.message.lot);
       setDetailsModal(true);
     } catch (err) {
-      alert('Error obteniendo detalles del lote');
+      showToast('Error obteniendo detalles del lote', 'danger');
     }
   };
 
@@ -118,8 +125,9 @@ const MedicamentoAlertas = () => {
       await retireLot(selectedLot.id);
       setRetireModal(false);
       fetchAlerts();
+      showToast('Lote retirado exitosamente', 'success');
     } catch (err) {
-      alert(err.message || 'Error retirando lote');
+      showToast(err.message || 'Error retirando lote', 'danger');
     } finally {
       setActionLoading(false);
     }
@@ -138,6 +146,12 @@ const MedicamentoAlertas = () => {
 
   return (
     <div className="medicamento-alertas-container">
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
       <CRow className="mb-4">
         <CCol xs={12} sm={6} lg={3} className="mb-3">
           <div className="card text-center border-danger h-100" style={{ minHeight: '90px' }}>

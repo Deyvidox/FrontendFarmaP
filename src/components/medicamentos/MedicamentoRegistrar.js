@@ -31,6 +31,7 @@ import {
   createMedicine,
 } from 'src/services/api';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 import '../../css/medicamentos/Medicamentos.css';
 
 const MedicamentoRegistrar = () => {
@@ -63,7 +64,12 @@ const MedicamentoRegistrar = () => {
 
   // Estados de envío
   const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type });
+    setTimeout(() => setToast({ show: true, message, type }), 20);
+  };
 
   // Carga de catálogos
   useEffect(() => {
@@ -96,7 +102,7 @@ const MedicamentoRegistrar = () => {
   // Envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAlert({ show: false, message: '', type: '' });
+    setToast({ show: false, message: '', type: 'info' });
     setSubmitting(true);
 
     // Construir payload para el backend
@@ -120,22 +126,14 @@ const MedicamentoRegistrar = () => {
 
     // Validación básica
     if (!payload.commercial_name || !payload.pharmaceutical_form_id || !payload.laboratory_id || !payload.category_id) {
-      setAlert({
-        show: true,
-        message: 'Complete los campos obligatorios: nombre comercial, forma farmacéutica, laboratorio y categoría.',
-        type: 'danger',
-      });
+      showToast('Complete los campos obligatorios: nombre comercial, forma farmacéutica, laboratorio y categoría.', 'danger');
       setSubmitting(false);
       return;
     }
 
     try {
       await createMedicine(payload);
-      setAlert({
-        show: true,
-        message: 'Medicamento registrado exitosamente',
-        type: 'success',
-      });
+      showToast('Medicamento registrado exitosamente', 'success');
       // Limpiar formulario
       setFormValues({
         nationalCode: '',
@@ -157,18 +155,14 @@ const MedicamentoRegistrar = () => {
       });
     } catch (err) {
       console.error('Error registrando medicamento:', err);
-      setAlert({
-        show: true,
-        message: err.message || 'Error al registrar medicamento',
-        type: 'danger',
-      });
+      showToast(err.message || 'Error al registrar medicamento', 'danger');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleReset = () => {
-    setAlert({ show: false, message: '', type: '' });
+    setToast({ show: false, message: '', type: 'info' });
     setFormValues({
       nationalCode: '',
       commercialName: '',
@@ -252,12 +246,12 @@ const MedicamentoRegistrar = () => {
           </h5>
         </CCardHeader>
         <CCardBody>
-          {alert.show && (
-            <CAlert color={alert.type} dismissible>
-              {alert.message}
-            </CAlert>
-          )}
-
+          <ToastNotification
+            show={toast.show}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
           <CForm onSubmit={handleSubmit} onReset={handleReset}>
             {/* Información Básica */}
             <div className="form-section">

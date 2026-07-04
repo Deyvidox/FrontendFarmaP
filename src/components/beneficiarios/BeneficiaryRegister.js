@@ -24,9 +24,15 @@ import CIcon from '@coreui/icons-react';
 import { createBeneficiary, getCommunities, createCommunity, updateCommunity, deleteCommunity, getMedicines, addBeneficiaryDisease, saveBeneficiaryMedicines } from 'src/services/api';
 import '../../css/beneficiarios/Beneficiaries.css';
 import HelpButton from '../common/HelpButton';
+import ToastNotification from '../common/ToastNotification';
 
 const BeneficiaryRegister = () => {
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: false, message: '', type });
+    setTimeout(() => setToast({ show: true, message, type }), 20);
+  };
   const [submitting, setSubmitting] = useState(false);
   const [comunidades, setComunidades] = useState([]);
   const [formValues, setFormValues] = useState({
@@ -86,7 +92,7 @@ const BeneficiaryRegister = () => {
         if (response?.message?.id) {
           setFormValues(prev => ({ ...prev, comunidad_id: response.message.id }));
         }
-        setAlert({ show: true, message: 'Comunidad añadida exitosamente', type: 'success' });
+        showToast('Comunidad añadida exitosamente', 'success');
       } else if (communityModalView === 'edit') {
         await updateCommunity(editingCommunityId, {
           name: communityForm.name,
@@ -94,7 +100,7 @@ const BeneficiaryRegister = () => {
           parish: communityForm.parish,
           state_region: communityForm.state_region
         });
-        setAlert({ show: true, message: 'Comunidad actualizada exitosamente', type: 'success' });
+        showToast('Comunidad actualizada exitosamente', 'success');
       }
 
       const commResponse = await getCommunities();
@@ -102,7 +108,7 @@ const BeneficiaryRegister = () => {
       setCommunityModalView('list');
     } catch (err) {
       console.error(err);
-      setAlert({ show: true, message: 'Error guardando comunidad: ' + (err.message || 'Error desconocido'), type: 'danger' });
+      showToast('Error guardando comunidad: ' + (err.message || 'Error desconocido'), 'danger');
     } finally {
       setSavingCommunity(false);
     }
@@ -125,13 +131,13 @@ const BeneficiaryRegister = () => {
       await deleteCommunity(id);
       const commResponse = await getCommunities();
       setComunidades(commResponse?.message?.communities || []);
-      setAlert({ show: true, message: 'Comunidad eliminada exitosamente', type: 'success' });
+      showToast('Comunidad eliminada exitosamente', 'success');
       if (formValues.comunidad_id === id) {
         setFormValues(prev => ({ ...prev, comunidad_id: '' }));
       }
     } catch (err) {
       console.error(err);
-      setAlert({ show: true, message: 'Error eliminando comunidad: ' + (err.message || 'Error desconocido'), type: 'danger' });
+      showToast('Error eliminando comunidad: ' + (err.message || 'Error desconocido'), 'danger');
     }
   };
 
@@ -215,11 +221,11 @@ const BeneficiaryRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAlert({ show: false, message: '', type: '' });
+    setToast({ show: false, message: '', type: 'info' });
 
     const errors = validateForm();
     if (errors.length > 0) {
-      setAlert({ show: true, message: errors.join('. '), type: 'danger' });
+      showToast(errors.join('. '), 'danger');
       return;
     }
 
@@ -299,14 +305,14 @@ const BeneficiaryRegister = () => {
       setMedicamentos([]);
     } catch (err) {
       console.error('Error registrando beneficiario:', err);
-      setAlert({ show: true, message: err.message || 'Error al registrar beneficiario', type: 'danger' });
+      showToast(err.message || 'Error al registrar beneficiario', 'danger');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleReset = () => {
-    setAlert({ show: false, message: '', type: '' });
+    setToast({ show: false, message: '', type: 'info' });
     setFormValues({
       cedula: '',
       nombres: '',
@@ -435,11 +441,12 @@ const BeneficiaryRegister = () => {
           </h5>
         </CCardHeader>
         <CCardBody>
-          {alert.show && (
-            <CAlert color={alert.type} className="beneficiary-alert">
-              {alert.message}
-            </CAlert>
-          )}
+          <ToastNotification
+            show={toast.show}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          />
 
           <CForm onSubmit={handleSubmit} onReset={handleReset}>
             <div className="form-section">
