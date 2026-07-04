@@ -54,3 +54,40 @@
   color: var(--fp-text) !important;
 }
 
+/* Dark mode contrast overrides for .bg-light cards and tables with inline styles */
+html[data-coreui-theme="dark"] .help-modal-body .bg-light,
+[data-coreui-theme="dark"] .help-modal-body .bg-light {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-coreui-theme="dark"] .help-modal-body table,
+[data-coreui-theme="dark"] .help-modal-body table {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+}
+
+html[data-coreui-theme="dark"] .help-modal-body tr,
+[data-coreui-theme="dark"] .help-modal-body tr,
+html[data-coreui-theme="dark"] .help-modal-body td,
+[data-coreui-theme="dark"] .help-modal-body td,
+html[data-coreui-theme="dark"] .help-modal-body th,
+[data-coreui-theme="dark"] .help-modal-body th {
+  background-color: transparent !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-coreui-theme="dark"] .help-modal-body table tr:first-child,
+[data-coreui-theme="dark"] .help-modal-body table tr:first-child,
+html[data-coreui-theme="dark"] .help-modal-body table thead tr,
+[data-coreui-theme="dark"] .help-modal-body table thead tr {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-coreui-theme="dark"] .help-modal-body .text-muted,
+[data-coreui-theme="dark"] .help-modal-body .text-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
