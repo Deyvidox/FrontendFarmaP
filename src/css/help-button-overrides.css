@@ -91,3 +91,14 @@ html[data-coreui-theme="dark"] .help-modal-body .text-muted,
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
+/* Force dark mode background on divs/tables with inline styles in help modals */
+html[data-coreui-theme="dark"] .help-modal-body div[style*="background"],
+[data-coreui-theme="dark"] .help-modal-body div[style*="background"],
+html[data-coreui-theme="dark"] .help-modal-body table[style*="background"],
+[data-coreui-theme="dark"] .help-modal-body table[style*="background"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+}
+
+
