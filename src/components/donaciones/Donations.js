@@ -64,6 +64,7 @@ const Donations = () => {
 
   const totalDonaciones = donations.length;
   const enInspeccion = donations.filter(d => d.status === 'Inspected' || d.status === 'InProcess').length;
+  const totalLotes = donations.reduce((sum, d) => sum + (parseInt(d.total_lots) || 0), 0);
 
   const getEstadoInfo = (status) => {
     switch (status) {
@@ -79,13 +80,30 @@ const Donations = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('es-VE');
   };
 
   const getShortId = (id) => {
     if (!id) return '';
     return `DON-${id.substring(0, 8).toUpperCase()}`;
   };
+
+  // Filtrado de donaciones
+  const filteredDonations = donations.filter(donation => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    switch (searchCriteria) {
+      case 'donante':
+        return (donation.donor_name || '').toLowerCase().includes(term);
+      case 'documento':
+        return (donation.document_number || '').toLowerCase().includes(term);
+      case 'estado':
+        const estadoLabel = getEstadoInfo(donation.status).label;
+        return estadoLabel.toLowerCase().includes(term);
+      default:
+        return true;
+    }
+  });
 
   const handleViewDetails = async (donation) => {
     setSelectedDonation(donation);
@@ -174,38 +192,16 @@ const Donations = () => {
               <HelpButton title="Manual de Usuario – Gestión de Donaciones">
                 <div>
                   <p><strong>¿Qué hace esta pantalla?</strong><br />
-                    Lista todas las donaciones registradas. Permite buscar, ver detalles, editar y eliminar donaciones.</p>
-                  <h6>🧪 Ejemplo de cómo se ve la tabla</h6>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f8f9fa', color: '#212529', fontSize: '0.85rem' }}>
-                      <thead>
-                        <tr style={{ background: '#e9ecef' }}>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>ID Donación</th>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Donante</th>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Fecha Recepción</th>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Tipo</th>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Estado</th>
-                          <th style={{ padding: '8px', border: '1px solid #dee2e6' }}>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>DON-5046980D</td>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Ministerio de Salud<br /><small>G-20001234-1</small></td>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>26/6/2026</td>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Equipamiento</td>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}><span style={{ background: '#198754', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Recibido</span></td>
-                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>👁️ ✏️ 🗑️</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <h6>📋 Uso y funcionalidades</h6>
-                  <ol>
-                    <li><strong>Tarjetas de resumen:</strong> Muestran el total de donaciones, las que están en inspección y los items totales.</li>
-                    <li><strong>Búsqueda:</strong> Filtre por donante, tipo o estado.</li>
-                    <li><strong>Acciones por fila:</strong> Ver, Editar, Eliminar.</li>
-                  </ol>
+                    Lista todas las donaciones registradas con sus lotes y medicamentos recibidos. Permite buscar, ver detalles, editar estado y eliminar donaciones.</p>
+                  <h6>📋 Columnas de la tabla</h6>
+                  <ul>
+                    <li><strong>Código:</strong> Identificador DON-XXXX de la donación.</li>
+                    <li><strong>N° Documento/Acta:</strong> Referencia del acta o documento físico.</li>
+                    <li><strong>Donante:</strong> Persona u organización que realizó la donación.</li>
+                    <li><strong>Fecha Recepción:</strong> Cuándo se recibió la donación.</li>
+                    <li><strong>Medicamentos/Lotes:</strong> Cantidad de lotes recibidos y total de unidades.</li>
+                    <li><strong>Estado:</strong> Estado actual de la donación.</li>
+                  </ul>
                 </div>
               </HelpButton>
             </h5>
@@ -218,7 +214,7 @@ const Donations = () => {
               <div className="card text-center border-primary">
                 <div className="card-body">
                   <div className="h4 text-primary mb-0">{totalDonaciones}</div>
-                  <small className="text-muted">Donaciones Totales</small>
+                  <small className="text-body-secondary">Donaciones Totales</small>
                 </div>
               </div>
             </CCol>
@@ -226,15 +222,15 @@ const Donations = () => {
               <div className="card text-center border-warning">
                 <div className="card-body">
                   <div className="h4 text-warning mb-0">{enInspeccion}</div>
-                  <small className="text-muted">En Inspección</small>
+                  <small className="text-body-secondary">En Inspección</small>
                 </div>
               </div>
             </CCol>
             <CCol md={4}>
               <div className="card text-center border-info">
                 <div className="card-body">
-                  <div className="h4 text-info mb-0">—</div>
-                  <small className="text-muted">Items Totales</small>
+                  <div className="h4 text-info mb-0">{totalLotes}</div>
+                  <small className="text-body-secondary">Lotes Recibidos</small>
                 </div>
               </div>
             </CCol>
@@ -256,7 +252,7 @@ const Donations = () => {
                     onChange={(e) => { setSearchCriteria(e.target.value); setSearchTerm(''); }}
                   >
                     <option value="donante">Donante</option>
-                    <option value="tipo">Tipo</option>
+                    <option value="documento">N° Documento</option>
                     <option value="estado">Estado</option>
                   </CFormSelect>
                 </CCol>
@@ -277,39 +273,46 @@ const Donations = () => {
               <CTable hover responsive>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>ID Donación</CTableHeaderCell>
+                    <CTableHeaderCell>Código</CTableHeaderCell>
+                    <CTableHeaderCell>N° Documento/Acta</CTableHeaderCell>
                     <CTableHeaderCell>Donante</CTableHeaderCell>
                     <CTableHeaderCell>Fecha Recepción</CTableHeaderCell>
-                    <CTableHeaderCell>Tipo</CTableHeaderCell>
+                    <CTableHeaderCell>Medicamentos / Lotes</CTableHeaderCell>
                     <CTableHeaderCell>Estado</CTableHeaderCell>
                     <CTableHeaderCell>Acciones</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {donations.length === 0 ? (
+                  {filteredDonations.length === 0 ? (
                     <CTableRow>
-                      <CTableDataCell colSpan="6" className="text-center">
+                      <CTableDataCell colSpan="7" className="text-center">
                         {searchTerm ? 'No se encontraron donaciones' : 'No hay donaciones registradas'}
                       </CTableDataCell>
                     </CTableRow>
                   ) : (
-                    donations.map(donation => {
+                    filteredDonations.map(donation => {
                       const estado = getEstadoInfo(donation.status);
+                      const lots = parseInt(donation.total_lots) || 0;
+                      const units = parseInt(donation.total_units) || 0;
                       return (
                         <CTableRow key={donation.id}>
                           <CTableDataCell><strong>{getShortId(donation.id)}</strong></CTableDataCell>
+                          <CTableDataCell>{donation.document_number || '—'}</CTableDataCell>
                           <CTableDataCell>
                             <div>{donation.donor_name || '—'}</div>
-                            <small className="text-muted">{donation.rif_cedula || ''}</small>
+                            <small className="text-body-secondary">{donation.rif_cedula || ''}</small>
                           </CTableDataCell>
                           <CTableDataCell>{formatDate(donation.reception_date)}</CTableDataCell>
-                          <CTableDataCell>{donation.donation_type || '—'}</CTableDataCell>
+                          <CTableDataCell>
+                            <span className="badge bg-info text-dark me-1">{lots} lote{lots !== 1 ? 's' : ''}</span>
+                            <span className="badge bg-secondary">{units} unds</span>
+                          </CTableDataCell>
                           <CTableDataCell><CBadge color={estado.color}>{estado.label}</CBadge></CTableDataCell>
                           <CTableDataCell>
                             <div className="d-flex gap-1">
                               <CButton color="info" size="sm" title="Ver detalles" onClick={() => handleViewDetails(donation)}><CIcon icon={cilInfo} /></CButton>
-                              <CButton color="warning" size="sm" onClick={() => handleEditClick(donation)}><CIcon icon={cilPencil} /></CButton>
-                              <CButton color="danger" size="sm" onClick={() => handleDeleteClick(donation)}><CIcon icon={cilTrash} /></CButton>
+                              <CButton color="warning" size="sm" title="Editar" onClick={() => handleEditClick(donation)}><CIcon icon={cilPencil} /></CButton>
+                              <CButton color="danger" size="sm" title="Eliminar" onClick={() => handleDeleteClick(donation)}><CIcon icon={cilTrash} /></CButton>
                             </div>
                           </CTableDataCell>
                         </CTableRow>
@@ -323,7 +326,7 @@ const Donations = () => {
         </CCardBody>
       </CCard>
 
-      {/* Modal Detalles (sin botón Imprimir) */}
+      {/* Modal Detalles — con desglose de lotes */}
       <CModal size="lg" visible={showDetailsModal} onClose={() => setShowDetailsModal(false)}>
         <CModalHeader closeButton>
           <CModalTitle>Detalles de Donación{selectedDonation ? ` - ${getShortId(selectedDonation.id)}` : ''}</CModalTitle>
@@ -336,18 +339,46 @@ const Donations = () => {
               <CRow className="mb-3">
                 <CCol md={6}>
                   <div className="mb-2"><strong>Donante:</strong> {selectedDonation.donor_name || '—'}</div>
-                  <div className="mb-2"><strong>RIF:</strong> {selectedDonation.rif_cedula || '—'}</div>
+                  <div className="mb-2"><strong>RIF/Cédula:</strong> {selectedDonation.rif_cedula || '—'}</div>
                   <div className="mb-2"><strong>Fecha Recepción:</strong> {formatDate(selectedDonation.reception_date)}</div>
-                  <div className="mb-2"><strong>Documento:</strong> {selectedDonation.document_number || '—'}</div>
                 </CCol>
                 <CCol md={6}>
+                  <div className="mb-2"><strong>N° Documento/Acta:</strong> {selectedDonation.document_number || '—'}</div>
                   <div className="mb-2"><strong>Tipo:</strong> {selectedDonation.donation_type || '—'}</div>
                   <div className="mb-2"><strong>Estado:</strong> <CBadge color={getEstadoInfo(selectedDonation.status).color}>{getEstadoInfo(selectedDonation.status).label}</CBadge></div>
-                  <div className="mb-2"><strong>Almacén:</strong> {selectedDonation.destination_warehouse || '—'}</div>
                 </CCol>
               </CRow>
-              {selectedDonation.transport_conditions && <div className="mb-2"><strong>Condiciones de Transporte:</strong> {selectedDonation.transport_conditions}</div>}
-              {selectedDonation.observations && <div className="mb-2"><strong>Observaciones:</strong> {selectedDonation.observations}</div>}
+              {selectedDonation.receiver_name && (
+                <div className="mb-2"><strong>Receptor:</strong> {selectedDonation.receiver_name}</div>
+              )}
+              {selectedDonation.observations && <div className="mb-3"><strong>Observaciones:</strong> {selectedDonation.observations}</div>}
+
+              {/* Desglose de medicamentos/lotes recibidos */}
+              {selectedDonation.lots && selectedDonation.lots.length > 0 && (
+                <>
+                  <h6 className="mt-3 mb-2">Medicamentos / Lotes Recibidos</h6>
+                  <CTable hover bordered responsive size="sm">
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Medicamento</CTableHeaderCell>
+                        <CTableHeaderCell>N° Lote</CTableHeaderCell>
+                        <CTableHeaderCell>Cantidad</CTableHeaderCell>
+                        <CTableHeaderCell>Fecha Vencimiento</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      {selectedDonation.lots.map((lot, idx) => (
+                        <CTableRow key={lot.id || idx}>
+                          <CTableDataCell>{lot.medicine_name || '—'}</CTableDataCell>
+                          <CTableDataCell><strong>{lot.lot_number}</strong></CTableDataCell>
+                          <CTableDataCell>{lot.total_units} unds</CTableDataCell>
+                          <CTableDataCell>{formatDate(lot.expiration_date)}</CTableDataCell>
+                        </CTableRow>
+                      ))}
+                    </CTableBody>
+                  </CTable>
+                </>
+              )}
             </>
           ) : null}
         </CModalBody>
@@ -356,7 +387,7 @@ const Donations = () => {
         </CModalFooter>
       </CModal>
 
-      {/* Modal Editar (solo los campos que pediste) */}
+      {/* Modal Editar */}
       <CModal visible={editModal} onClose={() => setEditModal(false)}>
         <CModalHeader closeButton><CModalTitle>Editar Donación</CModalTitle></CModalHeader>
         <CForm onSubmit={submitEdit}>
@@ -375,7 +406,7 @@ const Donations = () => {
               <CFormInput type="date" name="reception_date" value={editForm.reception_date} onChange={handleEditChange} />
             </div>
             <div className="mb-3">
-              <CFormLabel>Nro Documento</CFormLabel>
+              <CFormLabel>N° Documento/Acta</CFormLabel>
               <CFormInput name="document_number" value={editForm.document_number} onChange={handleEditChange} />
             </div>
             <div className="mb-3">

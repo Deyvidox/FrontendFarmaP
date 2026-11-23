@@ -1,61 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
-  CCard,
-  CCardHeader,
-  CCardBody,
-  CForm,
-  CRow,
-  CCol,
-  CFormInput,
-  CFormLabel,
-  CFormSelect,
-  CButton,
-  CFormTextarea,
-  CAlert,
-  CSpinner,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-  CBadge,
+  CCard, CCardHeader, CCardBody, CForm, CRow, CCol,
+  CFormInput, CFormLabel, CFormSelect, CButton, CFormTextarea,
+  CSpinner, CTable, CTableHead, CTableRow, CTableHeaderCell,
+  CTableBody, CTableDataCell, CBadge, CAlert
 } from '@coreui/react'
-import { cilSave, cilReload, cilTruck, cilPeople } from '@coreui/icons'
+import { cilSave, cilReload, cilTruck, cilClipboard, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import { createDelivery, getUsers, getMedicines, getBeneficiariesByMedicine } from '../../services/api'
+import {
+  createDelivery, getUsers,
+  getProviderRequests, getDonations,
+  getProviderRequestById, getDonationById,
+  getBeneficiariesByMedicine
+} from '../../services/api'
 import HelpButton from '../common/HelpButton'
 import ToastNotification from '../common/ToastNotification'
 import '../../css/entregas/DeliveryRegister.css'
 
 const DELIVERY_TYPES = [
-  { label: 'A Domicilio', value: 'HomeDelivery' },
-  { label: 'Centro de Salud', value: 'HealthCenter' },
-  { label: 'Jornada Comunitaria', value: 'Community' },
-  { label: 'Retiro en Sede', value: 'Pickup' },
+  { label: 'Retiro en Sede (Ventanilla)', value: 'Pickup Point' },
+  { label: 'A Domicilio', value: 'Home Delivery' },
+  { label: 'Centro de Salud / Hospital', value: 'Health Center' },
 ]
 
 const DELIVERY_STATUSES = [
   { label: 'Programada', value: 'Scheduled' },
-  { label: 'En Camino', value: 'OnTheWay' },
+  { label: 'En Camino', value: 'In Transit' },
   { label: 'Entregada', value: 'Delivered' },
-  { label: 'Cancelada', value: 'Cancelled' },
-  { label: 'Pendiente', value: 'Pending' },
 ]
 
+const todayStr = new Date().toISOString().split('T')[0]
+
 const INITIAL_FORM = {
-  medicine_id: '',
+  source_type: '',
+  source_id: '',
   delivery_user_id: '',
-  delivery_date: '',
-  delivery_type: 'HomeDelivery',
-  delivery_point: '',
-  witness_receptor: '',
-  next_estimated_delivery: '',
+  delivery_date: todayStr,
+  delivery_type: 'Pickup Point',
+  delivery_point: 'Sede Principal FarmaPatria',
   digital_signature: '',
   observations: '',
   status: 'Scheduled',
@@ -67,32 +49,44 @@ const DeliveryRegister = () => {
   const [submitting, setSubmitting] = useState(false)
 
   const showToast = (message, type = 'info') => {
-    setToast({ show: false, message: '', type });
-    setTimeout(() => setToast({ show: true, message, type }), 20);
-  };
+    setToast({ show: false, message: '', type })
+    setTimeout(() => setToast({ show: true, message, type }), 20)
+  }
 
+  // Catálogos iniciales
   const [users, setUsers] = useState([])
-  const [medicines, setMedicines] = useState([])
+  const [providerRequests, setProviderRequests] = useState([])
+  const [donations, setDonations] = useState([])
   const [loadingCatalogs, setLoadingCatalogs] = useState(true)
 
-  // Beneficiarios
-  const [beneficiariesCount, setBeneficiariesCount] = useState(0)
-  const [beneficiariesList, setBeneficiariesList] = useState([])
-  const [loadingBeneficiaries, setLoadingBeneficiaries] = useState(false)
-  const [showBeneficiariesModal, setShowBeneficiariesModal] = useState(false)
+  // Datos del origen seleccionado
+  const [sourceData, setSourceData] = useState(null)
+  const [sourceMedicines, setSourceMedicines] = useState([])
+  const [loadingSource, setLoadingSource] = useState(false)
 
+  // Medicamento seleccionado → Beneficiarios (se muestran TODOS automáticamente)
+  const [selectedMedicineId, setSelectedMedicineId] = useState('')
+  const [selectedMedicineName, setSelectedMedicineName] = useState('')
+  const [linkedBeneficiaries, setLinkedBeneficiaries] = useState([])
+  const [loadingBeneficiaries, setLoadingBeneficiaries] = useState(false)
+
+  // Items de entrega (medicamento + cantidad + lista de beneficiarios)
+  const [deliveryItems, setDeliveryItems] = useState([])
+  const [itemQuantity, setItemQuantity] = useState('')
+
+  /* ═══ CARGA INICIAL ═══ */
   useEffect(() => {
     const fetchCatalogs = async () => {
       setLoadingCatalogs(true)
       try {
-        const [userRes, medRes] = await Promise.all([
+        const [userRes, prRes, donRes] = await Promise.all([
           getUsers(),
-          getMedicines(),
+          getProviderRequests().catch(() => null),
+          getDonations().catch(() => null)
         ])
-        const userList = userRes?.message?.users || []
-        const medList = medRes?.message?.medicines || []
-        setUsers(userList.filter(u => u.status === 'Active'))
-        setMedicines(medList)
+        setUsers((userRes?.message?.users || []).filter(u => u.status === 'Active'))
+        setProviderRequests(prRes?.message?.providerRequests || [])
+        setDonations(donRes?.message?.donations || [])
       } catch (err) {
         console.error('Error cargando catálogos:', err)
         showToast('Error al cargar catálogos.', 'danger')
@@ -103,75 +97,226 @@ const DeliveryRegister = () => {
     fetchCatalogs()
   }, [])
 
-  const fetchBeneficiariesForMedicine = useCallback(async (medicineId) => {
-    if (!medicineId) {
-      setBeneficiariesCount(0)
-      setBeneficiariesList([])
+  /* ═══ CAMBIO DE TIPO DE ORIGEN ═══ */
+  const handleSourceTypeChange = (sourceType) => {
+    setForm(prev => ({ ...prev, source_type: sourceType, source_id: '' }))
+    setSourceData(null)
+    setSourceMedicines([])
+    setDeliveryItems([])
+    resetMedicineSelection()
+  }
+
+  const resetMedicineSelection = () => {
+    setSelectedMedicineId('')
+    setSelectedMedicineName('')
+    setLinkedBeneficiaries([])
+    setItemQuantity('')
+  }
+
+  /* ═══ SELECCIÓN DE SOLICITUD O DONACIÓN ═══ */
+  const handleSourceSelect = async (sourceId) => {
+    setForm(prev => ({ ...prev, source_id: sourceId }))
+    setDeliveryItems([])
+    setSourceMedicines([])
+    resetMedicineSelection()
+
+    if (!sourceId) {
+      setSourceData(null)
       return
     }
+
+    setLoadingSource(true)
+    try {
+      if (form.source_type === 'solicitud') {
+        const res = await getProviderRequestById(sourceId)
+        const sol = res?.message?.providerRequest
+        if (sol) {
+          setSourceData({
+            type: 'solicitud',
+            code: `SOL-${sol.id.substring(0, 8).toUpperCase()}`,
+            label: sol.provider_name || 'Proveedor',
+            detail: `${sol.department || ''} — ${sol.responsible_name || ''}`,
+            date: sol.request_date,
+            status: sol.status,
+          })
+          const meds = (sol.medicines || []).map(m => ({
+            id: m.medicine_id,
+            name: m.medicine_name || m.commercial_name || 'Medicamento',
+            available_qty: parseInt(m.requested_quantity) || 0,
+            detail: `Solicitado: ${m.requested_quantity || 0} uds.`,
+          }))
+          setSourceMedicines(meds)
+        }
+      } else if (form.source_type === 'donacion') {
+        const res = await getDonationById(sourceId)
+        const don = res?.message?.donation
+        if (don) {
+          setSourceData({
+            type: 'donacion',
+            code: `DON-${don.id.substring(0, 8).toUpperCase()}`,
+            label: don.donor_name || 'Donante',
+            detail: don.rif_cedula || '',
+            date: don.reception_date,
+            status: don.status,
+          })
+          const meds = (don.lots || []).map(l => ({
+            id: l.medicine_id,
+            name: l.medicine_name || 'Medicamento',
+            available_qty: parseInt(l.total_units) || 0,
+            lot_number: l.lot_number,
+            expiration_date: l.expiration_date,
+            detail: `Lote: ${l.lot_number || '—'} — ${l.total_units || 0} uds. — Vence: ${l.expiration_date ? new Date(l.expiration_date).toLocaleDateString('es-VE') : '—'}`,
+          }))
+          setSourceMedicines(meds)
+        }
+      }
+    } catch (err) {
+      console.error('Error cargando detalle del origen:', err)
+      showToast('Error al cargar detalle del origen seleccionado', 'danger')
+    } finally {
+      setLoadingSource(false)
+    }
+  }
+
+  /* ═══ SELECCIÓN DE MEDICAMENTO → CARGA AUTOMÁTICA DE TODOS LOS BENEFICIARIOS ═══ */
+  const handleMedicineSelect = async (medicineId) => {
+    setSelectedMedicineId(medicineId)
+    setLinkedBeneficiaries([])
+    setItemQuantity('')
+
+    if (!medicineId) {
+      setSelectedMedicineName('')
+      return
+    }
+
+    const med = sourceMedicines.find(m => m.id === medicineId)
+    setSelectedMedicineName(med?.name || 'Medicamento')
+
     setLoadingBeneficiaries(true)
     try {
-      const response = await getBeneficiariesByMedicine(medicineId)
-      const beneficiaries = response?.message?.beneficiaries || []
-      setBeneficiariesList(beneficiaries)
-      setBeneficiariesCount(beneficiaries.length)
+      const res = await getBeneficiariesByMedicine(medicineId)
+      const bens = res?.message?.beneficiaries || []
+      setLinkedBeneficiaries(bens)
+      if (bens.length === 0) {
+        showToast('No hay beneficiarios con este medicamento recetado en su ficha clínica.', 'warning')
+      }
     } catch (err) {
-      console.error('Error obteniendo beneficiarios:', err)
-      setBeneficiariesCount(0)
-      setBeneficiariesList([])
+      console.error('Error cargando beneficiarios por medicamento:', err)
+      showToast('Error al buscar beneficiarios para este medicamento', 'danger')
     } finally {
       setLoadingBeneficiaries(false)
     }
-  }, [])
+  }
+
+  /* ═══ AGREGAR ITEM (medicamento + cantidad + todos los beneficiarios vinculados) ═══ */
+  const addDeliveryItem = () => {
+    if (!selectedMedicineId || !itemQuantity || parseInt(itemQuantity) <= 0) {
+      showToast('Seleccione un medicamento e indique la cantidad (> 0)', 'warning')
+      return
+    }
+
+    const med = sourceMedicines.find(m => m.id === selectedMedicineId)
+    if (!med) {
+      showToast('Medicamento no encontrado en el origen', 'danger')
+      return
+    }
+
+    if (deliveryItems.some(it => it.medicine_id === selectedMedicineId)) {
+      showToast('Este medicamento ya está en la lista de entrega', 'warning')
+      return
+    }
+
+    const qty = parseInt(itemQuantity)
+    if (qty > med.available_qty) {
+      showToast(`La cantidad (${qty}) excede lo disponible en el origen (${med.available_qty} uds.)`, 'danger')
+      return
+    }
+
+    setDeliveryItems(prev => [...prev, {
+      id: Date.now(),
+      medicine_id: selectedMedicineId,
+      medicine_name: med.name,
+      quantity: qty,
+      available_qty: med.available_qty,
+      lot_number: med.lot_number || '—',
+      beneficiaries: [...linkedBeneficiaries],
+      beneficiaries_count: linkedBeneficiaries.length,
+    }])
+
+    // Limpiar selección para agregar otro medicamento si desea
+    resetMedicineSelection()
+  }
+
+  const removeDeliveryItem = (id) => {
+    setDeliveryItems(prev => prev.filter(it => it.id !== id))
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
-
-    if (name === 'medicine_id') {
-      fetchBeneficiariesForMedicine(value)
-    }
   }
 
+  /* ═══ SUBMIT ═══ */
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setToast({ show: false, message: '', type: 'info' })
 
-    if (!form.medicine_id) {
-      showToast('Seleccione un medicamento a entregar.', 'danger')
+    if (!form.source_type || !form.source_id) {
+      showToast('Seleccione el origen (Solicitud o Donación)', 'danger')
       return
     }
     if (!form.delivery_user_id) {
-      showToast('Seleccione un responsable de entrega.', 'danger')
+      showToast('Seleccione un responsable de entrega', 'danger')
       return
     }
-    if (!form.delivery_date) {
-      showToast('Indique la fecha de entrega.', 'danger')
+    if (deliveryItems.length === 0) {
+      showToast('Agregue al menos un medicamento a la entrega', 'danger')
+      return
+    }
+    if (form.delivery_date < todayStr) {
+      showToast('La fecha de entrega no puede ser anterior a hoy', 'danger')
       return
     }
 
+    // Construir la lista de nombres de todos los beneficiarios de todos los items
+    const allBeneficiaries = []
+    deliveryItems.forEach(it => {
+      it.beneficiaries.forEach(b => {
+        const fullName = `${b.first_name} ${b.last_name}`
+        if (!allBeneficiaries.includes(fullName)) {
+          allBeneficiaries.push(fullName)
+        }
+      })
+    })
+    const witnessReceptor = allBeneficiaries.length > 0
+      ? allBeneficiaries.join(', ')
+      : 'Beneficiarios vinculados'
+
     try {
       setSubmitting(true)
+
       const payload = {
-        medicine_id: form.medicine_id,
+        request_id: form.source_type === 'solicitud' ? form.source_id : null,
+        donation_id: form.source_type === 'donacion' ? form.source_id : null,
         delivery_user_id: form.delivery_user_id,
         delivery_date: form.delivery_date,
         delivery_type: form.delivery_type,
-        delivery_point: form.delivery_point || null,
-        witness_receptor: form.witness_receptor || null,
-        next_estimated_delivery: form.next_estimated_delivery || null,
+        delivery_point: form.delivery_point || 'Sede FarmaPatria',
+        witness_receptor: witnessReceptor,
         digital_signature: form.digital_signature || null,
         observations: form.observations || null,
         status: form.status,
+        items: deliveryItems.map(it => ({
+          medicine_id: it.medicine_id,
+          delivered_quantity: it.quantity,
+        }))
       }
-      await createDelivery(payload)
-      showToast('Entrega registrada exitosamente.', 'success')
-      setForm({ ...INITIAL_FORM })
-      setBeneficiariesCount(0)
-      setBeneficiariesList([])
+
+      const res = await createDelivery(payload)
+      showToast(res?.message?.text || 'Entrega registrada exitosamente ✅', 'success')
+      handleReset()
     } catch (err) {
       console.error('Error registrando entrega:', err)
-      showToast(err.message || 'Error al registrar la entrega.', 'danger')
+      showToast(err.message || 'Error al registrar entrega', 'danger')
     } finally {
       setSubmitting(false)
     }
@@ -179,44 +324,28 @@ const DeliveryRegister = () => {
 
   const handleReset = () => {
     setForm({ ...INITIAL_FORM })
-    setToast({ show: false, message: '', type: 'info' })
-    setBeneficiariesCount(0)
-    setBeneficiariesList([])
+    setSourceData(null)
+    setSourceMedicines([])
+    setDeliveryItems([])
+    resetMedicineSelection()
   }
+
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-VE') : '—'
 
   return (
     <div className="delivery-register-container">
-      <CCard className="delivery-register-card">
-        <CCardHeader>
-          <h5 className="mb-0 d-flex align-items-center">
+      <CCard className="mb-4">
+        <CCardHeader className="d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">
             <CIcon icon={cilTruck} className="me-2" />
             Registrar Nueva Entrega
-            <HelpButton title="Manual de Usuario – Registrar Nueva Entrega">
+            <HelpButton title="Ayuda – Nueva Entrega">
               <div>
-                <p><strong>¿Qué hace esta pantalla?</strong><br />
-                  Programa la entrega de un medicamento. Al seleccionar un medicamento, se muestra cuántos beneficiarios lo necesitan.</p>
-                <h6>🧪 Ejemplo de formulario</h6>
-                <div className="card p-3 mb-3 bg-light">
-                  <div className="row g-2 small">
-                    <div className="col-md-6"><span className="fw-bold">Medicamento *</span><br />Amoxicilina 500mg</div>
-                    <div className="col-md-6"><span className="fw-bold">Responsable *</span><br />Carlos Mendoza</div>
-                    <div className="col-12 mt-2">
-                      <span className="fw-bold">Beneficiarios que lo requieren</span><br />
-                      <span className="badge bg-info">10 beneficiarios seleccionados</span> <button className="btn btn-sm btn-outline-info">Ver listado</button>
-                    </div>
-                    <div className="col-md-6 mt-3"><span className="fw-bold">Fecha Entrega *</span><br />15/10/2025</div>
-                    <div className="col-md-6 mt-3"><span className="fw-bold">Tipo de Entrega</span><br />A Domicilio</div>
-                  </div>
-                </div>
-                <h6>📋 Validaciones y uso</h6>
-                <ol>
-                  <li><strong>Medicamento *:</strong> Seleccione del catálogo.</li>
-                  <li><strong>Responsable *:</strong> Usuario activo que realizará la entrega.</li>
-                  <li><strong>Beneficiarios:</strong> Vea el listado de beneficiarios que necesitan este medicamento.</li>
-                  <li><strong>Fecha de Entrega *:</strong> Día programado.</li>
-                  <li><strong>Tipo de Entrega:</strong> Modalidad logística.</li>
-                  <li><strong>Estado:</strong> Programada por defecto. Al cambiar a Entregada, el inventario se actualizará.</li>
-                </ol>
+                <p><strong>Paso 1:</strong> Seleccione de dónde proviene la medicina (Solicitud Aprobada o Donación Recibida).</p>
+                <p><strong>Paso 2:</strong> Seleccione un medicamento del origen. El sistema mostrará automáticamente <strong>todos</strong> los beneficiarios que tienen ese medicamento recetado en su ficha clínica.</p>
+                <p><strong>Paso 3:</strong> Indique la cantidad total a entregar y agregue. La entrega cubrirá a todos los beneficiarios vinculados.</p>
+                <p><strong>Paso 4:</strong> Complete los datos logísticos y confirme la entrega.</p>
+                <p>La entrega quedará vinculada al código de origen (SOL-xxx o DON-xxx) para total trazabilidad.</p>
               </div>
             </HelpButton>
           </h5>
@@ -232,193 +361,351 @@ const DeliveryRegister = () => {
           {loadingCatalogs ? (
             <div className="text-center py-5">
               <CSpinner color="primary" />
-              <p className="mt-2 text-muted">Cargando datos...</p>
+              <p className="mt-2 text-body-secondary">Cargando catálogos...</p>
             </div>
           ) : (
             <CForm onSubmit={handleSubmit} onReset={handleReset}>
-              {/* Información de la Entrega */}
-              <div className="form-section">
-                <h6 className="section-title">
-                  <CIcon icon={cilTruck} className="icon me-2" />
-                  Información de la Entrega
+
+              {/* ═══ SECCIÓN 1: ORIGEN DE LA ENTREGA ═══ */}
+              <div className="mb-4 p-3 border rounded">
+                <h6 className="fw-bold text-primary mb-3">
+                  <CIcon icon={cilClipboard} className="me-2" />
+                  1. Origen de la Entrega
                 </h6>
-                <CRow>
-                  <CCol md={6}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="medicine_id" className="register-form-label">Medicamento a Entregar *</CFormLabel>
-                      <CFormSelect id="medicine_id" name="medicine_id" value={form.medicine_id} onChange={handleChange} required>
-                        <option value="">Seleccione un medicamento</option>
-                        {medicines.map(med => (
-                          <option key={med.id} value={med.id}>{med.commercial_name} ({med.generic_name})</option>
-                        ))}
-                      </CFormSelect>
-                    </div>
+                <CRow className="mb-3">
+                  <CCol md={4}>
+                    <CFormLabel className="fw-semibold">¿De dónde proviene? *</CFormLabel>
+                    <CFormSelect
+                      value={form.source_type}
+                      onChange={(e) => handleSourceTypeChange(e.target.value)}
+                    >
+                      <option value="">— Seleccione tipo de origen —</option>
+                      <option value="solicitud">📋 Solicitud Aprobada</option>
+                      <option value="donacion">🎁 Donación Recibida</option>
+                    </CFormSelect>
                   </CCol>
-                  <CCol md={6}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_user_id" className="register-form-label">Responsable de Entrega *</CFormLabel>
-                      <CFormSelect id="delivery_user_id" name="delivery_user_id" value={form.delivery_user_id} onChange={handleChange} required>
-                        <option value="">Seleccione responsable</option>
-                        {users.map(user => (
-                          <option key={user.id} value={user.id}>{user.first_name} {user.last_name} {user.position ? ` — ${user.position}` : ''}</option>
-                        ))}
-                      </CFormSelect>
-                    </div>
+                  <CCol md={8}>
+                    {form.source_type === 'solicitud' && (
+                      <div>
+                        <CFormLabel className="fw-semibold">Seleccionar Solicitud *</CFormLabel>
+                        <CFormSelect
+                          value={form.source_id}
+                          onChange={(e) => handleSourceSelect(e.target.value)}
+                        >
+                          <option value="">— Seleccione una solicitud —</option>
+                          {providerRequests
+                            .filter(r => ['APROBADA', 'COMPLETADA', 'APROBADA_INTERNA'].includes(r.status))
+                            .map(r => (
+                              <option key={r.id} value={r.id}>
+                                SOL-{r.id.substring(0, 8).toUpperCase()} — {r.provider_name} — {r.total_units || 0} uds. — {r.status}
+                              </option>
+                            ))}
+                        </CFormSelect>
+                      </div>
+                    )}
+                    {form.source_type === 'donacion' && (
+                      <div>
+                        <CFormLabel className="fw-semibold">Seleccionar Donación *</CFormLabel>
+                        <CFormSelect
+                          value={form.source_id}
+                          onChange={(e) => handleSourceSelect(e.target.value)}
+                        >
+                          <option value="">— Seleccione una donación —</option>
+                          {donations
+                            .filter(d => ['Received', 'Accepted', 'Inspected'].includes(d.status))
+                            .map(d => (
+                              <option key={d.id} value={d.id}>
+                                DON-{d.id.substring(0, 8).toUpperCase()} — {d.donor_name} — {formatDate(d.reception_date)} — {d.status}
+                              </option>
+                            ))}
+                        </CFormSelect>
+                      </div>
+                    )}
                   </CCol>
                 </CRow>
 
-                {/* Sección de Beneficiarios que requieren el medicamento */}
-                {form.medicine_id && (
-                  <div className="mb-4 p-3 border rounded">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        {loadingBeneficiaries ? (
-                          <>
-                            <CSpinner size="sm" color="primary" className="me-2" />
-                            <span>Cargando beneficiarios...</span>
-                          </>
-                        ) : (
-                          <span>
-                            <CIcon icon={cilPeople} className="me-2" />
-                            <strong>{beneficiariesCount} beneficiario(s) seleccionado(s)</strong> requieren este medicamento
-                          </span>
-                        )}
+                {loadingSource && (
+                  <div className="text-center py-3">
+                    <CSpinner size="sm" color="primary" />
+                    <span className="ms-2 text-body-secondary">Cargando detalle del origen...</span>
+                  </div>
+                )}
+
+                {sourceData && !loadingSource && (
+                  <CAlert color={sourceData.type === 'solicitud' ? 'info' : 'success'} className="py-2 px-3 mb-0">
+                    <div className="row g-2 small">
+                      <div className="col-md-3">
+                        <strong>Código:</strong>{' '}
+                        <CBadge color={sourceData.type === 'solicitud' ? 'primary' : 'success'}>
+                          {sourceData.code}
+                        </CBadge>
                       </div>
-                      {!loadingBeneficiaries && beneficiariesCount > 0 && (
-                        <CButton color="outline-info" size="sm" onClick={() => setShowBeneficiariesModal(true)}>
-                          Ver listado
-                        </CButton>
-                      )}
+                      <div className="col-md-3">
+                        <strong>{sourceData.type === 'solicitud' ? 'Proveedor:' : 'Donante:'}</strong>{' '}
+                        {sourceData.label}
+                      </div>
+                      <div className="col-md-3">
+                        <strong>Detalle:</strong> {sourceData.detail || '—'}
+                      </div>
+                      <div className="col-md-3">
+                        <strong>Fecha:</strong> {formatDate(sourceData.date)} — <strong>Estado:</strong> {sourceData.status}
+                      </div>
                     </div>
+                    {sourceMedicines.length > 0 && (
+                      <div className="mt-2 small">
+                        <strong>Medicamentos en este origen:</strong> {sourceMedicines.length} — Total: {sourceMedicines.reduce((s, m) => s + m.available_qty, 0)} uds.
+                      </div>
+                    )}
+                  </CAlert>
+                )}
+              </div>
+
+              {/* ═══ SECCIÓN 2: MEDICAMENTO → BENEFICIARIOS AUTOMÁTICOS ═══ */}
+              <div className="mb-4 p-3 border rounded">
+                <h6 className="fw-bold text-primary mb-3">
+                  <CIcon icon={cilUser} className="me-2" />
+                  2. Medicamento y Beneficiarios Vinculados
+                </h6>
+
+                {sourceMedicines.length === 0 && form.source_id && !loadingSource ? (
+                  <CAlert color="warning" className="py-2">
+                    No se encontraron medicamentos en el origen seleccionado.
+                  </CAlert>
+                ) : null}
+
+                <CRow className="mb-3 g-2 align-items-end">
+                  {/* Selector de Medicamento del Origen */}
+                  <CCol md={6}>
+                    <CFormLabel className="fw-semibold">Medicamento del Origen *</CFormLabel>
+                    <CFormSelect
+                      value={selectedMedicineId}
+                      onChange={(e) => handleMedicineSelect(e.target.value)}
+                      disabled={sourceMedicines.length === 0}
+                    >
+                      <option value="">— Seleccione medicamento —</option>
+                      {sourceMedicines.map((m, idx) => (
+                        <option key={`${m.id}-${idx}`} value={m.id}>
+                          {m.name} — {m.detail}
+                        </option>
+                      ))}
+                    </CFormSelect>
+                  </CCol>
+
+                  {/* Cantidad */}
+                  <CCol md={3}>
+                    <CFormLabel className="fw-semibold">Cantidad a entregar</CFormLabel>
+                    <CFormInput
+                      type="number"
+                      min="1"
+                      max={sourceMedicines.find(m => m.id === selectedMedicineId)?.available_qty || 99999}
+                      placeholder="Cant. total"
+                      value={itemQuantity}
+                      onChange={(e) => setItemQuantity(e.target.value)}
+                      disabled={!selectedMedicineId}
+                    />
+                  </CCol>
+
+                  {/* Botón Agregar */}
+                  <CCol md={3}>
+                    <CButton
+                      color="primary"
+                      onClick={addDeliveryItem}
+                      className="w-100"
+                      disabled={!selectedMedicineId || !itemQuantity || linkedBeneficiaries.length === 0}
+                    >
+                      + Agregar a la Entrega
+                    </CButton>
+                  </CCol>
+                </CRow>
+
+                {/* ── Lista automática de beneficiarios vinculados ── */}
+                {loadingBeneficiaries && (
+                  <div className="text-center py-3">
+                    <CSpinner size="sm" color="primary" />
+                    <span className="ms-2 text-body-secondary">Buscando beneficiarios con receta de este medicamento...</span>
+                  </div>
+                )}
+
+                {!loadingBeneficiaries && selectedMedicineId && linkedBeneficiaries.length > 0 && (
+                  <div className="mt-2">
+                    <CAlert color="info" className="py-2 px-3 mb-2">
+                      <strong>📋 {linkedBeneficiaries.length} beneficiario(s)</strong> tienen recetado <strong>{selectedMedicineName}</strong> en su ficha clínica.
+                      Esta entrega los cubrirá a todos.
+                    </CAlert>
+                    <CTable hover bordered responsive small className="mb-0">
+                      <CTableHead>
+                        <CTableRow>
+                          <CTableHeaderCell>#</CTableHeaderCell>
+                          <CTableHeaderCell>Nombre Completo</CTableHeaderCell>
+                          <CTableHeaderCell>Cédula</CTableHeaderCell>
+                          <CTableHeaderCell>Teléfono</CTableHeaderCell>
+                          <CTableHeaderCell>Dirección</CTableHeaderCell>
+                        </CTableRow>
+                      </CTableHead>
+                      <CTableBody>
+                        {linkedBeneficiaries.map((ben, idx) => (
+                          <CTableRow key={ben.id}>
+                            <CTableDataCell>{idx + 1}</CTableDataCell>
+                            <CTableDataCell className="fw-semibold">
+                              {ben.first_name} {ben.last_name}
+                            </CTableDataCell>
+                            <CTableDataCell>
+                              <CBadge color="secondary">{ben.identification_number || 'S/N'}</CBadge>
+                            </CTableDataCell>
+                            <CTableDataCell>{ben.phone_personal || ben.phone || '—'}</CTableDataCell>
+                            <CTableDataCell className="text-body-secondary">{ben.detailed_address || '—'}</CTableDataCell>
+                          </CTableRow>
+                        ))}
+                      </CTableBody>
+                    </CTable>
+                  </div>
+                )}
+
+                {!loadingBeneficiaries && selectedMedicineId && linkedBeneficiaries.length === 0 && (
+                  <CAlert color="warning" className="py-2 mt-2">
+                    No hay beneficiarios con este medicamento recetado en su ficha clínica.
+                  </CAlert>
+                )}
+
+                {/* ── Tabla de items ya agregados ── */}
+                {deliveryItems.length > 0 && (
+                  <div className="mt-4">
+                    <h6 className="fw-semibold">
+                      ✅ Medicamentos en esta Entrega
+                      <CBadge color="primary" className="ms-2">
+                        {deliveryItems.length} medicamento(s) — {deliveryItems.reduce((s, i) => s + i.quantity, 0)} uds.
+                      </CBadge>
+                    </h6>
+                    <CTable hover bordered responsive small>
+                      <CTableHead>
+                        <CTableRow>
+                          <CTableHeaderCell>Medicamento</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Lote</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Cantidad</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Beneficiarios</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Quitar</CTableHeaderCell>
+                        </CTableRow>
+                      </CTableHead>
+                      <CTableBody>
+                        {deliveryItems.map(it => (
+                          <CTableRow key={it.id}>
+                            <CTableDataCell>{it.medicine_name}</CTableDataCell>
+                            <CTableDataCell className="text-center">{it.lot_number}</CTableDataCell>
+                            <CTableDataCell className="text-center fw-bold">{it.quantity} uds.</CTableDataCell>
+                            <CTableDataCell className="text-center">
+                              <CBadge color="info">{it.beneficiaries_count} persona(s)</CBadge>
+                              <div className="small text-body-secondary mt-1">
+                                {it.beneficiaries.map(b => `${b.first_name} ${b.last_name}`).join(', ')}
+                              </div>
+                            </CTableDataCell>
+                            <CTableDataCell className="text-center">
+                              <CButton color="danger" size="sm" onClick={() => removeDeliveryItem(it.id)}>✕</CButton>
+                            </CTableDataCell>
+                          </CTableRow>
+                        ))}
+                      </CTableBody>
+                    </CTable>
+                  </div>
+                )}
+
+                {deliveryItems.length === 0 && form.source_id && !loadingSource && !selectedMedicineId && (
+                  <div className="alert alert-secondary text-center py-2 mt-3">
+                    Seleccione un medicamento del origen para ver los beneficiarios vinculados y agregar a la entrega.
                   </div>
                 )}
               </div>
 
-              {/* Detalles de la Entrega */}
-              <div className="form-section">
-                <h6 className="section-title">
-                  <CIcon icon={cilTruck} className="icon me-2" />
-                  Detalles de la Entrega
+              {/* ═══ SECCIÓN 3: DATOS DEL DESPACHO ═══ */}
+              <div className="mb-4 p-3 border rounded">
+                <h6 className="fw-bold text-primary mb-3">
+                  <CIcon icon={cilTruck} className="me-2" />
+                  3. Datos del Despacho
                 </h6>
                 <CRow>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_date" className="register-form-label">Fecha Entrega *</CFormLabel>
-                      <CFormInput type="date" id="delivery_date" name="delivery_date" value={form.delivery_date} onChange={handleChange} required />
+                      <CFormLabel className="fw-semibold">Responsable de Entrega *</CFormLabel>
+                      <CFormSelect name="delivery_user_id" value={form.delivery_user_id} onChange={handleChange} required>
+                        <option value="">Seleccione responsable</option>
+                        {users.map(u => (
+                          <option key={u.id} value={u.id}>
+                            {u.first_name} {u.last_name} {u.position ? ` — ${u.position}` : ''}
+                          </option>
+                        ))}
+                      </CFormSelect>
                     </div>
                   </CCol>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_type" className="register-form-label">Tipo de Entrega</CFormLabel>
-                      <CFormSelect id="delivery_type" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
+                      <CFormLabel className="fw-semibold">Fecha de Entrega *</CFormLabel>
+                      <CFormInput
+                        type="date"
+                        name="delivery_date"
+                        value={form.delivery_date}
+                        min={todayStr}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </CCol>
+                  <CCol md={4}>
+                    <div className="mb-3">
+                      <CFormLabel className="fw-semibold">Tipo de Entrega</CFormLabel>
+                      <CFormSelect name="delivery_type" value={form.delivery_type} onChange={handleChange}>
                         {DELIVERY_TYPES.map(dt => (<option key={dt.value} value={dt.value}>{dt.label}</option>))}
                       </CFormSelect>
                     </div>
                   </CCol>
+                </CRow>
+                <CRow>
                   <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="status" className="register-form-label">Estado</CFormLabel>
-                      <CFormSelect id="status" name="status" value={form.status} onChange={handleChange}>
+                      <CFormLabel className="fw-semibold">Punto de Entrega</CFormLabel>
+                      <CFormInput name="delivery_point" value={form.delivery_point} onChange={handleChange} placeholder="Dirección o sede" />
+                    </div>
+                  </CCol>
+                  <CCol md={4}>
+                    <div className="mb-3">
+                      <CFormLabel className="fw-semibold">Estado de la Entrega</CFormLabel>
+                      <CFormSelect name="status" value={form.status} onChange={handleChange}>
                         {DELIVERY_STATUSES.map(ds => (<option key={ds.value} value={ds.value}>{ds.label}</option>))}
                       </CFormSelect>
                     </div>
                   </CCol>
-                </CRow>
-                <CRow>
-                  <CCol md={6}>
+                  <CCol md={4}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="delivery_point" className="register-form-label">Punto de Entrega</CFormLabel>
-                      <CFormInput type="text" id="delivery_point" name="delivery_point" placeholder="Dirección o lugar específico" value={form.delivery_point} onChange={handleChange} />
-                    </div>
-                  </CCol>
-                  <CCol md={6}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="witness_receptor" className="register-form-label">Testigo/Receptor</CFormLabel>
-                      <CFormInput type="text" id="witness_receptor" name="witness_receptor" placeholder="Nombre del testigo o receptor" value={form.witness_receptor} onChange={handleChange} />
-                    </div>
-                  </CCol>
-                </CRow>
-                <CRow>
-                  <CCol md={6}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="next_estimated_delivery" className="register-form-label">Próxima Entrega Estimada</CFormLabel>
-                      <CFormInput type="date" id="next_estimated_delivery" name="next_estimated_delivery" value={form.next_estimated_delivery} onChange={handleChange} />
-                    </div>
-                  </CCol>
-                  <CCol md={6}>
-                    <div className="mb-3">
-                      <CFormLabel htmlFor="digital_signature" className="register-form-label">Firma Digital/Comprobante</CFormLabel>
-                      <CFormInput type="text" id="digital_signature" name="digital_signature" placeholder="Código o referencia de firma" value={form.digital_signature} onChange={handleChange} />
+                      <CFormLabel className="fw-semibold">Firma / Comprobante</CFormLabel>
+                      <CFormInput name="digital_signature" value={form.digital_signature} onChange={handleChange} placeholder="Código o firma digital" />
                     </div>
                   </CCol>
                 </CRow>
                 <CRow>
                   <CCol md={12}>
                     <div className="mb-3">
-                      <CFormLabel htmlFor="observations" className="register-form-label">Observaciones</CFormLabel>
-                      <CFormTextarea id="observations" name="observations" rows="3" placeholder="Observaciones de la entrega..." value={form.observations} onChange={handleChange} />
+                      <CFormLabel className="fw-semibold">Observaciones</CFormLabel>
+                      <CFormTextarea name="observations" rows="2" value={form.observations} onChange={handleChange} placeholder="Notas adicionales..." />
                     </div>
                   </CCol>
                 </CRow>
               </div>
 
-              <div className="d-flex gap-2 btn-group-responsive mt-4">
-                <CButton color="primary" type="submit" className="register-btn-primary" disabled={submitting}>
-                  {submitting ? <><CSpinner size="sm" className="me-2" /> Registrando...</> : <><CIcon icon={cilSave} className="me-2" /> Registrar Entrega</>}
+              {/* ═══ BOTONES ═══ */}
+              <div className="d-flex gap-2 mt-4">
+                <CButton color="primary" type="submit" disabled={submitting}>
+                  {submitting ? (
+                    <><CSpinner size="sm" className="me-2" /> Registrando...</>
+                  ) : (
+                    <><CIcon icon={cilSave} className="me-2" /> Confirmar Entrega</>
+                  )}
                 </CButton>
-                <CButton color="secondary" type="reset" className="register-btn-secondary" disabled={submitting}>
-                  <CIcon icon={cilReload} className="me-2" /> Limpiar Formulario
+                <CButton color="secondary" type="reset" disabled={submitting}>
+                  <CIcon icon={cilReload} className="me-2" /> Limpiar
                 </CButton>
               </div>
             </CForm>
           )}
         </CCardBody>
       </CCard>
-
-      {/* Modal de listado de beneficiarios */}
-      <CModal visible={showBeneficiariesModal} onClose={() => setShowBeneficiariesModal(false)} size="lg">
-        <CModalHeader closeButton>
-          <CModalTitle>
-            <CIcon icon={cilPeople} className="me-2" />
-            Beneficiarios que requieren este medicamento
-          </CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          {beneficiariesList.length === 0 ? (
-            <p className="text-muted">No hay beneficiarios registrados para este medicamento.</p>
-          ) : (
-            <CTable hover responsive>
-              <CTableHead>
-                <CTableRow>
-                  <CTableHeaderCell>Cédula</CTableHeaderCell>
-                  <CTableHeaderCell>Nombre Completo</CTableHeaderCell>
-                  <CTableHeaderCell>Comunidad</CTableHeaderCell>
-                  <CTableHeaderCell>Prioridad</CTableHeaderCell>
-                  <CTableHeaderCell>Teléfono</CTableHeaderCell>
-                </CTableRow>
-              </CTableHead>
-              <CTableBody>
-                {beneficiariesList.map(benef => (
-                  <CTableRow key={benef.id}>
-                    <CTableDataCell>{benef.identification_number || '—'}</CTableDataCell>
-                    <CTableDataCell>{benef.first_name} {benef.last_name}</CTableDataCell>
-                    <CTableDataCell>{benef.community_name || '—'}</CTableDataCell>
-                    <CTableDataCell>
-                      <CBadge color={benef.priority_level === 'High' ? 'danger' : benef.priority_level === 'Medium' ? 'warning' : 'success'}>
-                        {benef.priority_level === 'High' ? 'ALTA' : benef.priority_level === 'Medium' ? 'MEDIA' : 'BAJA'}
-                      </CBadge>
-                    </CTableDataCell>
-                    <CTableDataCell>{benef.phone_personal || '—'}</CTableDataCell>
-                  </CTableRow>
-                ))}
-              </CTableBody>
-            </CTable>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowBeneficiariesModal(false)}>Cerrar</CButton>
-        </CModalFooter>
-      </CModal>
     </div>
   )
 }

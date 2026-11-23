@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
     CCard,
     CCardHeader,
@@ -27,7 +27,6 @@ import {
     getDonationTypes,
     getUsers,
     createDonation,
-    getDonorTypes,
     getMedicines
 } from '../../services/api'
 import HelpButton from '../common/HelpButton'
@@ -49,17 +48,27 @@ const DonationRegister = () => {
     const [users, setUsers] = useState([])
     const [medicinesCatalog, setMedicinesCatalog] = useState([])
 
-    // Formulario principal
+    // Fecha mínima: primer día del mes actual
+    const dateMinReception = useMemo(() => {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+    }, [])
+    // Fecha máxima: hoy
+    const dateMaxReception = useMemo(() => new Date().toISOString().split('T')[0], [])
+    // Fecha mínima para vencimiento: mañana
+    const dateMinExpiration = useMemo(() => {
+        const d = new Date()
+        d.setDate(d.getDate() + 1)
+        return d.toISOString().split('T')[0]
+    }, [])
+
+    // Formulario principal — solo campos esenciales
     const [form, setForm] = useState({
         donor_id: '',
         donation_type_id: '',
         receiver_user_id: '',
         reception_date: new Date().toISOString().split('T')[0],
-        documentation_date: '',
         document_number: '',
-        estimated_total_value: '',
-        destination_warehouse: '',
-        transport_conditions: '',
         observations: '',
         status: 'Received'
     })
@@ -122,6 +131,21 @@ const DonationRegister = () => {
             return
         }
 
+        const qty = parseInt(newMedicine.quantity)
+        if (isNaN(qty) || qty <= 0) {
+            showToast('La cantidad debe ser mayor a 0', 'warning')
+            return
+        }
+
+        // Validar que la fecha de vencimiento sea posterior a hoy
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const expDate = new Date(newMedicine.expiration_date + 'T00:00:00')
+        if (expDate <= today) {
+            showToast('La fecha de vencimiento debe ser posterior a hoy', 'warning')
+            return
+        }
+
         const selectedMed = medicinesCatalog.find(m => m.id === newMedicine.medicine_id)
         if (!selectedMed) return
 
@@ -136,7 +160,7 @@ const DonationRegister = () => {
             medicine_id: newMedicine.medicine_id,
             commercial_name: selectedMed.commercial_name,
             generic_name: selectedMed.generic_name,
-            quantity: parseInt(newMedicine.quantity),
+            quantity: qty,
             lot_number: newMedicine.lot_number,
             expiration_date: newMedicine.expiration_date
         }])
@@ -160,6 +184,20 @@ const DonationRegister = () => {
             showToast('Seleccione el tipo de donación', 'warning')
             return
         }
+        if (!form.reception_date) {
+            showToast('Ingrese la fecha de recepción', 'warning')
+            return
+        }
+
+        // Validar fecha de recepción: mínimo primer día del mes actual, máximo hoy
+        const recDate = new Date(form.reception_date + 'T00:00:00')
+        const minDate = new Date(dateMinReception + 'T00:00:00')
+        const maxDate = new Date(dateMaxReception + 'T00:00:00')
+        if (recDate < minDate || recDate > maxDate) {
+            showToast('La fecha de recepción debe estar dentro del mes actual y no ser futura', 'warning')
+            return
+        }
+
         if (medicines.length === 0) {
             showToast('Debe agregar al menos un medicamento a la donación', 'warning')
             return
@@ -168,14 +206,13 @@ const DonationRegister = () => {
         setSubmitting(true)
         try {
             const payload = {
-                ...form,
-                estimated_total_value: form.estimated_total_value ? parseFloat(form.estimated_total_value) : null,
+                donor_id: form.donor_id,
+                donation_type_id: form.donation_type_id,
                 receiver_user_id: form.receiver_user_id || null,
-                documentation_date: form.documentation_date || null,
+                reception_date: form.reception_date,
                 document_number: form.document_number || null,
-                destination_warehouse: form.destination_warehouse || null,
-                transport_conditions: form.transport_conditions || null,
                 observations: form.observations || null,
+                status: form.status,
                 medicines: medicines.map(m => ({
                     medicine_id: m.medicine_id,
                     quantity: m.quantity,
@@ -200,11 +237,7 @@ const DonationRegister = () => {
             donation_type_id: '',
             receiver_user_id: '',
             reception_date: new Date().toISOString().split('T')[0],
-            documentation_date: '',
             document_number: '',
-            estimated_total_value: '',
-            destination_warehouse: '',
-            transport_conditions: '',
             observations: '',
             status: 'Received'
         })
@@ -232,32 +265,33 @@ const DonationRegister = () => {
                         <HelpButton title="Manual de Usuario – Registrar Donación">
                             <div>
                                 <p><strong>¿Qué hace esta pantalla?</strong><br />
-                                    Registra una donación de medicamentos, incluyendo los medicamentos específicos, lotes y fechas de vencimiento. Esta información alimenta directamente el inventario.</p>
+                                    Registra una donación de medicamentos recibida por FarmaPatria. Cada donación debe incluir los medicamentos específicos con su lote y fecha de vencimiento.</p>
                                 <h6>🧪 Ejemplo de formulario completo</h6>
-                                <div style={{ background: '#f8f9fa', color: '#212529', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                                <div style={{ padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid var(--cui-border-color)' }}>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                         <div style={{ flex: '1 1 45%' }}><strong>Donante *</strong><br />Ministerio de Salud (G-20001234-1)</div>
                                         <div style={{ flex: '1 1 45%' }}><strong>Tipo de Donación *</strong><br />Medicamentos</div>
-                                        <div style={{ flex: '1 1 45%' }}><strong>Número de Documento</strong><br />FACT-2024-00123</div>
-                                        <div style={{ flex: '1 1 45%' }}><strong>Fecha Recepción *</strong><br />02/07/2026</div>
+                                        <div style={{ flex: '1 1 45%' }}><strong>N° Documento/Acta</strong><br />ACTA-2026-00123</div>
+                                        <div style={{ flex: '1 1 45%' }}><strong>Fecha Recepción *</strong><br />22/11/2026</div>
                                         <div style={{ flex: '1 1 45%' }}><strong>Receptor</strong><br />Carlos Mendoza</div>
-                                        <div style={{ flex: '1 1 45%' }}><strong>Almacén Destino</strong><br />Almacén Principal</div>
+                                        <div style={{ flex: '1 1 45%' }}><strong>Estado</strong><br />Recibido</div>
                                     </div>
                                     <hr />
                                     <p><strong>Medicamentos donados:</strong></p>
                                     <ul>
-                                        <li>Amoxicilina 500mg – Lote LOTE-A01 – Vence: 01/09/2026 – 300 unidades</li>
-                                        <li>Losartán 50mg – Lote LOTE-B02 – Vence: 15/01/2027 – 500 unidades</li>
+                                        <li>Amoxicilina 500mg – Lote LOTE-A01 – Vence: 01/09/2027 – 300 unidades</li>
+                                        <li>Losartán 50mg – Lote LOTE-B02 – Vence: 15/01/2028 – 500 unidades</li>
                                     </ul>
                                 </div>
-                                <h6>📋 Validaciones y uso</h6>
+                                <h6>📋 Validaciones</h6>
                                 <ol>
                                     <li><strong>Donante * (obligatorio):</strong> Seleccione de la lista.</li>
-                                    <li><strong>Tipo de Donación *:</strong> Siempre "Medicamentos".</li>
-                                    <li><strong>Medicamentos Donados *:</strong> Agregue cada medicamento con su lote y fecha de vencimiento. Estos crearán lotes en el inventario al guardar.</li>
-                                    <li><strong>Campos logísticos:</strong> Complete la información de recepción, almacén y transporte según corresponda.</li>
+                                    <li><strong>Tipo de Donación *:</strong> Solo tipo Medicamentos.</li>
+                                    <li><strong>Fecha de Recepción *:</strong> Debe estar dentro del mes actual (no fechas pasadas de meses anteriores ni futuras).</li>
+                                    <li><strong>Medicamentos Donados *:</strong> Al menos un medicamento. Cada uno requiere: medicamento, cantidad (&gt; 0), lote y fecha de vencimiento (posterior a hoy).</li>
+                                    <li><strong>N° de Lote:</strong> No puede repetirse dentro de la misma donación.</li>
                                 </ol>
-                                <p><strong>⚠️ Importante:</strong> La donación debe tener al menos un medicamento. El número de lote no puede repetirse en una misma donación.</p>
+                                <p><strong>⚠️ Importante:</strong> Los medicamentos crean lotes en el inventario al guardar la donación.</p>
                             </div>
                         </HelpButton>
                     </h5>
@@ -303,36 +337,37 @@ const DonationRegister = () => {
                             </CRow>
                         </div>
 
-                        {/* Información de la Donación */}
+                        {/* Información de la Donación — Solo campos esenciales */}
                         <div className="form-section">
                             <h6 className="section-title">
                                 <CIcon icon={cilGift} className="icon me-2" />
                                 Información de la Donación
                             </h6>
                             <CRow>
-                                <CCol md={6}>
+                                <CCol md={4}>
                                     <div className="mb-3">
-                                        <CFormLabel htmlFor="document_number" className="register-form-label">Número de Documento</CFormLabel>
-                                        <CFormInput type="text" id="document_number" name="document_number" className="register-form-input" placeholder="Ej: FACT-2024-00123" value={form.document_number} onChange={handleFormChange} />
+                                        <CFormLabel htmlFor="document_number" className="register-form-label">N° Documento / Acta</CFormLabel>
+                                        <CFormInput type="text" id="document_number" name="document_number" className="register-form-input" placeholder="Ej: ACTA-2026-00123" value={form.document_number} onChange={handleFormChange} />
                                     </div>
                                 </CCol>
-                                <CCol md={3}>
+                                <CCol md={4}>
                                     <div className="mb-3">
-                                        <CFormLabel htmlFor="reception_date" className="register-form-label">Fecha Recepción *</CFormLabel>
-                                        <CFormInput type="date" id="reception_date" name="reception_date" className="register-form-input" value={form.reception_date} onChange={handleFormChange} />
+                                        <CFormLabel htmlFor="reception_date" className="register-form-label">Fecha de Recepción *</CFormLabel>
+                                        <CFormInput
+                                            type="date"
+                                            id="reception_date"
+                                            name="reception_date"
+                                            className="register-form-input"
+                                            value={form.reception_date}
+                                            onChange={handleFormChange}
+                                            min={dateMinReception}
+                                            max={dateMaxReception}
+                                        />
                                     </div>
                                 </CCol>
-                                <CCol md={3}>
+                                <CCol md={4}>
                                     <div className="mb-3">
-                                        <CFormLabel htmlFor="documentation_date" className="register-form-label">Fecha Documentación</CFormLabel>
-                                        <CFormInput type="date" id="documentation_date" name="documentation_date" className="register-form-input" value={form.documentation_date} onChange={handleFormChange} />
-                                    </div>
-                                </CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol md={6}>
-                                    <div className="mb-3">
-                                        <CFormLabel htmlFor="receiver_user_id" className="register-form-label">Receptor</CFormLabel>
+                                        <CFormLabel htmlFor="receiver_user_id" className="register-form-label">Receptor (responsable)</CFormLabel>
                                         <CFormSelect id="receiver_user_id" name="receiver_user_id" className="register-form-select" value={form.receiver_user_id} onChange={handleFormChange}>
                                             <option value="">Seleccione receptor</option>
                                             {users.map(u => (
@@ -343,21 +378,7 @@ const DonationRegister = () => {
                                 </CCol>
                             </CRow>
                             <CRow>
-                                <CCol md={6}>
-                                    <div className="mb-3">
-                                        <CFormLabel htmlFor="destination_warehouse" className="register-form-label">Almacén Destino</CFormLabel>
-                                        <CFormInput type="text" id="destination_warehouse" name="destination_warehouse" className="register-form-input" placeholder="Ej: Almacén Principal" value={form.destination_warehouse} onChange={handleFormChange} />
-                                    </div>
-                                </CCol>
-                                <CCol md={6}>
-                                    <div className="mb-3">
-                                        <CFormLabel htmlFor="transport_conditions" className="register-form-label">Condiciones de Transporte</CFormLabel>
-                                        <CFormInput type="text" id="transport_conditions" name="transport_conditions" className="register-form-input" placeholder="Ej: Temperatura controlada 2-8°C" value={form.transport_conditions} onChange={handleFormChange} />
-                                    </div>
-                                </CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol md={6}>
+                                <CCol md={4}>
                                     <div className="mb-3">
                                         <CFormLabel htmlFor="status" className="register-form-label">Estado de la Donación</CFormLabel>
                                         <CFormSelect id="status" name="status" className="register-form-select" value={form.status} onChange={handleFormChange}>
@@ -368,29 +389,27 @@ const DonationRegister = () => {
                                         </CFormSelect>
                                     </div>
                                 </CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol md={12}>
+                                <CCol md={8}>
                                     <div className="mb-3">
                                         <CFormLabel htmlFor="observations" className="register-form-label">Observaciones</CFormLabel>
-                                        <CFormTextarea id="observations" name="observations" className="register-form-input" rows="3" placeholder="Observaciones adicionales sobre la donación..." value={form.observations} onChange={handleFormChange} />
+                                        <CFormTextarea id="observations" name="observations" className="register-form-input" rows="2" placeholder="Observaciones adicionales sobre la donación..." value={form.observations} onChange={handleFormChange} />
                                     </div>
                                 </CCol>
                             </CRow>
                         </div>
 
-                        {/* Medicamentos Donados (NUEVA SECCIÓN) */}
+                        {/* Medicamentos Donados */}
                         <div className="form-section">
                             <h6 className="section-title">
                                 <CIcon icon={cilGift} className="icon me-2" />
                                 Medicamentos Donados
                                 <span className="badge bg-primary ms-2">
-                                    {medicines.length} medicamentos | Total: {medicines.reduce((sum, m) => sum + m.quantity, 0)} unidades
+                                    {medicines.length} medicamento{medicines.length !== 1 ? 's' : ''} | Total: {medicines.reduce((sum, m) => sum + m.quantity, 0)} unidades
                                 </span>
                             </h6>
 
                             {/* Formulario para agregar medicamento */}
-                            <div className="border rounded p-3 mb-4">
+                            <div className="border rounded p-3 mb-4" style={{ borderColor: 'var(--cui-border-color)' }}>
                                 <h6>Agregar Medicamento</h6>
                                 <CRow className="g-3">
                                     <CCol md={4}>
@@ -425,7 +444,7 @@ const DonationRegister = () => {
                                     </CCol>
                                     <CCol md={3}>
                                         <div className="mb-3">
-                                            <CFormLabel className="register-form-label">Número de Lote *</CFormLabel>
+                                            <CFormLabel className="register-form-label">N° de Lote *</CFormLabel>
                                             <CFormInput
                                                 type="text"
                                                 name="lot_number"
@@ -443,7 +462,7 @@ const DonationRegister = () => {
                                                 name="expiration_date"
                                                 value={newMedicine.expiration_date}
                                                 onChange={handleNewMedicineChange}
-                                                min={new Date().toISOString().split('T')[0]}
+                                                min={dateMinExpiration}
                                             />
                                         </div>
                                     </CCol>
@@ -462,7 +481,7 @@ const DonationRegister = () => {
                                         <CTableRow>
                                             <CTableHeaderCell>Medicamento</CTableHeaderCell>
                                             <CTableHeaderCell>Cantidad</CTableHeaderCell>
-                                            <CTableHeaderCell>Lote</CTableHeaderCell>
+                                            <CTableHeaderCell>N° de Lote</CTableHeaderCell>
                                             <CTableHeaderCell>Fecha Vencimiento</CTableHeaderCell>
                                             <CTableHeaderCell>Acciones</CTableHeaderCell>
                                         </CTableRow>
@@ -473,7 +492,7 @@ const DonationRegister = () => {
                                                 <CTableDataCell>{med.commercial_name}</CTableDataCell>
                                                 <CTableDataCell>{med.quantity} unds</CTableDataCell>
                                                 <CTableDataCell><strong>{med.lot_number}</strong></CTableDataCell>
-                                                <CTableDataCell>{new Date(med.expiration_date + 'T00:00:00').toLocaleDateString('es-ES')}</CTableDataCell>
+                                                <CTableDataCell>{new Date(med.expiration_date + 'T00:00:00').toLocaleDateString('es-VE')}</CTableDataCell>
                                                 <CTableDataCell>
                                                     <CButton color="danger" size="sm" onClick={() => removeMedicine(med.id)}>
                                                         <CIcon icon={cilTrash} />

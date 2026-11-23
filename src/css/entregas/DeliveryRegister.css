@@ -1,10 +1,12 @@
-/* DeliveryRegister.css — Module-specific overrides only */
+/* DeliveryRegister.css — Dark-mode compatible overrides */
 
-.delivery-register-card {
-  animation: fp-fadeInUp 0.5s ease-out;
+.delivery-register-container .form-section,
+.delivery-register-container .border {
+  border-color: var(--cui-border-color) !important;
 }
 
-.delivery-register-card .card-header {
-  border-left: 4px solid var(--fp-primary);
-  background: linear-gradient(135deg, var(--fp-primary-50) 0%, transparent 100%) !important;
+.delivery-register-container .alert-secondary {
+  background-color: var(--cui-tertiary-bg);
+  color: var(--cui-body-color);
+  border-color: var(--cui-border-color);
 }

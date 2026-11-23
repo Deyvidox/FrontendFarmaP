@@ -244,7 +244,7 @@ const Deliveries = () => {
                 <div>
                   <p>Controla la logística y distribución de medicamentos a los beneficiarios.</p>
                   <h6>Lista de Entregas</h6>
-                  <div className="card p-3 mb-3 bg-light">
+                  <div className="card p-3 mb-3" style={{ background: 'var(--cui-tertiary-bg)' }}>
                     <div className="row small">
                       <div className="col-2 fw-bold">(1) ID / Ref</div>
                       <div className="col-3 fw-bold">(2) Fecha/Hora</div>
@@ -253,7 +253,7 @@ const Deliveries = () => {
                       <div className="col-2 fw-bold">(5) Acciones</div>
                     </div>
                     <hr />
-                    <div className="row small text-muted">
+                    <div className="row small text-body-secondary">
                       <div className="col-2">ENT-0012</div>
                       <div className="col-3">15/10/23 - 09:00 AM</div>
                       <div className="col-3">María Gómez</div>
@@ -288,7 +288,7 @@ const Deliveries = () => {
               <div className="card text-center border-info stats-card-programadas">
                 <div className="card-body">
                   <div className="h4 text-info mb-0">{stats.programadas}</div>
-                  <small className="text-muted">Programadas</small>
+                  <small className="text-body-secondary">Programadas</small>
                 </div>
               </div>
             </CCol>
@@ -296,7 +296,7 @@ const Deliveries = () => {
               <div className="card text-center border-warning stats-card-en-proceso">
                 <div className="card-body">
                   <div className="h4 text-warning mb-0">{stats.enCamino}</div>
-                  <small className="text-muted">En Camino</small>
+                  <small className="text-body-secondary">En Camino</small>
                 </div>
               </div>
             </CCol>
@@ -304,7 +304,7 @@ const Deliveries = () => {
               <div className="card text-center border-success stats-card-completadas">
                 <div className="card-body">
                   <div className="h4 text-success mb-0">{stats.completadas}</div>
-                  <small className="text-muted">Entregadas</small>
+                  <small className="text-body-secondary">Entregadas</small>
                 </div>
               </div>
             </CCol>
@@ -312,7 +312,7 @@ const Deliveries = () => {
               <div className="card text-center border-primary stats-card-beneficiarios">
                 <div className="card-body">
                   <div className="h4 text-primary mb-0">{stats.total}</div>
-                  <small className="text-muted">Total Entregas</small>
+                  <small className="text-body-secondary">Total Entregas</small>
                 </div>
               </div>
             </CCol>
@@ -321,7 +321,7 @@ const Deliveries = () => {
           {loading && (
             <div className="text-center py-5">
               <CSpinner color="primary" />
-              <p className="mt-2 text-muted">Cargando entregas...</p>
+              <p className="mt-2 text-body-secondary">Cargando entregas...</p>
             </div>
           )}
 
@@ -367,7 +367,7 @@ const Deliveries = () => {
               </CRow>
 
               {searchTerm && (
-                <div className="text-muted small mb-2">
+                <div className="text-body-secondary small mb-2">
                   {deliveries.filter(d => {
                     const q = searchTerm.trim().toLowerCase();
                     if (!q) return true;
@@ -386,9 +386,10 @@ const Deliveries = () => {
                 <CTableHead>
                   <CTableRow>
                     <CTableHeaderCell>ID Entrega</CTableHeaderCell>
-                    <CTableHeaderCell>Fecha y Hora</CTableHeaderCell>
+                    <CTableHeaderCell>Origen</CTableHeaderCell>
+                    <CTableHeaderCell>Fecha</CTableHeaderCell>
                     <CTableHeaderCell>Lugar</CTableHeaderCell>
-                    <CTableHeaderCell>Medicamento</CTableHeaderCell>
+                    <CTableHeaderCell>Medicamento(s)</CTableHeaderCell>
                     <CTableHeaderCell>Beneficiario</CTableHeaderCell>
                     <CTableHeaderCell>Cantidad</CTableHeaderCell>
                     <CTableHeaderCell>Estado</CTableHeaderCell>
@@ -415,32 +416,36 @@ const Deliveries = () => {
                         <CTableRow key={delivery.id}>
                           <CTableDataCell><strong>{shortId(delivery.id)}</strong></CTableDataCell>
                           <CTableDataCell>
-                            <div>{formatDate(delivery.delivery_date)}</div>
-                            <small className="text-muted">
-                              {delivery.delivery_time && delivery.delivery_time !== '00:00'
-                                ? delivery.delivery_time
-                                : '—'}
-                            </small>
+                            {delivery.source_code ? (
+                              <CBadge color={delivery.source_type === 'solicitud' ? 'primary' : 'success'}>
+                                {delivery.source_code}
+                              </CBadge>
+                            ) : (
+                              <span className="text-body-secondary">Sin origen</span>
+                            )}
+                            {delivery.source_name && (
+                              <div><small className="text-body-secondary">{delivery.source_name}</small></div>
+                            )}
                           </CTableDataCell>
+                          <CTableDataCell>{formatDate(delivery.delivery_date)}</CTableDataCell>
                           <CTableDataCell>
                             <CIcon icon={cilMap} className="me-1" />
                             {delivery.delivery_point || '—'}
                           </CTableDataCell>
                           <CTableDataCell>
-                            {delivery.medicine_name ? (
-                              <span>{delivery.medicine_name}</span>
+                            {delivery.medicines_summary ? (
+                              <span>{delivery.medicines_summary}</span>
                             ) : (
-                              <span className="text-muted">—</span>
+                              <span className="text-body-secondary">—</span>
                             )}
                           </CTableDataCell>
                           <CTableDataCell>
                             {delivery.beneficiary_name ? (
                               <>
                                 <div>{delivery.beneficiary_name}</div>
-                                {delivery.beneficiary_cedula && (
-                                  <small className="text-muted">{delivery.beneficiary_cedula}</small>
-                                )}
                               </>
+                            ) : delivery.witness_receptor ? (
+                              <div>{delivery.witness_receptor}</div>
                             ) : (
                               '—'
                             )}
@@ -492,24 +497,64 @@ const Deliveries = () => {
             ) : (
               <CRow className="g-3">
                 <CCol md={6}>
+                  <div className="mb-2"><strong>Origen:</strong>{' '}
+                    {selectedDelivery.source_code ? (
+                      <CBadge color={selectedDelivery.source_type === 'solicitud' ? 'primary' : 'success'}>
+                        {selectedDelivery.source_code}
+                      </CBadge>
+                    ) : '—'}
+                    {selectedDelivery.source_name && ` — ${selectedDelivery.source_name}`}
+                  </div>
                   <div className="mb-2"><strong>Fecha:</strong> {formatDate(selectedDelivery.delivery_date)}</div>
                   <div className="mb-2"><strong>Tipo:</strong> {selectedDelivery.delivery_type || '—'}</div>
                   <div className="mb-2"><strong>Lugar:</strong> {selectedDelivery.delivery_point || '—'}</div>
-                  <div className="mb-2"><strong>Testigo/Receptor:</strong> {selectedDelivery.witness_receptor || '—'}</div>
+                  <div className="mb-2"><strong>Receptor:</strong> {selectedDelivery.witness_receptor || '—'}</div>
                 </CCol>
                 <CCol md={6}>
-                  <div className="mb-2"><strong>Medicamento:</strong> {selectedDelivery.medicine_name || '—'}</div>
-                  <div className="mb-2"><strong>Beneficiario:</strong> {selectedDelivery.beneficiary_name || '—'} ({selectedDelivery.beneficiary_cedula || 'N/A'})</div>
+                  <div className="mb-2"><strong>Medicamento(s):</strong> {selectedDelivery.medicines_summary || '—'}</div>
+                  <div className="mb-2"><strong>Beneficiario:</strong> {selectedDelivery.beneficiary_name || selectedDelivery.witness_receptor || '—'}</div>
                   <div className="mb-2"><strong>Responsable:</strong> {selectedDelivery.responsible_name || '—'}</div>
                   <div className="mb-2"><strong>Firma Digital:</strong> {selectedDelivery.digital_signature || '—'}</div>
                 </CCol>
                 <CCol xs={12}>
                   <div className="mb-2"><strong>Observaciones:</strong> {selectedDelivery.observations || '—'}</div>
                 </CCol>
+
+                {/* ═══ TABLA DE ITEMS / LOTES ENTREGADOS (TRAZABILIDAD) ═══ */}
+                {selectedDelivery.items && selectedDelivery.items.length > 0 && (
+                  <CCol xs={12}>
+                    <hr />
+                    <h6 className="fw-bold mb-2">Medicamentos / Lotes Entregados</h6>
+                    <CTable hover bordered responsive small>
+                      <CTableHead>
+                        <CTableRow>
+                          <CTableHeaderCell>Medicamento</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">N° Lote</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Cantidad</CTableHeaderCell>
+                          <CTableHeaderCell className="text-center">Vencimiento</CTableHeaderCell>
+                          <CTableHeaderCell>Procedencia</CTableHeaderCell>
+                        </CTableRow>
+                      </CTableHead>
+                      <CTableBody>
+                        {selectedDelivery.items.map((item, idx) => (
+                          <CTableRow key={item.id || idx}>
+                            <CTableDataCell>{item.medicine_name || '—'}</CTableDataCell>
+                            <CTableDataCell className="text-center">
+                              <CBadge color="secondary">{item.lot_number || '—'}</CBadge>
+                            </CTableDataCell>
+                            <CTableDataCell className="text-center fw-bold">{item.delivered_quantity} uds.</CTableDataCell>
+                            <CTableDataCell className="text-center">{formatDate(item.expiration_date)}</CTableDataCell>
+                            <CTableDataCell>{item.donor_name || '—'}</CTableDataCell>
+                          </CTableRow>
+                        ))}
+                      </CTableBody>
+                    </CTable>
+                  </CCol>
+                )}
               </CRow>
             )
           ) : (
-            <p className="text-muted">No hay información disponible.</p>
+            <p className="text-body-secondary">No hay información disponible.</p>
           )}
         </CModalBody>
         <CModalFooter>

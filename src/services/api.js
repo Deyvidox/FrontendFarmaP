@@ -362,6 +362,16 @@ export const updateRequest = async (id, data) => {
   })
 }
 
+export const assignRequestFEFO = async (id) => {
+  return request(`/requests/${id}/assign-fefo`, {
+    method: 'POST',
+  })
+}
+
+export const getRequestAssignments = async (id) => {
+  return request(`/requests/${id}/assignments`)
+}
+
 // ============================================================
 // ENTREGAS
 // ============================================================
@@ -371,6 +381,10 @@ export const getDeliveries = async () => {
 
 export const getDeliveryById = async (id) => {
   return request(`/deliveries/${id}`)
+}
+
+export const getDeliveryPreload = async (requestId) => {
+  return request(`/deliveries/preload-from-request/${requestId}`)
 }
 
 export const createDelivery = async (data) => {
